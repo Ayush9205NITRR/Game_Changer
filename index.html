@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GMAT Study OS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ── reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #e8e8e6;
+    --text: #1a1a1a; --text2: #6b7280; --text3: #9ca3af;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --teal: #5DCAA5; --teal-bg: #E1F5EE; --teal-text: #085041; --teal-border: #5DCAA5;
+    --coral: #F0997B; --coral-bg: #FAECE7; --coral-text: #712B13; --coral-border: #F0997B;
+    --purple-bg: #EEEDFE; --purple-text: #3C3489; --purple-border: #AFA9EC;
+    --amber-bg: #FAEEDA; --amber-text: #633806; --amber-border: #FAC775;
+    --red: #D85A30; --green: #1D9E75; --amber: #BA7517;
+    --radius: 8px; --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* ── layout ── */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 0 24px; height: 52px; border-bottom: 0.5px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  .topbar-title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .topbar-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
+  .nav-tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); background: var(--bg); padding: 0 24px; }
+  .nav-tab { font-size: 13px; padding: 10px 16px; border: none; background: none; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font); transition: color .15s; }
+  .nav-tab.on { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .main { padding: 24px; max-width: 860px; margin: 0 auto; width: 100%; }
+  .panel { display: none; } .panel.on { display: block; }
+
+  /* ── components ── */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 12px; }
+  .sec { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: var(--text2); margin-bottom: 10px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi { background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; }
+  .kpi-val { font-size: 24px; font-weight: 500; color: var(--text); }
+  .kpi-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .04em; }
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  input, select, textarea { font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 8px 10px; background: var(--bg); color: var(--text); width: 100%; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: #6b7280; }
+  textarea { resize: vertical; min-height: 64px; }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+  .btn { font-size: 13px; padding: 8px 16px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; font-family: var(--font); white-space: nowrap; transition: background .12s; }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
+  .btn-primary:hover { background: #333; }
+  .btn-sm { font-size: 12px; padding: 5px 12px; }
+  .btn-danger { color: var(--red); border-color: var(--coral); }
+  .btn-danger:hover { background: var(--coral-bg); }
+  .btn-icon { padding: 5px 8px; border-radius: var(--radius); border: 0.5px solid var(--border); background: none; color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1; }
+  .btn-icon:hover { background: var(--bg2); color: var(--text); }
+  .btn-icon.del:hover { background: var(--coral-bg); color: var(--red); border-color: var(--coral); }
+  .flex { display: flex; align-items: center; gap: 8px; }
+  .flex1 { flex: 1; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 14px 0; }
+  .chip { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-right: 4px; }
+  .chip-coral { background: var(--coral-bg); color: var(--coral-text); border: 0.5px solid var(--coral-border); }
+  .chip-purple { background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
+  .chip-amber { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
+  .chip-teal { background: var(--teal-bg); color: var(--teal-text); border: 0.5px solid var(--teal-border); }
+  .chip-gray { background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border2); }
+  .empty { text-align: center; padding: 2rem; color: var(--text2); font-size: 13px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 48px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .bar-bg { height: 7px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+  .bar-f { height: 100%; border-radius: 4px; }
+  .bname { font-size: 13px; color: var(--text); }
+  .bpct { font-size: 12px; color: var(--text2); text-align: right; }
+  .streak-dot { width: 28px; height: 28px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 10px; background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); }
+  .streak-dot.done { background: #C0DD97; border-color: #639922; color: #27500A; }
+  .streak-dot.today { border: 1.5px solid var(--text); }
+  .topt { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); cursor: pointer; margin: 3px; }
+  .topt:hover { background: var(--bg3); }
+  .topt.sel { background: var(--purple-bg); border-color: var(--purple-border); color: var(--purple-text); }
+  .item-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .item-row:last-child { border-bottom: none; }
+  .item-name { flex: 1; font-size: 13px; }
+  .inline-edit { flex: 1; font-size: 13px; padding: 4px 8px; }
+  .subtab-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .subtab { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; }
+  .subtab.on { background: var(--text); color: var(--bg); border-color: transparent; }
+  .pool-bar-wrap { height: 10px; background: var(--bg2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+  .pool-bar-fill { height: 100%; border-radius: 5px; background: var(--teal); transition: width .4s; }
+  .pool-bar-fill.low { background: var(--coral); }
+  .patt-table-row { display: grid; grid-template-columns: 1fr 56px 56px 56px 130px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .patt-table-head { font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); }
+  .patt-num { text-align: center; }
+  .mock-item { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 8px; cursor: pointer; transition: background .12s; }
+  .mock-item:hover { background: var(--bg2); }
+  .loading { text-align: center; padding: 3rem; color: var(--text2); font-size: 13px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 100; display: none; }
+  .setup-notice { background: var(--amber-bg); border: 0.5px solid var(--amber-border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 16px; }
+  .setup-notice h3 { font-size: 14px; font-weight: 500; color: var(--amber-text); margin-bottom: 8px; }
+  .setup-notice p { font-size: 13px; color: var(--amber-text); line-height: 1.6; }
+  .setup-notice code { font-family: monospace; background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  @media (max-width: 640px) {
+    .kpi-grid, .g4 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr; }
+    .main { padding: 16px; }
+    .patt-table-row { grid-template-columns: 1fr 44px 44px 44px; }
+    .patt-table-row .patt-top-err { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- topbar -->
+<div class="topbar">
+  <div class="topbar-title">GMAT Study OS</div>
+  <span class="topbar-badge" id="db-status">⬤ connecting…</span>
+  <div style="flex:1"></div>
+  <button class="btn btn-sm" onclick="showPanel('setup')">Setup</button>
+</div>
+
+<!-- nav -->
+<div class="nav-tabs">
+  <button class="nav-tab on" onclick="showPanel('dash')">Dashboard</button>
+  <button class="nav-tab" onclick="showPanel('training')">Training log</button>
+  <button class="nav-tab" onclick="showPanel('mocks')">Mocks</button>
+  <button class="nav-tab" onclick="showPanel('analysis')">Analysis</button>
+  <button class="nav-tab" onclick="showPanel('topics')">Topics & patterns</button>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════════
+     CONFIG NOTICE (shown when keys not set)
+═══════════════════════════════════════════════════ -->
+<div class="setup-notice" id="config-notice" style="display:none">
+  <h3>⚙ Connect Supabase — one-time setup</h3>
+  <p>
+    Open <code>index.html</code> in a text editor and find the two lines near the top of the &lt;script&gt; section:<br><br>
+    <code>const SUPABASE_URL = 'YOUR_SUPABASE_URL'</code><br>
+    <code>const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'</code><br><br>
+    Replace with your values from <strong>Supabase → Project Settings → API</strong>. Save, refresh — done.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════════════════════ -->
+<div id="dash" class="panel on">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val" id="d-pool">—</div><div class="kpi-lbl">Hours left</div></div>
+    <div class="kpi"><div class="kpi-val" id="d-days">—</div><div class="kpi-lbl">Days to exam</div></div>
+    <div class="kpi"><div class="kpi-val" id="d-qacc">—</div><div class="kpi-lbl">Quant accuracy</div></div>
+    <div class="kpi"><div class="kpi-val" id="d-mocks">0</div><div class="kpi-lbl">Mocks given</div></div>
+  </div>
+
+  <div class="card">
+    <div class="sec">Time pool — auto-subtracts daily</div>
+    <div style="font-size:13px;color:var(--text2)" id="d-pool-text">Set exam date in Setup tab.</div>
+    <div class="pool-bar-wrap"><div class="pool-bar-fill" id="d-pool-bar" style="width:0%"></div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px" id="d-streak"></div>
+  </div>
+
+  <div class="card">
+    <div class="sec">Topic accuracy — training</div>
+    <div id="d-topic-bars"><div class="empty" style="padding:.5rem">No sessions yet</div></div>
+  </div>
+
+  <div class="card">
+    <div class="sec">Error breakdown</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--red)" id="ec-comp">0</div><div class="kpi-lbl">Comprehension</div></div>
+      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:#7F77DD" id="ec-patt">0</div><div class="kpi-lbl">Pattern miss</div></div>
+      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--amber)" id="ec-opt">0</div><div class="kpi-lbl">Optimal soln</div></div>
+      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--text2)" id="ec-silly">0</div><div class="kpi-lbl">Silly / calc</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TRAINING LOG
+═══════════════════════════════════════════════════ -->
+<div id="training" class="panel">
+  <div class="card">
+    <div class="sec">Log session — bulk entry</div>
+    <div class="g3">
+      <div><label>Subject</label>
+        <select id="t-subj" onchange="refreshTopics();refreshPatterns()"></select>
+      </div>
+      <div><label>Topic</label>
+        <select id="t-topic" onchange="refreshPatterns()"></select>
+      </div>
+      <div><label>Pattern</label>
+        <select id="t-patt"></select>
+      </div>
+    </div>
+    <div class="g3">
+      <div><label>Attempted</label><input type="number" id="t-att" min="1" placeholder="20" oninput="calcWrong()" /></div>
+      <div><label>Correct</label><input type="number" id="t-cor" min="0" placeholder="15" oninput="calcWrong()" /></div>
+      <div><label>Wrong (auto)</label><input type="number" id="t-wrg" readonly style="background:var(--bg2)" placeholder="5" /></div>
+    </div>
+    <button class="btn btn-primary" onclick="startErrors()">Analyze wrong questions →</button>
+  </div>
+  <div id="t-err-queue"></div>
+  <div id="t-save-wrap" style="display:none;margin-top:10px">
+    <button class="btn btn-primary" onclick="saveSession()">Save session ✓</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MOCKS
+═══════════════════════════════════════════════════ -->
+<div id="mocks" class="panel">
+  <div class="subtab-row">
+    <button class="subtab on" onclick="mockSubtab('add',this)">Add mock</button>
+    <button class="subtab" onclick="mockSubtab('list',this)">All mocks</button>
+  </div>
+  <div id="mock-add-panel">
+    <div class="card">
+      <div class="g3">
+        <div><label>Mock name</label><input id="m-name" placeholder="Mock 1 / Official Practice 1" /></div>
+        <div><label>Total score</label><input id="m-score" type="number" placeholder="640" /></div>
+        <div><label>Date</label><input id="m-date" type="date" /></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec">Quant — by topic</div>
+      <div id="mock-quant-inputs" class="g3"></div>
+      <div class="divider"></div>
+      <div class="sec">VARC — by section</div>
+      <div id="mock-varc-inputs" class="g3"></div>
+      <div class="divider"></div>
+      <div class="sec">DI / LR — by type</div>
+      <div id="mock-di-inputs" class="g3"></div>
+      <button class="btn btn-primary" onclick="saveMock()">Save mock</button>
+    </div>
+  </div>
+  <div id="mock-list-panel" style="display:none"><div id="mock-list-inner"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ANALYSIS
+═══════════════════════════════════════════════════ -->
+<div id="analysis" class="panel">
+  <div class="subtab-row">
+    <button class="subtab on" onclick="anSubtab('training',this)">Training analysis</button>
+    <button class="subtab" onclick="anSubtab('mock',this)">Mock analysis</button>
+  </div>
+  <div id="an-training-panel"><div id="an-train-content"></div></div>
+  <div id="an-mock-panel" style="display:none"><div id="an-mock-content"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TOPICS & PATTERNS MANAGER
+═══════════════════════════════════════════════════ -->
+<div id="topics" class="panel">
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="subj-tabs-mgr"></div>
+  <div id="topic-mgr-content"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SETUP
+═══════════════════════════════════════════════════ -->
+<div id="setup" class="panel">
+  <div class="card">
+    <div class="sec">Exam settings</div>
+    <div class="g2">
+      <div><label>Exam date</label><input type="date" id="cfg-exam" /></div>
+      <div><label>Available hours / week</label><input type="number" id="cfg-hrs" placeholder="18" /></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save settings</button>
+  </div>
+  <div class="card">
+    <div class="sec">Supabase connection</div>
+    <div class="g2">
+      <div><label>Project URL</label><input id="cfg-url" placeholder="https://xxxx.supabase.co" /></div>
+      <div><label>Anon key</label><input id="cfg-key" placeholder="eyJ..." /></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveSupabaseConfig()">Save & reconnect</button>
+    <p style="font-size:12px;color:var(--text2);margin-top:8px">Find these in Supabase → Project Settings → API. Stored in localStorage only.</p>
+  </div>
+  <div class="card">
+    <div class="sec">Database setup — run this SQL once in Supabase SQL editor</div>
+    <pre id="sql-block" style="background:var(--bg2);border-radius:var(--radius);padding:14px;font-size:11px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;color:var(--text)"></pre>
+    <button class="btn btn-sm" style="margin-top:8px" onclick="copySql()">Copy SQL</button>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   CONFIG  — paste your Supabase values here OR use the Setup tab
+════════════════════════════════════════════════════ */
+const FALLBACK_URL = 'YOUR_SUPABASE_URL';
+const FALLBACK_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+/* ════════════════════════════════════════════════════
+   SQL to run once in Supabase SQL Editor
+════════════════════════════════════════════════════ */
+const SETUP_SQL = `
+-- GMAT Study OS — run once in Supabase SQL Editor
+
+create table if not exists gmat_config (
+  id text primary key default 'main',
+  exam_date date,
+  hrs_per_week numeric default 18,
+  subjects jsonb default '[]'::jsonb,
+  mock_sections jsonb default '{}'::jsonb,
+  updated_at timestamptz default now()
+);
+
+create table if not exists gmat_sessions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  date date default current_date,
+  subject text,
+  topic text,
+  pattern text,
+  attempted int default 0,
+  correct int default 0,
+  wrong int default 0,
+  errors jsonb default '[]'::jsonb
+);
+
+create table if not exists gmat_mocks (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  date date default current_date,
+  name text,
+  score int,
+  quant jsonb default '{}'::jsonb,
+  varc jsonb default '{}'::jsonb,
+  di jsonb default '{}'::jsonb
+);
+
+-- Insert default config row
+insert into gmat_config (id) values ('main') on conflict do nothing;
+`.trim();
+
+/* ════════════════════════════════════════════════════
+   DEFAULT TOPICS/PATTERNS
+════════════════════════════════════════════════════ */
+const DEFAULT_SUBJECTS = [
+  { name: 'Quant', topics: [
+    { name: 'Number Properties', patterns: ['Divisibility','HCF/LCM','Remainders','Factors','Even/Odd','Prime numbers'] },
+    { name: 'Algebra', patterns: ['Linear equations','Quadratic','Inequalities','Absolute value','Functions'] },
+    { name: 'Geometry', patterns: ['Triangles','Circles','Coordinate geometry','Lines & angles','3D shapes'] },
+    { name: 'Word Problems', patterns: ['Time-speed-distance','Work & time','Mixtures','Profit & loss','Age problems'] },
+    { name: 'Statistics', patterns: ['Mean/Median/Mode','Standard deviation','Range'] },
+    { name: 'Data Sufficiency', patterns: ['Yes/No DS','Value DS','Trap assumptions'] },
+    { name: 'P&C', patterns: ['Permutations','Combinations','Circular arrangement'] },
+    { name: 'Probability', patterns: ['Basic probability','Conditional','Independent events'] }
+  ]},
+  { name: 'VARC', topics: [
+    { name: 'Reading Comprehension', patterns: ['Main idea','Inference','Tone','Vocabulary in context','Author purpose'] },
+    { name: 'Critical Reasoning', patterns: ['Strengthen','Weaken','Assumption','Bold face','Evaluate'] },
+    { name: 'Sentence Correction', patterns: ['Modifier','Parallelism','Verb tense','Idiom','Subject-verb agreement'] }
+  ]},
+  { name: 'DI/LR', topics: [
+    { name: 'Data Interpretation', patterns: ['Table reading','Graph / chart','Multi-source reasoning','Two-part analysis'] },
+    { name: 'Logical Reasoning', patterns: ['Inference chain','Syllogism','Assumption identification'] }
+  ]}
+];
+const DEFAULT_MOCK_SECTIONS = {
+  quant: ['Number Properties','Algebra','Geometry','Word Problems','Statistics','Data Sufficiency','P&C','Probability'],
+  varc: ['RC — Main idea','RC — Inference','RC — Tone','CR — Strengthen','CR — Weaken','CR — Assumption','SC — Modifier','SC — Parallelism','SC — Verb tense'],
+  di: ['Table interpretation','Graph / chart','Multi-source reasoning','Two-part analysis','Logical reasoning']
+};
+
+/* ════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════ */
+let sb = null;
+let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS, mockSections: DEFAULT_MOCK_SECTIONS };
+let SESSIONS = [], MOCKS = [];
+let pending = null, pendingErrs = [];
+let activeSubjMgr = 0, editingMgr = null;
+let anFilter = 'all';
+
+/* ════════════════════════════════════════════════════
+   SUPABASE INIT
+════════════════════════════════════════════════════ */
+function getSupabaseCreds() {
+  const url = localStorage.getItem('sb_url') || FALLBACK_URL;
+  const key = localStorage.getItem('sb_key') || FALLBACK_KEY;
+  return { url, key };
+}
+
+async function initSupabase() {
+  const { url, key } = getSupabaseCreds();
+  const status = document.getElementById('db-status');
+  if (url === 'YOUR_SUPABASE_URL' || !url || !key || key === 'YOUR_SUPABASE_ANON_KEY') {
+    status.textContent = '⬤ offline (localStorage)';
+    status.style.color = '#BA7517';
+    document.getElementById('config-notice').style.display = 'block';
+    loadFromLocalStorage();
+    return;
+  }
+  try {
+    sb = window.supabase.createClient(url, key);
+    status.textContent = '⬤ connected';
+    status.style.color = '#1D9E75';
+    document.getElementById('config-notice').style.display = 'none';
+    await loadAll();
+  } catch(e) {
+    status.textContent = '⬤ error — check keys';
+    status.style.color = '#D85A30';
+    loadFromLocalStorage();
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   DATA LOAD / SAVE
+════════════════════════════════════════════════════ */
+function loadFromLocalStorage() {
+  const raw = localStorage.getItem('gmat_data_v3');
+  if (raw) { const d = JSON.parse(raw); CFG = d.cfg || CFG; SESSIONS = d.sessions || []; MOCKS = d.mocks || []; }
+  renderAll();
+}
+function saveToLocalStorage() {
+  localStorage.setItem('gmat_data_v3', JSON.stringify({ cfg: CFG, sessions: SESSIONS, mocks: MOCKS }));
+}
+
+async function loadAll() {
+  const [cfgRes, sessRes, mockRes] = await Promise.all([
+    sb.from('gmat_config').select('*').eq('id','main').single(),
+    sb.from('gmat_sessions').select('*').order('created_at', { ascending: false }),
+    sb.from('gmat_mocks').select('*').order('date', { ascending: true })
+  ]);
+  if (cfgRes.data) {
+    CFG.examDate = cfgRes.data.exam_date;
+    CFG.hrsPerWeek = cfgRes.data.hrs_per_week || 18;
+    if (cfgRes.data.subjects?.length) CFG.subjects = cfgRes.data.subjects;
+    if (cfgRes.data.mock_sections && Object.keys(cfgRes.data.mock_sections).length) CFG.mockSections = cfgRes.data.mock_sections;
+  }
+  SESSIONS = sessRes.data || [];
+  MOCKS = mockRes.data || [];
+  renderAll();
+}
+
+async function saveConfig() {
+  CFG.examDate = document.getElementById('cfg-exam').value || null;
+  CFG.hrsPerWeek = parseFloat(document.getElementById('cfg-hrs').value) || 18;
+  if (sb) {
+    await sb.from('gmat_config').upsert({ id:'main', exam_date: CFG.examDate, hrs_per_week: CFG.hrsPerWeek, subjects: CFG.subjects, mock_sections: CFG.mockSections });
+  } else { saveToLocalStorage(); }
+  toast('Settings saved');
+  renderDash();
+}
+
+async function saveCFGFull() {
+  if (sb) {
+    await sb.from('gmat_config').upsert({ id:'main', exam_date: CFG.examDate, hrs_per_week: CFG.hrsPerWeek, subjects: CFG.subjects, mock_sections: CFG.mockSections });
+  } else { saveToLocalStorage(); }
+}
+
+function saveSupabaseConfig() {
+  localStorage.setItem('sb_url', document.getElementById('cfg-url').value.trim());
+  localStorage.setItem('sb_key', document.getElementById('cfg-key').value.trim());
+  toast('Reconnecting…');
+  setTimeout(() => location.reload(), 800);
+}
+
+/* ════════════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════════════ */
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  const idx = ['dash','training','mocks','analysis','topics','setup'].indexOf(id);
+  document.querySelectorAll('.nav-tab')[idx]?.classList.add('on');
+  if (id === 'dash') renderDash();
+  if (id === 'analysis') { renderTrainAnalysis(); renderMockAnalysis(); }
+  if (id === 'topics') renderTopicMgr();
+  if (id === 'mocks') { buildMockInputs(); renderMockList(); }
+  if (id === 'setup') renderSetup();
+  if (id === 'training') { refreshTopics(); refreshPatterns(); }
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER ALL
+════════════════════════════════════════════════════ */
+function renderAll() {
+  renderDash();
+  refreshTopics();
+  refreshPatterns();
+  buildMockInputs();
+  renderMockList();
+  renderSetup();
+}
+
+/* ════════════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════════════ */
+function renderDash() {
+  if (CFG.examDate) {
+    const exam = new Date(CFG.examDate);
+    const now = new Date();
+    const daysLeft = Math.max(0, Math.round((exam - now) / 86400000));
+    const weeksLeft = daysLeft / 7;
+    const hrsLeft = Math.round(weeksLeft * CFG.hrsPerWeek);
+    const totalWeeks = Math.round((exam - new Date(exam.getFullYear(), exam.getMonth() - 3, exam.getDate())) / 604800000) || 12;
+    const pctLeft = Math.min(100, Math.round(weeksLeft / totalWeeks * 100));
+    document.getElementById('d-pool').textContent = hrsLeft + 'h';
+    document.getElementById('d-days').textContent = daysLeft + 'd';
+    document.getElementById('d-pool-text').textContent = `${daysLeft} days to exam · ~${hrsLeft}h remaining at ${CFG.hrsPerWeek}h/week`;
+    const bar = document.getElementById('d-pool-bar');
+    bar.style.width = pctLeft + '%';
+    bar.className = 'pool-bar-fill' + (pctLeft < 30 ? ' low' : '');
+  }
+  document.getElementById('d-mocks').textContent = MOCKS.length;
+  const qs = SESSIONS.filter(s => s.subject === 'Quant');
+  const qt = qs.reduce((a,s) => a + (s.attempted||0), 0);
+  const qc = qs.reduce((a,s) => a + (s.correct||0), 0);
+  document.getElementById('d-qacc').textContent = qt ? Math.round(qc/qt*100)+'%' : '—';
+  const errs = SESSIONS.flatMap(s => s.errors || []);
+  document.getElementById('ec-comp').textContent = errs.filter(e => e.errType === 'comprehension').length;
+  document.getElementById('ec-patt').textContent = errs.filter(e => e.errType === 'pattern').length;
+  document.getElementById('ec-opt').textContent = errs.filter(e => e.errType === 'optimal').length;
+  document.getElementById('ec-silly').textContent = errs.filter(e => e.errType === 'silly').length;
+  renderTopicBars();
+  renderStreak();
+}
+
+function renderTopicBars() {
+  const byTopic = {};
+  SESSIONS.forEach(s => {
+    if (!byTopic[s.topic]) byTopic[s.topic] = { att:0, cor:0 };
+    byTopic[s.topic].att += (s.attempted||0);
+    byTopic[s.topic].cor += (s.correct||0);
+  });
+  const el = document.getElementById('d-topic-bars');
+  const keys = Object.keys(byTopic);
+  if (!keys.length) { el.innerHTML = '<div class="empty" style="padding:.5rem">No sessions yet</div>'; return; }
+  const COLORS = ['#CECBF6','#5DCAA5','#F0997B','#FAC775','#85B7EB','#ED93B1','#97C459','#F5C4B3'];
+  el.innerHTML = keys.map((t,i) => {
+    const p = byTopic[t].att ? Math.round(byTopic[t].cor / byTopic[t].att * 100) : 0;
+    return `<div class="bar-row"><span class="bname">${t}</span><div class="bar-bg"><div class="bar-f" style="width:${p}%;background:${COLORS[i%8]}"></div></div><span class="bpct">${p}%</span></div>`;
+  }).join('');
+}
+
+function renderStreak() {
+  const today = new Date();
+  const days = Array.from({length:14}, (_,i) => { const d = new Date(today); d.setDate(d.getDate()-(13-i)); return d.toISOString().split('T')[0]; });
+  const active = new Set(SESSIONS.map(s => s.date));
+  const todayStr = today.toISOString().split('T')[0];
+  document.getElementById('d-streak').innerHTML = days.map(d => {
+    const l = new Date(d).toLocaleDateString('en',{weekday:'narrow'});
+    const cls = 'streak-dot' + (active.has(d) ? ' done' : '') + (d === todayStr ? ' today' : '');
+    return `<div class="${cls}" title="${d}">${l}</div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════
+   TRAINING — dropdowns
+════════════════════════════════════════════════════ */
+function refreshTopics() {
+  const subj = document.getElementById('t-subj');
+  if (!subj) return;
+  subj.innerHTML = CFG.subjects.map(s => `<option>${s.subject_name || s.name}</option>`).join('');
+  refreshPatterns();
+}
+function getSubjName(el) { return el?.options[el.selectedIndex]?.text || ''; }
+function refreshPatterns() {
+  const subjName = getSubjName(document.getElementById('t-subj'));
+  const s = CFG.subjects.find(x => (x.name||x.subject_name) === subjName);
+  const topicSel = document.getElementById('t-topic');
+  if (!topicSel || !s) return;
+  topicSel.innerHTML = (s.topics||[]).map(t => `<option>${t.name}</option>`).join('');
+  updatePatternDropdown();
+}
+function updatePatternDropdown() {
+  const subjName = getSubjName(document.getElementById('t-subj'));
+  const topicName = getSubjName(document.getElementById('t-topic'));
+  const s = CFG.subjects.find(x => (x.name||x.subject_name) === subjName);
+  const t = s?.topics?.find(x => x.name === topicName);
+  const pattSel = document.getElementById('t-patt');
+  if (!pattSel) return;
+  pattSel.innerHTML = (t?.patterns||['General']).map(p => `<option>${p}</option>`).join('');
+}
+function calcWrong() {
+  const a = parseInt(document.getElementById('t-att').value)||0;
+  const c = parseInt(document.getElementById('t-cor').value)||0;
+  document.getElementById('t-wrg').value = Math.max(0, a - c);
+}
+
+/* ════════════════════════════════════════════════════
+   TRAINING — error tree
+════════════════════════════════════════════════════ */
+const TREE = [
+  { q: 'Comprehension issue?', opts: ['Yes — missed word/phrasing','No — understood question'] },
+  { q: 'Pattern identified correctly?', opts: ['Yes — right pattern','No — wrong pattern applied'] },
+  { q: 'Optimal solution known?', opts: ['Yes — knew approach','No — did not know approach'] },
+  { q: 'Final error type?', opts: ['Silly mistake','Calculation error','Wrong comprehension','Wrong pattern','Wrong approach'] }
+];
+const RESOLVES = new Set(['Yes — missed word/phrasing','No — wrong pattern applied','No — did not know approach','Silly mistake','Calculation error','Wrong comprehension','Wrong pattern','Wrong approach']);
+const ERR_MAP = { 'Yes — missed word/phrasing':'comprehension','No — wrong pattern applied':'pattern','No — did not know approach':'optimal','Silly mistake':'silly','Calculation error':'silly','Wrong comprehension':'comprehension','Wrong pattern':'pattern','Wrong approach':'optimal' };
+const ERR_COLOR = { comprehension:'coral', pattern:'purple', optimal:'amber', silly:'gray', other:'gray' };
+
+function startErrors() {
+  const att = parseInt(document.getElementById('t-att').value)||0;
+  const cor = parseInt(document.getElementById('t-cor').value)||0;
+  if (!att) { toast('Enter attempted count'); return; }
+  const wrg = Math.max(0, att - cor);
+  pending = {
+    subject: getSubjName(document.getElementById('t-subj')),
+    topic: getSubjName(document.getElementById('t-topic')),
+    pattern: getSubjName(document.getElementById('t-patt')),
+    attempted: att, correct: cor, wrong: wrg,
+    date: new Date().toISOString().split('T')[0]
+  };
+  pendingErrs = [];
+  const q = document.getElementById('t-err-queue');
+  if (wrg === 0) {
+    q.innerHTML = `<div class="card" style="border-color:var(--teal-border)"><div style="font-size:13px;color:var(--teal-text)">✓ All correct — clean session!</div></div>`;
+    document.getElementById('t-save-wrap').style.display = 'block'; return;
+  }
+  let html = `<div class="sec" style="margin-top:4px">${wrg} wrong question${wrg>1?'s':''} — analyze each</div>`;
+  for (let i = 0; i < wrg; i++) {
+    html += `<div class="card" id="ec${i}" style="margin-bottom:8px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text2)">Wrong ${i+1} / ${wrg} · <span style="color:var(--text)">${pending.topic} → ${pending.pattern}</span></div>
+      <div id="etree${i}">${renderTreeStep(i, 0)}</div>
+    </div>`;
+  }
+  q.innerHTML = html;
+  document.getElementById('t-save-wrap').style.display = 'none';
+}
+
+function renderTreeStep(qi, step) {
+  if (step >= TREE.length) return '';
+  const node = TREE[step];
+  return `<div id="tstep${qi}_${step}" style="margin-bottom:8px">
+    <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px">${node.q}</div>
+    <div>${node.opts.map(o => `<button class="topt" onclick="pickTree(${qi},${step},'${o.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}</div>
+  </div>`;
+}
+
+function pickTree(qi, step, opt, btn) {
+  btn.closest('div').querySelectorAll('.topt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if (!pendingErrs[qi]) pendingErrs[qi] = { path:[], errType:'', fix:'', done:false };
+  pendingErrs[qi].path[step] = opt;
+  if (RESOLVES.has(opt)) {
+    pendingErrs[qi].errType = ERR_MAP[opt] || 'other';
+    const col = ERR_COLOR[pendingErrs[qi].errType] || 'gray';
+    const fixId = `fix${qi}`;
+    let fixDiv = document.getElementById(`efix${qi}`);
+    if (!fixDiv) {
+      fixDiv = document.createElement('div');
+      fixDiv.id = `efix${qi}`;
+      document.getElementById(`etree${qi}`).appendChild(fixDiv);
+    }
+    fixDiv.innerHTML = `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
+      <div style="margin-bottom:8px"><span class="chip chip-${col}">${pendingErrs[qi].errType}</span></div>
+      <label>Fix / pattern to remember</label>
+      <textarea id="${fixId}" style="margin-top:4px" placeholder="e.g. For DS Yes/No — always test each statement independently…"></textarea>
+      <button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="doneErr(${qi})">Done ✓</button>
+    </div>`;
+  } else {
+    const nextId = `tstep${qi}_${step+1}`;
+    let existing = document.getElementById(nextId);
+    if (existing) existing.remove();
+    const div = document.createElement('div');
+    div.innerHTML = renderTreeStep(qi, step + 1);
+    document.getElementById(`etree${qi}`).appendChild(div.firstElementChild);
+  }
+}
+
+function doneErr(qi) {
+  pendingErrs[qi].fix = document.getElementById(`fix${qi}`)?.value || '';
+  pendingErrs[qi].done = true;
+  document.getElementById(`ec${qi}`).style.borderColor = 'var(--teal-border)';
+  const allDone = Array.from({length: pending.wrong}, (_,i) => pendingErrs[i]?.done).every(Boolean);
+  if (allDone) document.getElementById('t-save-wrap').style.display = 'block';
+}
+
+async function saveSession() {
+  if (!pending) return;
+  const errs = Array.from({length: pending.wrong}, (_,i) => ({
+    errType: pendingErrs[i]?.errType || 'other',
+    fix: pendingErrs[i]?.fix || ''
+  }));
+  const row = { ...pending, errors: errs };
+  if (sb) {
+    const { data, error } = await sb.from('gmat_sessions').insert([{
+      date: row.date, subject: row.subject, topic: row.topic, pattern: row.pattern,
+      attempted: row.attempted, correct: row.correct, wrong: row.wrong, errors: row.errors
+    }]).select().single();
+    if (!error && data) SESSIONS.unshift(data);
+  } else {
+    row.id = Date.now().toString(); SESSIONS.unshift(row); saveToLocalStorage();
+  }
+  toast('Session saved!');
+  document.getElementById('t-err-queue').innerHTML = '';
+  document.getElementById('t-save-wrap').style.display = 'none';
+  document.getElementById('t-att').value = '';
+  document.getElementById('t-cor').value = '';
+  document.getElementById('t-wrg').value = '';
+  pending = null; pendingErrs = [];
+  renderDash();
+}
+
+/* ════════════════════════════════════════════════════
+   MOCKS
+════════════════════════════════════════════════════ */
+function buildMockInputs() {
+  const ms = CFG.mockSections || DEFAULT_MOCK_SECTIONS;
+  ['quant','varc','di'].forEach(key => {
+    const secs = ms[key] || [];
+    document.getElementById(`mock-${key}-inputs`).innerHTML = secs.map(s => {
+      const k = s.replace(/\W/g,'_');
+      return `<div><label>${s}</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <input placeholder="Correct" id="mc_${key}_${k}_c" type="number" />
+        <input placeholder="Total" id="mc_${key}_${k}_t" type="number" />
+      </div></div>`;
+    }).join('');
+  });
+}
+
+function readMockSecs(key) {
+  const secs = (CFG.mockSections || DEFAULT_MOCK_SECTIONS)[key] || [];
+  const obj = {};
+  secs.forEach(s => {
+    const k = s.replace(/\W/g,'_');
+    const c = parseInt(document.getElementById(`mc_${key}_${k}_c`)?.value)||0;
+    const t = parseInt(document.getElementById(`mc_${key}_${k}_t`)?.value)||0;
+    if (t > 0) obj[s] = { c, t, w: Math.max(0, t-c) };
+  });
+  return obj;
+}
+
+async function saveMock() {
+  const name = document.getElementById('m-name').value.trim();
+  const score = parseInt(document.getElementById('m-score').value)||0;
+  const date = document.getElementById('m-date').value || new Date().toISOString().split('T')[0];
+  if (!name || !score) { toast('Enter mock name and score'); return; }
+  const row = { name, score, date, quant: readMockSecs('quant'), varc: readMockSecs('varc'), di: readMockSecs('di') };
+  if (sb) {
+    const { data, error } = await sb.from('gmat_mocks').insert([row]).select().single();
+    if (!error && data) MOCKS.push(data);
+  } else {
+    row.id = Date.now().toString(); MOCKS.push(row); saveToLocalStorage();
+  }
+  toast('Mock saved!');
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-score').value = '';
+  mockSubtab('list', document.querySelectorAll('#mocks .subtab')[1]);
+  renderDash();
+}
+
+function mockSubtab(id, btn) {
+  document.getElementById('mock-add-panel').style.display = id === 'add' ? 'block' : 'none';
+  document.getElementById('mock-list-panel').style.display = id === 'list' ? 'block' : 'none';
+  document.querySelectorAll('#mocks .subtab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (id === 'list') renderMockList();
+}
+
+function pct(c, t) { return t ? Math.round(c/t*100) : null; }
+function accColor(p) { return p == null ? 'var(--text2)' : p >= 75 ? '#1D9E75' : p >= 55 ? '#BA7517' : '#D85A30'; }
+
+function renderMockList() {
+  const el = document.getElementById('mock-list-inner');
+  if (!MOCKS.length) { el.innerHTML = '<div class="empty">No mocks yet</div>'; return; }
+  el.innerHTML = [...MOCKS].reverse().map((m, ri) => {
+    const i = MOCKS.length - 1 - ri;
+    const allSecs = { ...(m.quant||{}), ...(m.varc||{}), ...(m.di||{}) };
+    const totC = Object.values(allSecs).reduce((a,s) => a + (s.c||0), 0);
+    const totT = Object.values(allSecs).reduce((a,s) => a + (s.t||0), 0);
+    const op = pct(totC, totT);
+    return `<div class="mock-item" onclick="showMockDetail(${i})">
+      <div class="flex">
+        <div class="flex1">
+          <div style="font-size:14px;font-weight:500">${m.name}</div>
+          <div style="font-size:12px;color:var(--text2)">${m.date} · ${totT} qs · ${op !== null ? op+'% overall' : '—'}</div>
+        </div>
+        <div style="font-size:24px;font-weight:500;color:${accColor(op)}">${m.score}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showMockDetail(idx) {
+  anSubtab('mock', document.querySelectorAll('#analysis .subtab')[1]);
+  showPanel('analysis');
+  const m = MOCKS[idx];
+  const renderSecs = (secs, title) => {
+    const entries = Object.entries(secs || {}).filter(([,v]) => v.t > 0);
+    if (!entries.length) return '';
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="sec">${title}</div>
+      ${entries.map(([topic, v]) => {
+        const p = pct(v.c, v.t);
+        return `<div class="bar-row"><span class="bname" style="font-size:12px">${topic}</span><div class="bar-bg"><div class="bar-f" style="width:${p||0}%;background:${accColor(p)}"></div></div><span class="bpct" style="color:${accColor(p)}">${p !== null ? p+'%' : '—'}</span></div>`;
+      }).join('')}
+    </div>`;
+  };
+  document.getElementById('an-mock-content').innerHTML = `
+    <div class="flex" style="margin-bottom:14px">
+      <button class="btn btn-sm" onclick="renderMockAnalysis()">← All mocks</button>
+      <span style="font-size:15px;font-weight:500;margin-left:8px">${m.name}</span>
+      <span style="font-size:24px;font-weight:500;margin-left:auto;color:${accColor(pct(Object.values({...(m.quant||{}),...(m.varc||{}),...(m.di||{})}).reduce((a,s)=>a+(s.c||0),0), Object.values({...(m.quant||{}),...(m.varc||{}),...(m.di||{})}).reduce((a,s)=>a+(s.t||0),0)))}">${m.score}</span>
+    </div>
+    ${renderSecs(m.quant, 'Quant — by topic')}
+    ${renderSecs(m.varc, 'VARC — by section')}
+    ${renderSecs(m.di, 'DI / LR — by type')}
+  `;
+}
+
+/* ════════════════════════════════════════════════════
+   ANALYSIS
+════════════════════════════════════════════════════ */
+function anSubtab(id, btn) {
+  document.getElementById('an-training-panel').style.display = id === 'training' ? 'block' : 'none';
+  document.getElementById('an-mock-panel').style.display = id === 'mock' ? 'block' : 'none';
+  document.querySelectorAll('#analysis .subtab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (id === 'training') renderTrainAnalysis();
+  if (id === 'mock') renderMockAnalysis();
+}
+
+function renderTrainAnalysis() {
+  const el = document.getElementById('an-train-content');
+  // filter buttons
+  let filterHtml = `<div class="card"><div class="flex" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    ${['All','Quant','VARC','DI/LR'].map(f => `<button class="subtab${anFilter===f?' on':''}" onclick="setAnFilter('${f}',this)">${f}</button>`).join('')}
+  </div>`;
+  let sessions = anFilter === 'All' ? SESSIONS : SESSIONS.filter(s => s.subject === anFilter);
+  if (!sessions.length) { el.innerHTML = filterHtml + '<div class="empty">No sessions yet</div></div>'; return; }
+  const byPatt = {};
+  sessions.forEach(s => {
+    const key = `${s.subject}|${s.topic}|${s.pattern}`;
+    if (!byPatt[key]) byPatt[key] = { subject:s.subject, topic:s.topic, pattern:s.pattern, att:0, cor:0, wrg:0, errors:[] };
+    byPatt[key].att += (s.attempted||0);
+    byPatt[key].cor += (s.correct||0);
+    byPatt[key].wrg += (s.wrong||0);
+    byPatt[key].errors.push(...(s.errors||[]));
+  });
+  const rows = Object.values(byPatt).sort((a,b) => b.wrg - a.wrg);
+  let html = filterHtml + `<div class="patt-table-row patt-table-head" style="border-bottom:0.5px solid var(--border2);padding-bottom:6px">
+    <span>Pattern</span><span class="patt-num">Att</span><span class="patt-num">Cor</span><span class="patt-num">Wrg</span><span class="patt-top-err">Top error</span>
+  </div>`;
+  rows.forEach(r => {
+    const errCounts = {};
+    (r.errors||[]).forEach(e => { errCounts[e.errType] = (errCounts[e.errType]||0)+1; });
+    const topErr = Object.entries(errCounts).sort((a,b) => b[1]-a[1])[0];
+    const ap = pct(r.cor, r.att);
+    html += `<div class="patt-table-row">
+      <div><div style="font-size:13px;font-weight:500">${r.pattern}</div><div style="font-size:11px;color:var(--text2)">${r.topic}</div></div>
+      <span class="patt-num" style="color:var(--text2)">${r.att}</span>
+      <span class="patt-num" style="color:var(--green)">${r.cor}</span>
+      <span class="patt-num" style="color:var(--red)">${r.wrg}</span>
+      <span class="patt-top-err">${topErr ? `<span class="chip chip-${ERR_COLOR[topErr[0]]||'gray'}">${topErr[0]} ×${topErr[1]}</span>` : '—'}</span>
+    </div>`;
+    const fixes = (r.errors||[]).filter(e => e.fix);
+    if (fixes.length) {
+      html += `<div style="padding:6px 0 10px 4px;border-bottom:0.5px solid var(--border)">${fixes.map(e => `<div style="font-size:12px;color:var(--teal-text);padding:2px 0">→ ${e.fix}</div>`).join('')}</div>`;
+    }
+  });
+  el.innerHTML = html + '</div>';
+}
+
+function setAnFilter(f, btn) {
+  anFilter = f;
+  renderTrainAnalysis();
+}
+
+function renderMockAnalysis() {
+  const el = document.getElementById('an-mock-content');
+  if (!MOCKS.length) { el.innerHTML = '<div class="empty">No mocks yet</div>'; return; }
+  const sorted = [...MOCKS].sort((a,b) => new Date(a.date)-new Date(b.date));
+  const maxScore = Math.max(...sorted.map(m => m.score));
+  let html = `<div class="card"><div class="sec">Score trend — click to view detail</div>`;
+  sorted.forEach((m, i) => {
+    const idx = MOCKS.indexOf(m);
+    const pctBar = Math.min(100, Math.round((m.score - 400) / 450 * 100));
+    const col = m.score >= 700 ? '#1D9E75' : m.score >= 650 ? '#BA7517' : '#D85A30';
+    html += `<div class="flex" style="padding:8px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="showMockDetail(${idx})">
+      <span style="font-size:12px;color:var(--text2);min-width:90px">${m.date}</span>
+      <div style="flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:0 12px;align-self:center">
+        <div style="height:100%;width:${pctBar}%;background:${col};border-radius:3px"></div>
+      </div>
+      <span style="font-size:14px;font-weight:500;color:${col};min-width:40px;text-align:right">${m.score}</span>
+      <span style="font-size:12px;color:var(--text2);margin-left:10px;min-width:90px">${m.name}</span>
+    </div>`;
+  });
+  el.innerHTML = html + '</div>';
+}
+
+/* ════════════════════════════════════════════════════
+   TOPICS & PATTERNS MANAGER
+════════════════════════════════════════════════════ */
+function renderTopicMgr() {
+  const tabsEl = document.getElementById('subj-tabs-mgr');
+  tabsEl.innerHTML = CFG.subjects.map((s,i) => {
+    const name = s.name || s.subject_name;
+    return `<button class="subtab${i===activeSubjMgr?' on':''}" onclick="setMgrSubj(${i})">${name}</button>`;
+  }).join('') + `<button class="btn btn-sm" onclick="addSubject()" style="border-radius:20px;font-size:12px">+ Subject</button>`;
+  renderTopicMgrContent();
+}
+
+function setMgrSubj(i) { activeSubjMgr = i; renderTopicMgr(); }
+
+function renderTopicMgrContent() {
+  const el = document.getElementById('topic-mgr-content');
+  const subj = CFG.subjects[activeSubjMgr];
+  if (!subj) { el.innerHTML = ''; return; }
+  const subjName = subj.name || subj.subject_name;
+  let html = `<div class="card">
+    <div class="flex" style="margin-bottom:14px">
+      <span style="font-size:14px;font-weight:500">${subjName}</span>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn-icon" onclick="renameSubject(${activeSubjMgr})" title="Rename">✎</button>
+        <button class="btn-icon del" onclick="deleteSubject(${activeSubjMgr})" title="Delete">✕</button>
+      </div>
+    </div>`;
+  (subj.topics||[]).forEach((t, ti) => {
+    const editing = editingMgr?.type === 'topic' && editingMgr.si === activeSubjMgr && editingMgr.ti === ti;
+    html += `<div style="margin-bottom:14px">
+      <div class="flex" style="margin-bottom:6px;padding-bottom:6px;border-bottom:0.5px solid var(--border)">
+        ${editing
+          ? `<input class="inline-edit" id="edit-inp" value="${esc(t.name)}" onkeydown="if(event.key==='Enter')saveTopic(${activeSubjMgr},${ti})" />
+             <button class="btn btn-sm btn-primary" onclick="saveTopic(${activeSubjMgr},${ti})">Save</button>
+             <button class="btn btn-sm" onclick="cancelMgrEdit()">Cancel</button>`
+          : `<span style="font-size:13px;font-weight:500">${esc(t.name)}</span>
+             <div style="margin-left:auto;display:flex;gap:4px">
+               <button class="btn-icon" onclick="startEditTopic(${activeSubjMgr},${ti})" title="Rename">✎</button>
+               <button class="btn-icon del" onclick="deleteTopic(${activeSubjMgr},${ti})" title="Delete">✕</button>
+             </div>`}
+      </div>
+      <div style="margin-left:12px">`;
+    (t.patterns||[]).forEach((p, pi) => {
+      const editingP = editingMgr?.type === 'patt' && editingMgr.si === activeSubjMgr && editingMgr.ti === ti && editingMgr.pi === pi;
+      html += `<div class="item-row">
+        ${editingP
+          ? `<input class="inline-edit" id="edit-inp" value="${esc(p)}" onkeydown="if(event.key==='Enter')savePattern(${activeSubjMgr},${ti},${pi})" />
+             <button class="btn btn-sm btn-primary" onclick="savePattern(${activeSubjMgr},${ti},${pi})">Save</button>
+             <button class="btn btn-sm" onclick="cancelMgrEdit()">Cancel</button>`
+          : `<span class="item-name">${esc(p)}</span>
+             <button class="btn-icon btn-sm" onclick="startEditPatt(${activeSubjMgr},${ti},${pi})" title="Rename">✎</button>
+             <button class="btn-icon btn-sm del" onclick="deletePattern(${activeSubjMgr},${ti},${pi})" title="Delete">✕</button>`}
+      </div>`;
+    });
+    html += `<div class="flex" style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
+        <input id="addp-${ti}" placeholder="Add pattern…" style="flex:1;font-size:12px;padding:5px 8px" onkeydown="if(event.key==='Enter')addPattern(${activeSubjMgr},${ti})" />
+        <button class="btn btn-sm btn-primary" onclick="addPattern(${activeSubjMgr},${ti})">+</button>
+      </div></div></div>`;
+  });
+  html += `<div class="flex" style="margin-top:6px;padding-top:10px;border-top:0.5px solid var(--border)">
+    <input id="add-topic-inp" placeholder="Add topic to ${subjName}…" style="flex:1" onkeydown="if(event.key==='Enter')addTopic(${activeSubjMgr})" />
+    <button class="btn btn-primary btn-sm" onclick="addTopic(${activeSubjMgr})">+ Topic</button>
+  </div></div>`;
+  el.innerHTML = html;
+  if (editingMgr) document.getElementById('edit-inp')?.focus();
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function addSubject() {
+  const name = prompt('New subject name:');
+  if (!name?.trim()) return;
+  CFG.subjects.push({ name: name.trim(), topics: [] });
+  activeSubjMgr = CFG.subjects.length - 1;
+  saveCFGFull(); renderTopicMgr();
+}
+function renameSubject(si) {
+  const name = prompt('Rename subject:', CFG.subjects[si].name);
+  if (!name?.trim()) return;
+  CFG.subjects[si].name = name.trim();
+  saveCFGFull(); renderTopicMgr();
+}
+function deleteSubject(si) {
+  if (!confirm(`Delete subject "${CFG.subjects[si].name}" and all its data?`)) return;
+  CFG.subjects.splice(si, 1);
+  activeSubjMgr = Math.max(0, activeSubjMgr - 1);
+  saveCFGFull(); renderTopicMgr();
+}
+function addTopic(si) {
+  const val = document.getElementById('add-topic-inp')?.value?.trim();
+  if (!val) return;
+  CFG.subjects[si].topics.push({ name: val, patterns: [] });
+  saveCFGFull(); renderTopicMgr(); refreshTopics();
+}
+function startEditTopic(si, ti) { editingMgr = {type:'topic',si,ti,pi:null}; renderTopicMgrContent(); }
+function saveTopic(si, ti) {
+  const val = document.getElementById('edit-inp')?.value?.trim();
+  if (val) CFG.subjects[si].topics[ti].name = val;
+  cancelMgrEdit();
+}
+function deleteTopic(si, ti) {
+  if (!confirm(`Delete topic "${CFG.subjects[si].topics[ti].name}"?`)) return;
+  CFG.subjects[si].topics.splice(ti, 1);
+  saveCFGFull(); renderTopicMgr(); refreshTopics();
+}
+function addPattern(si, ti) {
+  const val = document.getElementById(`addp-${ti}`)?.value?.trim();
+  if (!val) return;
+  CFG.subjects[si].topics[ti].patterns.push(val);
+  saveCFGFull(); renderTopicMgr(); refreshPatterns();
+}
+function startEditPatt(si, ti, pi) { editingMgr = {type:'patt',si,ti,pi}; renderTopicMgrContent(); }
+function savePattern(si, ti, pi) {
+  const val = document.getElementById('edit-inp')?.value?.trim();
+  if (val) CFG.subjects[si].topics[ti].patterns[pi] = val;
+  cancelMgrEdit();
+}
+function deletePattern(si, ti, pi) {
+  CFG.subjects[si].topics[ti].patterns.splice(pi, 1);
+  saveCFGFull(); renderTopicMgr(); refreshPatterns();
+}
+function cancelMgrEdit() { editingMgr = null; saveCFGFull(); renderTopicMgr(); }
+
+/* ════════════════════════════════════════════════════
+   SETUP
+════════════════════════════════════════════════════ */
+function renderSetup() {
+  document.getElementById('cfg-exam').value = CFG.examDate || '';
+  document.getElementById('cfg-hrs').value = CFG.hrsPerWeek || 18;
+  const { url, key } = getSupabaseCreds();
+  document.getElementById('cfg-url').value = url !== 'YOUR_SUPABASE_URL' ? url : '';
+  document.getElementById('cfg-key').value = key !== 'YOUR_SUPABASE_ANON_KEY' ? key : '';
+  document.getElementById('sql-block').textContent = SETUP_SQL;
+}
+function copySql() {
+  navigator.clipboard.writeText(SETUP_SQL).then(() => toast('SQL copied!')).catch(() => toast('Copy failed — select manually'));
+}
+
+/* ════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════ */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+/* ════════════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', initSupabase);
+</script>
+</body>
+</html>
