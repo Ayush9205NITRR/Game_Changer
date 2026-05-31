@@ -132,6 +132,7 @@ body {
 /* ── screens ── */
 .screen { display: none; padding: 28px 0; }
 .screen.on { display: block; }
+#screen-map.on { display: flex; }
 
 /* ── section heading ── */
 .page-title {
@@ -182,7 +183,6 @@ body {
 
 /* === 3-PANE MAP === */
 #screen-map {
-  display: flex !important;
   height: calc(100vh - 48px);
   overflow: hidden;
   padding: 0 !important;
@@ -206,16 +206,16 @@ body {
 .pane-empty { font-size: 13px; color: var(--t3); margin-top: 40px; text-align: center; }
 
 /* nav tree */
-#nav-subj-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+#nav-subj-tabs { display: flex; gap: 4px; padding: 10px 10px 8px; background: var(--bg); border-bottom: 1px solid var(--border); }
 .nav-stab {
-  flex: 1; padding: 9px 6px; font-size: 12px; font-weight: 600;
+  flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 600;
   text-align: center; cursor: pointer; color: var(--t2);
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  border-top: none; border-left: none; border-right: none; border-bottom: 2px solid transparent;
-  background: none; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); font-family: inherit;
+  transition: all 0.12s;
 }
-.nav-stab:hover { color: var(--text); }
-.nav-stab.on { color: var(--text); border-bottom-color: var(--text); }
+.nav-stab:hover { color: var(--text); border-color: var(--text); }
+.nav-stab.on { background: var(--text); color: #fff; border-color: var(--text); }
 .nav-topic-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px 8px 14px; cursor: pointer;
@@ -232,7 +232,7 @@ body {
   border-bottom: 1px solid var(--bg); gap: 6px;
 }
 .nav-sub-row:hover { background: var(--bg); color: var(--text); }
-.nav-sub-row.sel, .nav-subsub-row.sel { background: var(--text); color: #fff; }
+.nav-sub-row.sel, .nav-subsub-row.sel { background: var(--text); color: #fff; border-radius: 4px; margin: 0 4px; }
 .nav-sub-acc { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: auto; flex-shrink: 0; }
 .nav-sub-void { font-size: 10px; color: var(--t3); margin-left: auto; }
 .nav-subsub-row {
