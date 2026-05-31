@@ -6,740 +6,647 @@
 <title>Study OS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* ── reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:     #F7F6F3;
-  --card:   #FFFFFF;
-  --border: #E5E4DF;
-  --text:   #1A1A18;
-  --t2:     #6B6B68;
-  --t3:     #ABABAB;
+  --bg:      #F5F4F0;
+  --card:    #FFFFFF;
+  --border:  #E2E1DC;
+  --border2: #CCCBC5;
+  --text:    #111110;
+  --t2:      #65655F;
+  --t3:      #A5A59E;
 
-  --green:  #1D9E75;
-  --amber:  #D4A017;
-  --red:    #D85A30;
-  --void:   #DDDDD8;
-  --purple: #7B68EE;
+  --green:   #15803D;
+  --amber:   #B45309;
+  --red:     #B91C1C;
+  --purple:  #4F46E5;
+  --blue:    #1D6FA8;
 
-  /* error type colors */
-  --c-comp:    #E8684A;
-  --c-pattern: #7B68EE;
-  --c-misread: #2196F3;
-  --c-calc:    #D4A017;
-  --c-slow:    #1D9E75;
-
-  --r: 10px;
-  --r-sm: 7px;
-  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --r: 8px;
+  --r-sm: 5px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
 }
 
-/* ── app shell ── */
-#app {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 68px;
-}
-
-/* ── topbar ── */
+/* ── top bar ── */
 #topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 10px;
+  gap: 0;
+  height: 48px;
+  padding: 0 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: var(--bg);
-  z-index: 20;
+  z-index: 50;
 }
-#topbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; }
+
+#app-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-right: 32px;
+  white-space: nowrap;
+}
+
+#top-nav {
+  display: flex;
+  height: 100%;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 100%;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: inherit;
+  transition: color 0.12s;
+  white-space: nowrap;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.on { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+
+.nav-tab-add {
+  margin-left: auto;
+  padding: 0 16px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  align-self: center;
+  margin-right: 16px;
+  transition: opacity 0.12s;
+}
+.nav-tab-add:hover { opacity: 0.82; }
+.nav-tab-add.on { background: var(--green); }
+
 #db-badge {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
-  color: var(--t2);
+  font-size: 12px;
+  color: var(--t3);
+  white-space: nowrap;
 }
 #db-dot {
-  width: 7px; height: 7px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--amber);
 }
 #db-dot.green { background: var(--green); }
 #db-dot.red   { background: var(--red); }
 
+/* ── app wrapper ── */
+#app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
 /* ── screens ── */
-.screen { display: none; padding: 0 16px 8px; flex: 1; }
+.screen { display: none; padding: 28px 0; }
 .screen.on { display: block; }
 
-/* ── bottom nav ── */
-#bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  display: flex;
-  z-index: 30;
+/* ── section heading ── */
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin-bottom: 20px;
 }
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 9px 4px 10px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--t3);
-  font-size: 10px;
-  font-family: inherit;
-  font-weight: 500;
-  transition: color 0.15s;
-}
-.nav-btn.on { color: var(--green); }
-.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
 
-/* ── cards & typography ── */
+/* ── cards ── */
 .card {
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
+  padding: 16px 18px;
   margin-bottom: 10px;
 }
-.card-title {
+.card-label {
   font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--t2);
-  margin-bottom: 12px;
-}
-h2 { font-size: 17px; font-weight: 700; }
-.hint { font-size: 12px; color: var(--t3); }
-
-/* ── buttons ── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 18px;
-  border-radius: var(--r-sm);
-  font-size: 14px;
   font-weight: 600;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--t3);
+  margin-bottom: 10px;
 }
-.btn-dark  { background: var(--text); color: #fff; }
-.btn-dark:hover { opacity: 0.85; }
-.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
-.btn-ghost:hover { border-color: var(--text); }
-.btn-full  { width: 100%; }
-.btn-sm    { padding: 7px 14px; font-size: 13px; }
-
-/* big mode buttons on Log step 0 */
-.mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 18px 16px;
-  border-radius: var(--r);
-  border: 2px solid var(--border);
-  background: var(--card);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-.mode-btn:hover, .mode-btn.picked {
-  border-color: var(--text);
-  background: var(--text);
-  color: #fff;
-}
-.mode-btn .ico  { font-size: 26px; }
-.mode-btn .mttl { font-size: 15px; font-weight: 600; display: block; }
-.mode-btn .mhint{ font-size: 12px; opacity: 0.65; display: block; }
 
 /* ── subject tabs ── */
 .subj-tabs {
   display: flex;
-  gap: 7px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 .subj-tab {
-  padding: 6px 16px;
-  border-radius: 100px;
+  padding: 5px 14px;
+  border-radius: 4px;
   font-size: 13px;
-  font-weight: 600;
-  border: 1.5px solid var(--border);
+  font-weight: 500;
+  border: 1px solid var(--border);
   background: var(--card);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.12s;
+  color: var(--t2);
+  transition: all 0.1s;
 }
-.subj-tab.on { background: var(--text); border-color: var(--text); color: #fff; }
+.subj-tab:hover { border-color: var(--border2); color: var(--text); }
+.subj-tab.on { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
 
-/* ── map: topic groups & subtopic rows ── */
-.topic-group { margin-bottom: 14px; }
+/* ── MAP ── */
+#map-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28px;
+}
+@media (max-width: 640px) { #map-body { grid-template-columns: 1fr; } }
+
+.topic-group { margin-bottom: 18px; }
 .topic-lbl {
   font-size: 11px;
   font-weight: 700;
-  color: var(--t2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 5px 0;
+  color: var(--t3);
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 6px;
 }
+
 .sub-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  margin-bottom: 5px;
-  border: 1.5px solid transparent;
+  margin-bottom: 4px;
   cursor: pointer;
-  transition: border-color 0.12s;
+  transition: border-color 0.1s, background 0.1s;
 }
-.sub-row:hover { border-color: var(--border); }
-.sub-row.void-row {
-  background: var(--bg);
-  border: 1.5px dashed var(--border);
-}
-.sub-name { flex: 1; font-size: 14px; font-weight: 500; }
-.sub-name.dim { color: var(--t3); }
+.sub-row:hover { border-color: var(--border2); }
+.sub-row.void-row { background: transparent; border-style: dashed; }
+.sub-name { flex: 1; font-size: 13px; font-weight: 500; }
+.sub-name.dim { color: var(--t3); font-weight: 400; }
 
-/* accuracy bubble */
 .acc-bub {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 100px;
-  min-width: 52px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  min-width: 50px;
   text-align: center;
+  letter-spacing: 0.2px;
 }
-.acc-good { background: #D4F1E7; color: var(--green); }
-.acc-warn { background: #FEF3D0; color: var(--amber); }
-.acc-bad  { background: #FCE8E0; color: var(--red); }
-.acc-void { background: var(--void); color: var(--t3); }
+.acc-good { background: #DCFCE7; color: var(--green); }
+.acc-warn { background: #FEF3C7; color: var(--amber); }
+.acc-bad  { background: #FEE2E2; color: var(--red); }
+.acc-void { background: #F1F0ED; color: var(--t3); }
 
-/* note dot */
 .note-dot {
-  width: 9px; height: 9px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--border);
   flex-shrink: 0;
 }
 .note-dot.has { background: var(--purple); }
 
-/* ── log wizard ── */
+/* ── LOG wizard ── */
 .log-step { display: none; }
 .log-step.on { display: block; }
+
+#screen-log .inner {
+  max-width: 560px;
+  margin: 0 auto;
+}
 
 .step-head {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .back-btn {
-  width: 34px; height: 34px;
+  width: 30px; height: 30px;
   border-radius: 50%;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   background: var(--card);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 17px;
+  font-size: 15px;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
+  color: var(--t2);
+  transition: border-color 0.1s;
 }
-.step-ttl  { font-size: 18px; font-weight: 700; }
+.back-btn:hover { border-color: var(--border2); color: var(--text); }
+.step-ttl  { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
 .step-sub  { font-size: 12px; color: var(--t2); margin-top: 2px; }
 
-/* progress bar */
-.prog-bar {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 18px;
-}
+.prog-bar { display: flex; gap: 4px; margin-bottom: 20px; }
 .prog-seg {
-  height: 3px;
-  border-radius: 2px;
-  flex: 1;
+  height: 2px; border-radius: 1px; flex: 1;
   background: var(--border);
   transition: background 0.2s;
 }
 .prog-seg.done   { background: var(--text); }
 .prog-seg.active { background: var(--green); }
 
-/* pick list (subject / topic / subtopic selection) */
+/* mode selection */
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+.mode-btn:hover { border-color: var(--border2); background: #FAFAF9; }
+.mode-btn.active, .mode-btn:active {
+  border-color: var(--text);
+  background: var(--text);
+  color: #fff;
+}
+.mode-btn .ico  { font-size: 20px; }
+.mode-btn .mttl { font-size: 14px; font-weight: 600; display: block; }
+.mode-btn .mhint{ font-size: 12px; color: var(--t2); display: block; margin-top: 1px; }
+.mode-btn.active .mhint, .mode-btn:active .mhint { color: rgba(255,255,255,0.65); }
+
+/* pick lists */
 .pick-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 58vh;
+  gap: 4px;
+  max-height: 55vh;
   overflow-y: auto;
 }
 .pick-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 11px 14px;
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  border: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: all 0.1s;
 }
-.pick-item:hover { border-color: var(--border); }
+.pick-item:hover { border-color: var(--border2); }
 .pick-item.sel   { background: var(--text); border-color: var(--text); color: #fff; }
-.pick-ttl  { font-size: 14px; font-weight: 600; }
+.pick-ttl  { font-size: 14px; font-weight: 500; }
 .pick-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
-.pick-item.sel .pick-sub { color: rgba(255,255,255,0.65); }
-.pick-arrow { font-size: 14px; color: var(--t3); }
-.pick-item.sel .pick-arrow { color: rgba(255,255,255,0.6); }
+.pick-item.sel .pick-sub { color: rgba(255,255,255,0.6); }
+.pick-arrow { font-size: 13px; color: var(--t3); }
 
-/* ── steppers (±) ── */
+/* steppers */
 .stepper-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 13px 0;
 }
 .stepper-row + .stepper-row { border-top: 1px solid var(--border); }
 .stepper-info .lbl { font-size: 14px; font-weight: 600; }
-.stepper-info .sub { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.stepper-info .sub { font-size: 11px; color: var(--t2); margin-top: 2px; }
 .stepper {
   display: flex;
   align-items: center;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: var(--bg);
 }
 .step-btn {
-  width: 38px; height: 38px;
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  cursor: pointer;
-  color: var(--text);
-  transition: background 0.1s;
+  width: 34px; height: 34px;
+  border: none; background: var(--bg);
+  font-size: 18px; cursor: pointer;
+  color: var(--text); transition: background 0.1s;
 }
 .step-btn:hover { background: var(--border); }
 .step-val {
-  min-width: 42px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
+  min-width: 40px; text-align: center;
+  font-size: 16px; font-weight: 700;
+  background: var(--card);
+  padding: 0 4px;
 }
 
-/* wrong summary box */
 .wrong-box {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  padding: 13px 16px;
   border-radius: var(--r-sm);
-  margin-top: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
 }
-.wrong-box .num { font-size: 32px; font-weight: 800; }
-.wrong-box .lbl { font-size: 13px; }
+.wrong-box .wnum { font-size: 28px; font-weight: 800; }
+.wrong-box .wlbl { font-size: 12px; color: var(--t2); }
 
-/* ── error type cards ── */
-.err-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-
+/* error cards */
+.err-cards { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .err-card {
   border-radius: var(--r);
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
 }
-.err-card.picked { border-color: rgba(0,0,0,0.3); }
-
+.err-card.picked { border-color: rgba(0,0,0,0.25); }
 .err-card-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 14px;
+  display: flex; align-items: center;
+  gap: 10px; padding: 12px 14px;
 }
-.err-ico  { font-size: 22px; }
-.err-name { font-size: 14px; font-weight: 700; }
-.err-desc { font-size: 12px; opacity: 0.7; margin-top: 1px; }
+.err-ico  { font-size: 18px; }
+.err-name { font-size: 13px; font-weight: 700; }
+.err-desc { font-size: 11px; opacity: 0.7; margin-top: 1px; }
 .err-badge {
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 700;
-  background: rgba(0,0,0,0.12);
-  padding: 1px 9px;
-  border-radius: 100px;
+  margin-left: auto; font-size: 12px; font-weight: 700;
+  background: rgba(0,0,0,0.1); padding: 1px 8px; border-radius: 3px;
 }
-
 .err-reasons {
-  display: none;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 0 14px 13px;
+  display: none; flex-wrap: wrap; gap: 5px; padding: 0 14px 12px;
 }
 .err-card.picked .err-reasons { display: flex; }
-
 .reason-chip {
-  padding: 4px 11px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 500;
-  background: rgba(255,255,255,0.45);
-  border: 1.5px solid rgba(0,0,0,0.10);
-  cursor: pointer;
-  transition: all 0.1s;
+  padding: 3px 10px; border-radius: 3px;
+  font-size: 11px; font-weight: 500;
+  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(0,0,0,0.12);
+  cursor: pointer; transition: all 0.1s;
 }
-.reason-chip.sel {
-  background: rgba(0,0,0,0.14);
-  border-color: transparent;
-  font-weight: 700;
-}
+.reason-chip.sel { background: rgba(0,0,0,0.12); border-color: transparent; font-weight: 700; }
 
-/* ── notes form ── */
+/* notes form */
 .note-textarea {
   width: 100%;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 9px 11px;
+  font-size: 13px;
   font-family: inherit;
   background: var(--bg);
   color: var(--text);
   resize: vertical;
   min-height: 80px;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
+  line-height: 1.6;
 }
-.note-textarea:focus { outline: none; border-color: var(--text); }
+.note-textarea:focus { outline: none; border-color: var(--border2); }
 
-.status-row { display: flex; gap: 7px; }
+.status-row { display: flex; gap: 6px; }
 .status-opt {
-  flex: 1;
-  padding: 9px 6px;
+  flex: 1; padding: 8px 6px;
   border-radius: var(--r-sm);
-  border: 2px solid var(--border);
-  text-align: center;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  background: var(--card);
-  transition: all 0.12s;
+  border: 1px solid var(--border);
+  text-align: center; cursor: pointer;
+  font-size: 12px; font-weight: 500;
+  font-family: inherit; background: var(--card);
+  transition: all 0.1s;
 }
-.status-opt.s0.on { background: #D4F1E7; border-color: var(--green); color: var(--green); }
-.status-opt.s1.on { background: #FEF3D0; border-color: var(--amber); color: var(--amber); }
-.status-opt.s2.on { background: #FCE8E0; border-color: var(--red); color: var(--red); }
+.status-opt.s0.on { background: #DCFCE7; border-color: #86EFAC; color: var(--green); font-weight: 600; }
+.status-opt.s1.on { background: #FEF3C7; border-color: #FCD34D; color: var(--amber); font-weight: 600; }
+.status-opt.s2.on { background: #FEE2E2; border-color: #FCA5A5; color: var(--red); font-weight: 600; }
 
-/* questions in notes */
-.q-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.q-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 .q-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: var(--bg);
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
-  font-size: 13px;
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--bg); padding: 7px 10px;
+  border-radius: var(--r-sm); font-size: 12px;
 }
 .q-text { flex: 1; line-height: 1.4; }
-.q-del {
-  background: none;
-  border: none;
-  color: var(--t3);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  padding: 0;
-  flex-shrink: 0;
-}
+.q-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 15px; }
 
-.add-row {
-  display: flex;
-  gap: 7px;
-}
+.add-row { display: flex; gap: 6px; }
 .add-inp {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: 13px;
-  font-family: inherit;
-  background: var(--bg);
-  color: var(--text);
+  flex: 1; padding: 7px 11px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 13px; font-family: inherit;
+  background: var(--bg); color: var(--text);
 }
-.add-inp:focus { outline: none; border-color: var(--text); }
+.add-inp:focus { outline: none; border-color: var(--border2); }
 .add-go {
-  padding: 8px 14px;
-  border-radius: var(--r-sm);
-  background: var(--text);
-  color: #fff;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
+  padding: 7px 14px; border-radius: var(--r-sm);
+  background: var(--text); color: #fff;
+  border: none; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
 }
 
-/* ── insights ── */
-.kpi-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.kpi-box { background: var(--card); border-radius: var(--r); padding: 13px 14px; }
-.kpi-val { font-size: 26px; font-weight: 800; }
-.kpi-lbl { font-size: 11px; color: var(--t2); margin-top: 2px; }
-
-.filter-bar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-.filter-btn {
-  padding: 5px 14px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  cursor: pointer;
-  white-space: nowrap;
-  font-family: inherit;
-}
-.filter-btn.on { background: var(--text); border-color: var(--text); color: #fff; }
-
-.sec-title {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  margin-top: 4px;
-}
-
-/* void list */
-.void-item {
-  display: flex;
-  align-items: center;
+/* ── INSIGHTS ── */
+.ins-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  padding: 9px 12px;
-  background: var(--bg);
-  border-radius: var(--r-sm);
-  border: 1.5px dashed var(--border);
-  margin-bottom: 6px;
+  margin-bottom: 24px;
 }
-.void-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--void); flex-shrink: 0; }
-.void-name { font-size: 13px; font-weight: 600; }
-.void-sub  { font-size: 11px; color: var(--t3); }
+@media (max-width: 640px) { .ins-kpi-row { grid-template-columns: 1fr 1fr; } }
 
-/* error bar */
-.ebar-row { margin-bottom: 14px; }
-.ebar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-.ebar-label { font-size: 13px; font-weight: 700; }
-.ebar-count { font-size: 13px; color: var(--t2); }
-.ebar-hint  { font-size: 11px; color: var(--t3); margin-bottom: 5px; }
-.ebar-track { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
-.ebar-fill  { height: 100%; border-radius: 4px; }
-
-/* subtopic accuracy */
-.acc-item {
+.kpi-box {
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 12px 14px;
-  margin-bottom: 7px;
+  padding: 14px 16px;
 }
-.acc-item-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+.kpi-val { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.kpi-lbl { font-size: 11px; color: var(--t2); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+.ins-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28px;
 }
-.acc-item-name { font-size: 14px; font-weight: 600; }
-.acc-item-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
-.acc-stats { display: flex; gap: 5px; flex-shrink: 0; }
-.mini-stat {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 100px;
+@media (max-width: 680px) { .ins-body { grid-template-columns: 1fr; } }
+
+.filter-bar { display: flex; gap: 5px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 4px 12px; border-radius: 3px;
+  font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border); background: var(--card);
+  cursor: pointer; font-family: inherit; color: var(--t2);
 }
-.ms-g { background: #D4F1E7; color: var(--green); }
-.ms-r { background: #FCE8E0; color: var(--red); }
-.ms-a { background: #FEF3D0; color: var(--amber); }
-.ms-b { background: var(--void); color: var(--t2); }
+.filter-btn:hover { color: var(--text); border-color: var(--border2); }
+.filter-btn.on { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
+
+.sec-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t3); margin-bottom: 10px; }
+
+.void-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: var(--card);
+  border: 1px dashed var(--border); border-radius: var(--r-sm);
+  margin-bottom: 5px;
+}
+.void-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.void-name { font-size: 13px; font-weight: 500; }
+.void-path { font-size: 11px; color: var(--t3); margin-top: 1px; }
+
+.ebar-row { margin-bottom: 12px; }
+.ebar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.ebar-label { font-size: 13px; font-weight: 600; }
+.ebar-count { font-size: 12px; color: var(--t2); }
+.ebar-hint  { font-size: 11px; color: var(--t3); margin-bottom: 4px; }
+.ebar-track { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.ebar-fill  { height: 100%; border-radius: 3px; }
+
+.acc-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 11px 14px; margin-bottom: 6px;
+}
+.acc-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.acc-item-name { font-size: 13px; font-weight: 600; }
+.acc-item-path { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.acc-stats { display: flex; gap: 4px; flex-shrink: 0; }
+.mini-stat { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
+.ms-g { background: #DCFCE7; color: var(--green); }
+.ms-r { background: #FEE2E2; color: var(--red); }
+.ms-a { background: #FEF3C7; color: var(--amber); }
 .err-tag {
-  display: inline-block;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-weight: 600;
-  margin: 3px 3px 0 0;
+  display: inline-block; font-size: 11px; padding: 2px 7px;
+  border-radius: 3px; font-weight: 600; margin: 3px 3px 0 0;
 }
 
-/* ── settings ── */
+/* ── SETTINGS ── */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 640px) { .settings-grid { grid-template-columns: 1fr; } }
+
+.sset-block { margin-bottom: 20px; }
 .sset-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--t2);
-  margin-bottom: 8px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--t3); margin-bottom: 8px;
 }
 .field { margin-bottom: 10px; }
-.field label { display: block; font-size: 12px; color: var(--t2); font-weight: 500; margin-bottom: 5px; }
+.field label { display: block; font-size: 12px; color: var(--t2); font-weight: 500; margin-bottom: 4px; }
 .field input, .field textarea {
-  width: 100%;
-  padding: 9px 11px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: 14px;
-  font-family: inherit;
-  background: var(--card);
-  color: var(--text);
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 13px; font-family: inherit;
+  background: var(--card); color: var(--text);
 }
-.field input:focus, .field textarea:focus { outline: none; border-color: var(--text); }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--border2); }
 
 .sql-box {
-  background: #1C1C1A;
-  color: #D4D4CF;
-  border-radius: var(--r-sm);
-  padding: 13px;
+  background: #18181B; color: #D4D4D8;
+  border-radius: var(--r-sm); padding: 12px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  line-height: 1.7;
-  overflow-x: auto;
-  white-space: pre;
-  margin-bottom: 10px;
+  font-size: 11px; line-height: 1.75;
+  overflow-x: auto; white-space: pre; margin-bottom: 8px;
+  max-height: 240px; overflow-y: auto;
 }
 
-/* topic manager */
-.mgr-item {
-  background: var(--card);
-  border-radius: var(--r);
-  overflow: hidden;
-  margin-bottom: 7px;
-}
-.mgr-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 13px;
-  cursor: pointer;
-}
-.mgr-name { flex: 1; font-size: 14px; font-weight: 600; }
+.mgr-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 6px; }
+.mgr-header { display: flex; align-items: center; gap: 8px; padding: 10px 13px; cursor: pointer; }
+.mgr-name { flex: 1; font-size: 13px; font-weight: 600; }
 .mgr-ct   { font-size: 11px; color: var(--t3); }
-.mgr-arr  { font-size: 11px; color: var(--t3); transition: transform 0.15s; }
+.mgr-arr  { font-size: 10px; color: var(--t3); transition: transform 0.15s; }
 .mgr-item.open .mgr-arr { transform: rotate(180deg); }
-.mgr-body {
-  display: none;
-  padding: 0 13px 13px;
-  border-top: 1px solid var(--border);
-}
+.mgr-body { display: none; padding: 0 13px 12px; border-top: 1px solid var(--border); }
 .mgr-item.open .mgr-body { display: block; }
 
 .sub-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 100px;
-  background: var(--bg);
-  font-size: 12px;
-  margin: 4px 3px 0 0;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 3px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 12px; margin: 3px 3px 0 0;
 }
 .sub-tag-x {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: var(--border);
-  border: none;
-  cursor: pointer;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--t2);
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--border); border: none; cursor: pointer;
+  font-size: 9px; display: flex; align-items: center; justify-content: center; color: var(--t2);
 }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 5px; padding: 8px 16px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 600; border: none;
+  cursor: pointer; font-family: inherit; transition: opacity 0.12s;
+}
+.btn-dark  { background: var(--text); color: #fff; }
+.btn-dark:hover { opacity: 0.85; }
+.btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--border2); }
+.btn-full { width: 100%; }
+.btn-sm   { padding: 6px 12px; font-size: 12px; }
 
 /* ── toast ── */
 #toast {
-  position: fixed;
-  bottom: 76px;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: var(--text);
-  color: #fff;
-  padding: 9px 20px;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0;
-  transition: all 0.22s;
-  z-index: 200;
-  white-space: nowrap;
-  pointer-events: none;
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--text); color: #fff;
+  padding: 8px 18px; border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+  opacity: 0; transition: all 0.2s;
+  z-index: 200; white-space: nowrap; pointer-events: none;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── utilities ── */
-.mt4  { margin-top: 4px; }
+/* ── misc ── */
 .mt8  { margin-top: 8px; }
 .mt12 { margin-top: 12px; }
 .mt16 { margin-top: 16px; }
 .mb8  { margin-bottom: 8px; }
 .mb12 { margin-bottom: 12px; }
 .tc   { text-align: center; }
-.t2   { color: var(--t2); }
-.t3   { color: var(--t3); }
-.empty-state {
-  text-align: center;
-  padding: 28px 0;
-  color: var(--t3);
-  font-size: 13px;
-}
-
-@media (min-width: 480px) {
-  #app { box-shadow: 0 0 60px rgba(0,0,0,0.07); }
-}
+.empty-state { text-align: center; padding: 24px 0; color: var(--t3); font-size: 13px; }
 </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- TOP BAR -->
-  <div id="topbar">
-    <span id="topbar-title">Study OS</span>
-    <div id="db-badge">
-      <span id="db-label">Local</span>
-      <div id="db-dot"></div>
-    </div>
+<!-- TOP BAR (full width) -->
+<div id="topbar">
+  <span id="app-name">Study OS</span>
+  <div id="top-nav">
+    <button class="nav-tab on" id="nt-map" onclick="nav('map')">Map</button>
+    <button class="nav-tab" id="nt-insights" onclick="nav('insights')">Insights</button>
+    <button class="nav-tab" id="nt-settings" onclick="nav('settings')">Settings</button>
   </div>
+  <button class="nav-tab-add" id="nt-log" onclick="nav('log')">+ Add</button>
+  <div id="db-badge">
+    <span id="db-label">Local</span>
+    <div id="db-dot"></div>
+  </div>
+</div>
+
+<div id="app">
 
   <!-- ══ MAP ══ -->
   <div id="screen-map" class="screen on">
@@ -747,18 +654,12 @@ h2 { font-size: 17px; font-weight: 700; }
     <div id="map-body"></div>
   </div>
 
-  <!-- ══ LOG (wizard) ══ -->
+  <!-- ══ LOG ══ -->
   <div id="screen-log" class="screen">
+    <div class="inner">
 
-    <!-- Step 0: Pick mode -->
-    <div id="ls0" class="log-step on">
-      <div class="step-head">
-        <div>
-          <div class="step-ttl">What did you do?</div>
-          <div class="step-sub">Pick one to get started</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
+      <div id="ls0" class="log-step on">
+        <div class="step-ttl" style="margin-bottom:16px">What did you do?</div>
         <button class="mode-btn" onclick="startMode('practice')">
           <span class="ico">📚</span>
           <div>
@@ -774,246 +675,178 @@ h2 { font-size: 17px; font-weight: 700; }
           </div>
         </button>
       </div>
-    </div>
 
-    <!-- Step 1: Subject -->
-    <div id="ls1" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">Pick a subject</div>
-          <div class="step-sub" id="ls1-sub"></div>
+      <div id="ls1" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">Pick a subject</div><div class="step-sub" id="ls1-sub"></div></div>
         </div>
+        <div class="prog-bar" id="prog1"></div>
+        <div class="pick-list" id="subj-list"></div>
       </div>
-      <div class="prog-bar" id="prog1"></div>
-      <div class="pick-list" id="subj-list"></div>
-    </div>
 
-    <!-- Step 2: Topic -->
-    <div id="ls2" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">Pick a topic</div>
-          <div class="step-sub" id="ls2-sub"></div>
+      <div id="ls2" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">Pick a topic</div><div class="step-sub" id="ls2-sub"></div></div>
         </div>
+        <div class="prog-bar" id="prog2"></div>
+        <div class="pick-list" id="topic-list"></div>
       </div>
-      <div class="prog-bar" id="prog2"></div>
-      <div class="pick-list" id="topic-list"></div>
-    </div>
 
-    <!-- Step 3: Sub-topic -->
-    <div id="ls3" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">Pick a sub-topic</div>
-          <div class="step-sub" id="ls3-sub"></div>
+      <div id="ls3" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">Pick a sub-topic</div><div class="step-sub" id="ls3-sub"></div></div>
         </div>
+        <div class="prog-bar" id="prog3"></div>
+        <div class="pick-list" id="subtopic-list"></div>
       </div>
-      <div class="prog-bar" id="prog3"></div>
-      <div class="pick-list" id="subtopic-list"></div>
-    </div>
 
-    <!-- Step 4P: Questions (Practice) -->
-    <div id="ls4p" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">How many questions?</div>
-          <div class="step-sub" id="ls4p-sub"></div>
+      <div id="ls4p" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">How many questions?</div><div class="step-sub" id="ls4p-sub"></div></div>
         </div>
-      </div>
-      <div class="prog-bar" id="prog4p"></div>
-
-      <div class="card">
-        <div class="stepper-row">
-          <div class="stepper-info">
-            <div class="lbl">Attempted</div>
-            <div class="sub">Total questions tried</div>
+        <div class="prog-bar" id="prog4p"></div>
+        <div class="card">
+          <div class="stepper-row">
+            <div class="stepper-info"><div class="lbl">Attempted</div><div class="sub">Total questions tried</div></div>
+            <div class="stepper">
+              <button class="step-btn" onclick="step('att',-1)">−</button>
+              <div class="step-val" id="v-att">0</div>
+              <button class="step-btn" onclick="step('att',1)">+</button>
+            </div>
           </div>
-          <div class="stepper">
-            <button class="step-btn" onclick="step('att',-1)">−</button>
-            <div class="step-val" id="v-att">0</div>
-            <button class="step-btn" onclick="step('att',1)">+</button>
+          <div class="stepper-row">
+            <div class="stepper-info"><div class="lbl">Got right</div><div class="sub">Correct answers</div></div>
+            <div class="stepper">
+              <button class="step-btn" onclick="step('cor',-1)">−</button>
+              <div class="step-val" id="v-cor">0</div>
+              <button class="step-btn" onclick="step('cor',1)">+</button>
+            </div>
           </div>
         </div>
-        <div class="stepper-row">
-          <div class="stepper-info">
-            <div class="lbl">Got right</div>
-            <div class="sub">Correct answers</div>
-          </div>
-          <div class="stepper">
-            <button class="step-btn" onclick="step('cor',-1)">−</button>
-            <div class="step-val" id="v-cor">0</div>
-            <button class="step-btn" onclick="step('cor',1)">+</button>
+        <div class="wrong-box" id="wrong-box">
+          <div style="font-size:28px" id="wrong-ico">—</div>
+          <div>
+            <div class="wlbl">Got wrong</div>
+            <div class="wnum" id="v-wrong">0</div>
           </div>
         </div>
+        <button class="btn btn-dark btn-full mt12" onclick="goToErrors()">Next →</button>
       </div>
 
-      <div class="wrong-box" id="wrong-box">
-        <div style="font-size:36px" id="wrong-ico">⬜</div>
-        <div>
-          <div class="lbl" style="font-size:13px;color:var(--t2)">Got wrong</div>
-          <div class="num" id="v-wrong">0</div>
+      <div id="ls4n" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">Add a note</div><div class="step-sub" id="ls4n-sub"></div></div>
         </div>
+        <div class="prog-bar" id="prog4n"></div>
+        <div class="card mb8">
+          <div class="card-label">Key insight — what did you learn?</div>
+          <textarea class="note-textarea" id="n-insight" placeholder="Write the main thing you understood or learned..."></textarea>
+        </div>
+        <div class="card mb8">
+          <div class="card-label">Questions I still have</div>
+          <div class="q-list" id="q-list"></div>
+          <div class="add-row">
+            <input class="add-inp" id="q-inp" placeholder="Type a question..." />
+            <button class="add-go" onclick="addQ()">Add</button>
+          </div>
+        </div>
+        <div class="card mb12">
+          <div class="card-label">How well do you understand this?</div>
+          <div class="status-row">
+            <button class="status-opt s0" onclick="pickStatus(0)">✓ Got it</button>
+            <button class="status-opt s1" onclick="pickStatus(1)">↻ Need review</button>
+            <button class="status-opt s2" onclick="pickStatus(2)">? Still confused</button>
+          </div>
+        </div>
+        <button class="btn btn-dark btn-full" onclick="saveNote()">Save note</button>
       </div>
 
-      <button class="btn btn-dark btn-full mt12" onclick="goToErrors()">Next →</button>
+      <div id="ls5p" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">What went wrong?</div><div class="step-sub" id="ls5p-sub"></div></div>
+        </div>
+        <div class="prog-bar" id="prog5p"></div>
+        <div class="err-cards" id="err-cards"></div>
+        <div class="card mb12">
+          <div class="card-label">Quick note (optional)</div>
+          <textarea class="note-textarea" id="s-note" placeholder="Anything to remember about this session..."></textarea>
+        </div>
+        <button class="btn btn-dark btn-full" onclick="saveSession()">Save session</button>
+      </div>
+
     </div>
-
-    <!-- Step 4N: Notes -->
-    <div id="ls4n" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">Add a note</div>
-          <div class="step-sub" id="ls4n-sub"></div>
-        </div>
-      </div>
-      <div class="prog-bar" id="prog4n"></div>
-
-      <div class="card mb8">
-        <div class="card-title">What did you learn? (key insight)</div>
-        <textarea class="note-textarea" id="n-insight" placeholder="Write the main thing you understood or learned..."></textarea>
-      </div>
-
-      <div class="card mb8">
-        <div class="card-title">Questions I still have</div>
-        <div class="q-list" id="q-list"></div>
-        <div class="add-row">
-          <input class="add-inp" id="q-inp" placeholder="Type a question and tap Add..." />
-          <button class="add-go" onclick="addQ()">Add</button>
-        </div>
-      </div>
-
-      <div class="card mb12">
-        <div class="card-title">How well do you get this?</div>
-        <div class="status-row">
-          <button class="status-opt s0" onclick="pickStatus(0)">✅ Got it</button>
-          <button class="status-opt s1" onclick="pickStatus(1)">🔁 Need to review</button>
-          <button class="status-opt s2" onclick="pickStatus(2)">❓ Still confused</button>
-        </div>
-      </div>
-
-      <button class="btn btn-dark btn-full" onclick="saveNote()">Save note ✓</button>
-    </div>
-
-    <!-- Step 5P: What went wrong -->
-    <div id="ls5p" class="log-step">
-      <div class="step-head">
-        <div class="back-btn" onclick="logBack()">←</div>
-        <div>
-          <div class="step-ttl">What went wrong?</div>
-          <div class="step-sub" id="ls5p-sub">Tap a card, then pick the reason</div>
-        </div>
-      </div>
-      <div class="prog-bar" id="prog5p"></div>
-
-      <div class="err-cards" id="err-cards"></div>
-
-      <div class="card mb12">
-        <div class="card-title">Quick note (optional)</div>
-        <textarea class="note-textarea" id="s-note" placeholder="Anything to remember about this session..."></textarea>
-      </div>
-
-      <button class="btn btn-dark btn-full" onclick="saveSession()">Save session ✓</button>
-    </div>
-
   </div>
 
   <!-- ══ INSIGHTS ══ -->
   <div id="screen-insights" class="screen">
-    <div class="kpi-2" id="ins-kpis"></div>
-    <div class="filter-bar" id="ins-filters">
+    <div class="ins-kpi-row" id="ins-kpis"></div>
+    <div class="filter-bar">
       <button class="filter-btn on" onclick="setFilter('all',this)">All</button>
       <button class="filter-btn" onclick="setFilter('Quant',this)">Quant</button>
       <button class="filter-btn" onclick="setFilter('VARC',this)">VARC</button>
       <button class="filter-btn" onclick="setFilter('DI/LR',this)">DI/LR</button>
     </div>
-
-    <div class="sec-title">Where you haven't practiced yet</div>
-    <div id="ins-voids" class="mb12"></div>
-
-    <div class="sec-title">Why you're getting things wrong</div>
-    <div id="ins-errors" class="mb12"></div>
-
-    <div class="sec-title">Your weakest sub-topics</div>
-    <div id="ins-acc"></div>
+    <div class="ins-body">
+      <div id="ins-left">
+        <div class="sec-title">Where you haven't practiced yet</div>
+        <div id="ins-voids" class="mb12"></div>
+        <div class="sec-title">Your weakest sub-topics</div>
+        <div id="ins-acc"></div>
+      </div>
+      <div id="ins-right">
+        <div class="sec-title">Why you're getting things wrong</div>
+        <div id="ins-errors"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ══ SETTINGS ══ -->
   <div id="screen-settings" class="screen">
+    <div class="settings-grid">
+      <div>
+        <div class="sset-block">
+          <div class="sset-title">Study plan</div>
+          <div class="card">
+            <div class="field"><label>Exam date</label><input type="date" id="s-date" /></div>
+            <div class="field"><label>Hours per week</label><input type="number" id="s-hrs" min="1" max="80" placeholder="18" /></div>
+            <button class="btn btn-dark btn-sm" onclick="saveSettings()">Save</button>
+          </div>
+        </div>
 
-    <div class="mb12">
-      <div class="sset-title mb8">Study plan</div>
-      <div class="card">
-        <div class="field">
-          <label>Exam date</label>
-          <input type="date" id="s-date" />
+        <div class="sset-block">
+          <div class="sset-title">Supabase (cloud sync)</div>
+          <div class="card">
+            <div class="field"><label>Project URL</label><input type="text" id="s-url" placeholder="https://xyz.supabase.co" /></div>
+            <div class="field"><label>Anon Key</label><input type="text" id="s-key" placeholder="eyJ..." /></div>
+            <button class="btn btn-dark btn-sm" onclick="connectDb()">Connect</button>
+            <p style="font-size:12px;color:var(--t3);margin-top:8px">Without this, data stays in this browser only.</p>
+          </div>
         </div>
-        <div class="field">
-          <label>Hours per week</label>
-          <input type="number" id="s-hrs" min="1" max="80" placeholder="18" />
+
+        <div class="sset-block">
+          <div class="sset-title">Database setup — run once in Supabase SQL editor</div>
+          <div class="card">
+            <div class="sql-box" id="sql-out"></div>
+            <button class="btn btn-outline btn-sm" onclick="copySQL()">Copy SQL</button>
+          </div>
         </div>
-        <button class="btn btn-dark btn-sm" onclick="saveSettings()">Save</button>
+      </div>
+
+      <div>
+        <div class="sset-title">Topics &amp; Sub-topics</div>
+        <div class="subj-tabs" id="mgr-tabs"></div>
+        <div id="mgr-body"></div>
       </div>
     </div>
-
-    <div class="mb12">
-      <div class="sset-title mb8">Connect Supabase (optional — for cloud sync)</div>
-      <div class="card">
-        <div class="field">
-          <label>Project URL</label>
-          <input type="text" id="s-url" placeholder="https://xyz.supabase.co" />
-        </div>
-        <div class="field">
-          <label>Anon Key</label>
-          <input type="text" id="s-key" placeholder="eyJ..." />
-        </div>
-        <button class="btn btn-dark btn-sm" onclick="connectDb()">Connect</button>
-        <p class="hint mt8">Without this, your data is saved only in this browser.</p>
-      </div>
-    </div>
-
-    <div class="mb12">
-      <div class="sset-title mb8">Database setup — run this once in Supabase SQL editor</div>
-      <div class="card">
-        <div class="sql-box" id="sql-out"></div>
-        <button class="btn btn-ghost btn-sm" onclick="copySQL()">Copy SQL</button>
-      </div>
-    </div>
-
-    <div class="mb12">
-      <div class="sset-title mb8">Topics &amp; Sub-topics</div>
-      <div class="subj-tabs" id="mgr-tabs"></div>
-      <div id="mgr-body"></div>
-    </div>
-
   </div>
 
-</div><!-- end #app -->
-
-<!-- BOTTOM NAV -->
-<nav id="bottom-nav">
-  <button class="nav-btn on" id="nb-map" onclick="nav('map')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-    Map
-  </button>
-  <button class="nav-btn" id="nb-log" onclick="nav('log')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    Add
-  </button>
-  <button class="nav-btn" id="nb-insights" onclick="nav('insights')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Insights
-  </button>
-  <button class="nav-btn" id="nb-settings" onclick="nav('settings')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-    Settings
-  </button>
-</nav>
-
+</div>
 <div id="toast"></div>
 
 <script>
@@ -1023,86 +856,35 @@ h2 { font-size: 17px; font-weight: 700; }
 
 const ERR = [
   {
-    id: 'comp',
-    label: "Didn't understand it",
-    desc: 'Read the question but got confused by it',
-    ico: '🤔',
-    col: '#E8684A',
-    bg:  '#FEF0EB',
-    reasons: [
-      "Couldn't turn words into math / equations",
-      'Question language was confusing',
-      "Couldn't simplify the scenario",
-      'Missing a concept needed to solve this'
-    ]
+    id: 'comp', label: "Didn't understand it",
+    desc: 'Read it but got confused', ico: '🤔', col: '#C2410C', bg: '#FFF7ED',
+    reasons: ["Couldn't form the equation", 'Question language confusing', "Couldn't simplify it", 'Missing a core concept']
   },
   {
-    id: 'pattern',
-    label: "Didn't know how to solve",
-    desc: 'Understood the question — just no idea what method to use',
-    ico: '🔍',
-    col: '#7B68EE',
-    bg:  '#F0EFFF',
-    reasons: [
-      "Couldn't find the right method",
-      'Applied the wrong method',
-      "Unsure how much of the question to read first",
-      'Multiple methods looked right — picked wrong one'
-    ]
+    id: 'pattern', label: "Didn't know how to solve",
+    desc: 'Understood it — no idea what method to use', ico: '🔍', col: '#4338CA', bg: '#EEF2FF',
+    reasons: ["Couldn't find the right method", 'Used wrong method', 'Unsure how much to read first', 'Multiple methods looked right']
   },
   {
-    id: 'misread',
-    label: 'Read it wrong',
-    desc: 'The method was right — but you missed something in the question',
-    ico: '👁️',
-    col: '#2196F3',
-    bg:  '#EBF5FE',
-    reasons: [
-      'Was rushing — skipped something',
-      'Skipped a line or condition',
-      'Misunderstood a word or symbol',
-      'Missed a hidden constraint in the question'
-    ]
+    id: 'misread', label: 'Read it wrong',
+    desc: 'Method was right — missed something in the question', ico: '👁', col: '#1558A8', bg: '#EFF6FF',
+    reasons: ['Rushed — skipped something', 'Skipped a line or condition', 'Misunderstood a word/symbol', 'Missed a hidden constraint']
   },
   {
-    id: 'calc',
-    label: 'Math went wrong',
-    desc: 'Right method — but made a calculation mistake',
-    ico: '🔢',
-    col: '#D4A017',
-    bg:  '#FEF9E7',
-    reasons: [
-      'Division or fraction error',
-      'Multiplication error',
-      'Sign error (+ vs −)',
-      'Small arithmetic slip',
-      'Unit or conversion error'
-    ]
+    id: 'calc', label: 'Math went wrong',
+    desc: 'Right method — calculation mistake', ico: '∑', col: '#92400E', bg: '#FFFBEB',
+    reasons: ['Division / fraction error', 'Multiplication error', 'Sign error (+ vs −)', 'Small arithmetic slip', 'Unit conversion error']
   },
   {
-    id: 'slow',
-    label: 'Took too long',
-    desc: 'Got it right eventually — but used a slow approach',
-    ico: '⚡',
-    col: '#1D9E75',
-    bg:  '#E8F8F3',
-    reasons: [
-      'Missed a shortcut or trick',
-      'Used brute force instead',
-      'Over-complicated it',
-      'Right method but execution too slow'
-    ]
+    id: 'slow', label: 'Took too long',
+    desc: 'Got it right — but too slowly', ico: '⏱', col: '#065F46', bg: '#F0FDF4',
+    reasons: ['Missed a shortcut or trick', 'Used brute force', 'Over-complicated it', 'Right method but slow execution']
   }
 ];
 
-const N_STATUS = ['✅ Got it', '🔁 Need to review', '❓ Still confused'];
-const N_STATUS_CLS = ['got', 'review', 'confused'];
-const N_STATUS_COLORS = ['var(--green)', 'var(--amber)', 'var(--red)'];
-
 const DEFAULT_SUBJECTS = [
   {
-    name: 'Quant',
-    topics: [
+    name: 'Quant', topics: [
       { name: 'Number Properties', subtopics: ['Divisibility', 'HCF / LCM', 'Remainders', 'Factors', 'Even & Odd', 'Prime numbers'] },
       { name: 'Algebra',           subtopics: ['Linear equations', 'Quadratic equations', 'Inequalities', 'Absolute value', 'Functions'] },
       { name: 'Geometry',          subtopics: ['Triangles', 'Circles', 'Coordinate geometry', 'Lines & angles', '3D shapes'] },
@@ -1114,16 +896,14 @@ const DEFAULT_SUBJECTS = [
     ]
   },
   {
-    name: 'VARC',
-    topics: [
+    name: 'VARC', topics: [
       { name: 'Reading Comprehension', subtopics: ['Main idea', 'Inference', 'Tone & attitude', 'Vocabulary in context', "Author's purpose"] },
       { name: 'Critical Reasoning',    subtopics: ['Strengthen', 'Weaken', 'Assumption', 'Bold face', 'Evaluate'] },
       { name: 'Sentence Correction',   subtopics: ['Modifiers', 'Parallelism', 'Verb tense', 'Idioms', 'Subject-verb agreement'] }
     ]
   },
   {
-    name: 'DI/LR',
-    topics: [
+    name: 'DI/LR', topics: [
       { name: 'Data Interpretation', subtopics: ['Table reading', 'Graphs & charts', 'Multi-source reasoning', 'Two-part analysis'] },
       { name: 'Logical Reasoning',   subtopics: ['Inference chain', 'Syllogism', 'Assumption identification'] }
     ]
@@ -1132,46 +912,25 @@ const DEFAULT_SUBJECTS = [
 
 const SQL = `-- Run once in Supabase SQL Editor
 create table if not exists gmat_config (
-  id text primary key,
-  exam_date date,
-  hrs_per_week int default 18,
-  subjects jsonb,
-  updated_at timestamptz default now()
+  id text primary key, exam_date date, hrs_per_week int default 18,
+  subjects jsonb, updated_at timestamptz default now()
 );
-
 create table if not exists gmat_sessions (
   id uuid primary key default gen_random_uuid(),
-  created_at timestamptz default now(),
-  date date,
-  subject text,
-  topic text,
-  subtopic text,
-  attempted int,
-  correct int,
-  wrong int,
-  errors jsonb,
-  note text
+  created_at timestamptz default now(), date date,
+  subject text, topic text, subtopic text,
+  attempted int, correct int, wrong int, errors jsonb, note text
 );
-
 create table if not exists gmat_notes (
   id uuid primary key default gen_random_uuid(),
-  created_at timestamptz default now(),
-  date date,
-  subject text,
-  topic text,
-  subtopic text,
-  insight text,
-  questions jsonb,
-  status int default 0
+  created_at timestamptz default now(), date date,
+  subject text, topic text, subtopic text,
+  insight text, questions jsonb, status int default 0
 );
-
 create table if not exists gmat_mocks (
   id uuid primary key default gen_random_uuid(),
-  created_at timestamptz default now(),
-  date date,
-  name text,
-  score int,
-  sections jsonb
+  created_at timestamptz default now(), date date,
+  name text, score int, sections jsonb
 );`;
 
 // ─────────────────────────────────────────────
@@ -1180,38 +939,29 @@ create table if not exists gmat_mocks (
 
 let sb = null;
 let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS };
-let SESSIONS = [];
-let NOTES    = [];
+let SESSIONS = [], NOTES = [];
 
-// wizard
-let wMode    = null;   // 'practice' | 'notes'
-let wSubj    = -1;
-let wTopic   = -1;
-let wSub     = -1;
-let wMapJump = false;  // came from map tap
-
-let pAtt = 0, pCor = 0;
-let selErr = {};       // { errId: { reasons: [idx,...] } }
-
-let nStatus = 0;
-let nQs     = [];      // questions array
-
-let insFilter = 'all';
-let mgrSubj   = 0;
-let mapSubj   = 0;
+let wMode = null, wSubj = -1, wTopic = -1, wSub = -1, wMapJump = false;
+let pAtt = 0, pCor = 0, selErr = {};
+let nStatus = 0, nQs = [];
+let insFilter = 'all', mgrSubj = 0, mapSubj = 0;
 
 // ─────────────────────────────────────────────
 //  DB / STORAGE
 // ─────────────────────────────────────────────
 
 function initSb() {
-  const url = localStorage.getItem('sb_url');
-  const key = localStorage.getItem('sb_key');
-  if (url && key) {
-    try { sb = supabase.createClient(url, key); return true; }
-    catch(e) { sb = null; }
-  }
+  const url = localStorage.getItem('sb_url'), key = localStorage.getItem('sb_key');
+  if (url && key) { try { sb = supabase.createClient(url, key); return true; } catch(e) { sb = null; } }
   return false;
+}
+
+function migrateSubjects(subs) {
+  // support old format where 'patterns' was used instead of 'subtopics'
+  if (!subs) return;
+  subs.forEach(subj => subj.topics && subj.topics.forEach(t => {
+    if (!t.subtopics && t.patterns) t.subtopics = t.patterns;
+  }));
 }
 
 async function loadAll() {
@@ -1223,57 +973,43 @@ async function loadAll() {
         sb.from('gmat_notes').select('*').order('date',{ascending:false})
       ]);
       if (cr.data) {
-        CFG.examDate   = cr.data.exam_date;
-        CFG.hrsPerWeek = cr.data.hrs_per_week || 18;
-        if (cr.data.subjects) CFG.subjects = cr.data.subjects;
+        CFG.examDate = cr.data.exam_date; CFG.hrsPerWeek = cr.data.hrs_per_week || 18;
+        if (cr.data.subjects) { CFG.subjects = cr.data.subjects; migrateSubjects(CFG.subjects); }
       }
-      SESSIONS = sr.data || [];
-      NOTES    = nr.data || [];
-      setDb('green','Synced');
-    } catch(e) { setDb('red','Error'); loadLocal(); }
+      SESSIONS = sr.data || []; NOTES = nr.data || [];
+      setDb('green', 'Synced');
+    } catch(e) { setDb('red', 'Error'); loadLocal(); }
   } else { loadLocal(); }
 }
 
 function loadLocal() {
   const raw = localStorage.getItem('studyos_v2');
-  if (!raw) { setDb('','Local'); return; }
+  if (!raw) { setDb('', 'Local'); return; }
   try {
     const d = JSON.parse(raw);
     if (d.cfg) {
-      CFG.examDate   = d.cfg.examDate;
-      CFG.hrsPerWeek = d.cfg.hrsPerWeek || 18;
-      if (d.cfg.subjects) CFG.subjects = d.cfg.subjects;
+      CFG.examDate = d.cfg.examDate; CFG.hrsPerWeek = d.cfg.hrsPerWeek || 18;
+      if (d.cfg.subjects) { CFG.subjects = d.cfg.subjects; migrateSubjects(CFG.subjects); }
     }
-    SESSIONS = d.sessions || [];
-    NOTES    = d.notes    || [];
+    SESSIONS = d.sessions || []; NOTES = d.notes || [];
   } catch(e) {}
-  setDb('','Local');
+  setDb('', 'Local');
 }
 
 function saveLocal() {
   localStorage.setItem('studyos_v2', JSON.stringify({
     cfg: { examDate: CFG.examDate, hrsPerWeek: CFG.hrsPerWeek, subjects: CFG.subjects },
-    sessions: SESSIONS,
-    notes: NOTES
+    sessions: SESSIONS, notes: NOTES
   }));
 }
 
 async function saveCfg() {
-  if (sb) {
-    await sb.from('gmat_config').upsert({
-      id: 'main',
-      exam_date: CFG.examDate,
-      hrs_per_week: CFG.hrsPerWeek,
-      subjects: CFG.subjects,
-      updated_at: new Date().toISOString()
-    });
-  }
+  if (sb) await sb.from('gmat_config').upsert({ id:'main', exam_date:CFG.examDate, hrs_per_week:CFG.hrsPerWeek, subjects:CFG.subjects, updated_at:new Date().toISOString() });
   saveLocal();
 }
 
 function setDb(color, label) {
-  const dot = document.getElementById('db-dot');
-  dot.className = color;
+  document.getElementById('db-dot').className = color;
   document.getElementById('db-label').textContent = label;
 }
 
@@ -1282,15 +1018,13 @@ function setDb(color, label) {
 // ─────────────────────────────────────────────
 
 const NAVS = ['map','log','insights','settings'];
-const NAV_TITLES = { map:'Study Map', log:'Add Entry', insights:'Insights', settings:'Settings' };
 
 function nav(name) {
   NAVS.forEach(n => {
     document.getElementById('screen-'+n).classList.toggle('on', n===name);
-    document.getElementById('nb-'+n).classList.toggle('on', n===name);
+    const el = document.getElementById('nt-'+n);
+    if (el) el.classList.toggle('on', n===name);
   });
-  document.getElementById('topbar-title').textContent = NAV_TITLES[name];
-
   if (name==='map')      renderMap();
   if (name==='log')      resetWizard();
   if (name==='insights') renderInsights();
@@ -1302,53 +1036,39 @@ function nav(name) {
 // ─────────────────────────────────────────────
 
 function renderMap() {
-  const subjs = CFG.subjects || DEFAULT_SUBJECTS;
-
-  document.getElementById('map-tabs').innerHTML = subjs.map((s,i) =>
+  const subs = subjs();
+  document.getElementById('map-tabs').innerHTML = subs.map((s,i) =>
     `<button class="subj-tab ${i===mapSubj?'on':''}" onclick="setMapSubj(${i})">${h(s.name)}</button>`
   ).join('');
-
-  const subj = subjs[mapSubj];
-  document.getElementById('map-body').innerHTML = subj.topics.map(topic => {
-    const rows = (topic.subtopics||[]).map(sub => {
-      const sess  = SESSIONS.filter(s=>s.subject===subj.name && s.topic===topic.name && s.subtopic===sub);
-      const notes = NOTES.filter(n=>n.subject===subj.name && n.topic===topic.name && n.subtopic===sub);
-      const att   = sess.reduce((a,s)=>a+(s.attempted||0),0);
-      const cor   = sess.reduce((a,s)=>a+(s.correct||0),0);
-      const hasNote = notes.length>0;
-      const isVoid  = att===0;
-
+  const subj = subs[mapSubj];
+  document.getElementById('map-body').innerHTML = subj.topics.map((topic, ti) => {
+    const rows = getSubs(topic).map((sub, si) => {
+      const sess  = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub);
+      const notes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===sub);
+      const att = sess.reduce((a,s)=>a+(s.attempted||0),0);
+      const cor = sess.reduce((a,s)=>a+(s.correct||0),0);
+      const isVoid = att===0;
       let bub;
       if (isVoid) {
-        bub = `<span class="acc-bub acc-void">Not done</span>`;
+        bub = `<span class="acc-bub acc-void">—</span>`;
       } else {
         const acc = Math.round(cor/att*100);
-        const cls = acc>=75?'acc-good':acc>=55?'acc-warn':'acc-bad';
-        bub = `<span class="acc-bub ${cls}">${acc}%</span>`;
+        bub = `<span class="acc-bub ${acc>=75?'acc-good':acc>=55?'acc-warn':'acc-bad'}">${acc}%</span>`;
       }
-      const noteDot = `<div class="note-dot ${hasNote?'has':''}" title="${hasNote?'Has notes':'No notes yet'}"></div>`;
-
-      return `<div class="sub-row ${isVoid?'void-row':''}"
-        onclick="mapTap(${mapSubj},${subj.topics.indexOf(topic)},${JSON.stringify(topic.subtopics||[]).indexOf(JSON.stringify(sub))>-1?(topic.subtopics||[]).indexOf(sub):-1})">
+      return `<div class="sub-row ${isVoid?'void-row':''}" onclick="mapTap(${mapSubj},${ti},${si})">
         <div class="sub-name ${isVoid?'dim':''}">${h(sub)}</div>
         ${bub}
-        ${noteDot}
+        <div class="note-dot ${notes.length?'has':''}" title="${notes.length?'Has notes':'No notes'}"></div>
       </div>`;
     }).join('');
-
-    return `<div class="topic-group">
-      <div class="topic-lbl">${h(topic.name)}</div>
-      ${rows}
-    </div>`;
+    return `<div class="topic-group"><div class="topic-lbl">${h(topic.name)}</div>${rows}</div>`;
   }).join('');
 }
 
 function setMapSubj(i) { mapSubj = i; renderMap(); }
 
 function mapTap(si, ti, subi) {
-  if (subi < 0) return;
-  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true;
-  nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true; nav('log');
 }
 
 // ─────────────────────────────────────────────
@@ -1357,139 +1077,92 @@ function mapTap(si, ti, subi) {
 
 function showStep(id) {
   document.querySelectorAll('.log-step').forEach(el=>el.classList.remove('on'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('on');
+  const el = document.getElementById(id); if (el) el.classList.add('on');
 }
 
 function resetWizard() {
-  wMode = null;
-  pAtt = 0; pCor = 0;
-  selErr = {};
-  nStatus = 0; nQs = [];
-
-  if (!wMapJump) {
-    wSubj = -1; wTopic = -1; wSub = -1;
-  }
+  wMode = null; pAtt = 0; pCor = 0; selErr = {}; nStatus = 0; nQs = [];
+  if (!wMapJump) { wSubj = -1; wTopic = -1; wSub = -1; }
   wMapJump = false;
-
   showStep('ls0');
-
-  // if pre-filled from map, show mode step (don't auto-pick mode)
 }
 
 function startMode(mode) {
   wMode = mode;
   document.getElementById('ls1-sub').textContent = mode==='practice'?'Practicing questions':'Reading / studying';
-
-  if (wSubj >= 0) {
-    // jumped from map — skip subject/topic/subtopic steps
-    afterSubtopicPicked();
-    return;
-  }
-
-  renderSubjList();
-  showStep('ls1');
-  setProg('prog1', 1, totalSteps());
+  if (wSubj >= 0) { afterSubtopicPicked(); return; }
+  const subs = subjs();
+  document.getElementById('subj-list').innerHTML = subs.map((s,i)=>
+    `<div class="pick-item" onclick="pickSubj(${i})">
+      <div><div class="pick-ttl">${h(s.name)}</div><div class="pick-sub">${s.topics.length} topics</div></div>
+      <span class="pick-arrow">›</span></div>`).join('');
+  showStep('ls1'); setProg('prog1', 1, totalSteps());
 }
 
 function totalSteps() { return wMode==='practice' ? 5 : 4; }
 
 function setProg(id, done, total) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.innerHTML = Array.from({length:total},(_,i)=>
-    `<div class="prog-seg ${i<done?'done':i===done?'active':''}"></div>`
-  ).join('');
-}
-
-function renderSubjList() {
-  const subjs = CFG.subjects || DEFAULT_SUBJECTS;
-  document.getElementById('subj-list').innerHTML = subjs.map((s,i)=>
-    `<div class="pick-item" onclick="pickSubj(${i})">
-      <div><div class="pick-ttl">${h(s.name)}</div><div class="pick-sub">${s.topics.length} topics</div></div>
-      <span class="pick-arrow">›</span>
-    </div>`
-  ).join('');
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = Array.from({length:total},(_,i)=>`<div class="prog-seg ${i<done?'done':i===done?'active':''}"></div>`).join('');
 }
 
 function pickSubj(i) {
   wSubj = i;
   const subj = subjs()[i];
   document.getElementById('ls2-sub').textContent = subj.name;
-  setProg('prog2', 2, totalSteps());
-
   document.getElementById('topic-list').innerHTML = subj.topics.map((t,ti)=>
     `<div class="pick-item" onclick="pickTopic(${ti})">
-      <div><div class="pick-ttl">${h(t.name)}</div><div class="pick-sub">${(t.subtopics||[]).length} sub-topics</div></div>
-      <span class="pick-arrow">›</span>
-    </div>`
-  ).join('');
-  showStep('ls2');
+      <div><div class="pick-ttl">${h(t.name)}</div><div class="pick-sub">${getSubs(t).length} sub-topics</div></div>
+      <span class="pick-arrow">›</span></div>`).join('');
+  showStep('ls2'); setProg('prog2', 2, totalSteps());
 }
 
 function pickTopic(ti) {
   wTopic = ti;
   const topic = subjs()[wSubj].topics[ti];
   document.getElementById('ls3-sub').textContent = `${subjs()[wSubj].name} → ${topic.name}`;
-  setProg('prog3', 3, totalSteps());
-
-  document.getElementById('subtopic-list').innerHTML = (topic.subtopics||[]).map((sub,si)=>
-    `<div class="pick-item" onclick="pickSub(${si})">
-      <div class="pick-ttl">${h(sub)}</div>
-    </div>`
-  ).join('');
-  showStep('ls3');
+  document.getElementById('subtopic-list').innerHTML = getSubs(topic).map((sub,si)=>
+    `<div class="pick-item" onclick="pickSub(${si})"><div class="pick-ttl">${h(sub)}</div></div>`).join('');
+  showStep('ls3'); setProg('prog3', 3, totalSteps());
 }
 
-function pickSub(si) {
-  wSub = si;
-  afterSubtopicPicked();
-}
+function pickSub(si) { wSub = si; afterSubtopicPicked(); }
 
 function afterSubtopicPicked() {
   const topic = subjs()[wSubj].topics[wTopic];
-  const sub   = (topic.subtopics||[])[wSub];
-  const breadcrumb = `${topic.name} → ${h(sub)}`;
-
+  const sub   = getSubs(topic)[wSub];
+  const bc    = `${topic.name} → ${h(sub)}`;
   if (wMode === 'practice') {
-    document.getElementById('ls4p-sub').textContent = breadcrumb;
+    document.getElementById('ls4p-sub').textContent = bc;
     pAtt = 0; pCor = 0;
-    document.getElementById('v-att').textContent   = 0;
-    document.getElementById('v-cor').textContent   = 0;
+    document.getElementById('v-att').textContent = 0;
+    document.getElementById('v-cor').textContent = 0;
     document.getElementById('v-wrong').textContent = 0;
-    updateWrongBox();
-    setProg('prog4p', 4, totalSteps());
-    showStep('ls4p');
+    updateWrongBox(); setProg('prog4p', 4, totalSteps()); showStep('ls4p');
   } else {
-    document.getElementById('ls4n-sub').textContent = breadcrumb;
+    document.getElementById('ls4n-sub').textContent = bc;
     document.getElementById('n-insight').value = '';
-    nQs = []; nStatus = 0;
-    renderQs();
+    nQs = []; nStatus = 0; renderQs();
     document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===0));
-    setProg('prog4n', 4, totalSteps());
-    showStep('ls4n');
+    setProg('prog4n', 4, totalSteps()); showStep('ls4n');
   }
 }
 
 function logBack() {
-  const cur = document.querySelector('.log-step.on');
-  if (!cur) return;
+  const cur = document.querySelector('.log-step.on'); if (!cur) return;
   const id = cur.id;
-  if (id==='ls1' || id==='ls4p' || id==='ls4n') {
-    wSubj=-1; wTopic=-1; wSub=-1; wMode=null;
-    showStep('ls0');
-  } else if (id==='ls2') showStep('ls1');
+  if (id==='ls1'||id==='ls4p'||id==='ls4n') { wSubj=-1; wTopic=-1; wSub=-1; wMode=null; showStep('ls0'); }
+  else if (id==='ls2') showStep('ls1');
   else if (id==='ls3') showStep('ls2');
   else if (id==='ls5p') showStep('ls4p');
   else showStep('ls0');
 }
 
-// ── Steppers ──
 function step(f, d) {
-  if (f==='att') { pAtt = Math.max(0, pAtt+d); if (pCor>pAtt) pCor=pAtt; }
-  else           { pCor = Math.max(0, Math.min(pAtt, pCor+d)); }
-  document.getElementById('v-att').textContent   = pAtt;
-  document.getElementById('v-cor').textContent   = pCor;
+  if (f==='att') { pAtt=Math.max(0,pAtt+d); if(pCor>pAtt)pCor=pAtt; }
+  else           { pCor=Math.max(0,Math.min(pAtt,pCor+d)); }
+  document.getElementById('v-att').textContent = pAtt;
+  document.getElementById('v-cor').textContent = pCor;
   document.getElementById('v-wrong').textContent = pAtt-pCor;
   updateWrongBox();
 }
@@ -1498,42 +1171,30 @@ function updateWrongBox() {
   const w = pAtt - pCor;
   const box = document.getElementById('wrong-box');
   const ico = document.getElementById('wrong-ico');
-  ico.textContent = w===0 ? '✅' : w<=2 ? '🔴' : w<=5 ? '🟠' : '⚠️';
-  box.style.background = w===0 ? '#E8F8F3' : w<=2 ? '#FEF0EB' : w<=5 ? '#FEF9E7' : '#FCE8E0';
-  box.style.borderRadius = 'var(--r-sm)';
+  ico.textContent = w===0?'✓':w<=2?'↓':w<=5?'↓↓':'↓↓↓';
+  const col = w===0?'#F0FDF4':w<=2?'#FFF7ED':w<=5?'#FFFBEB':'#FEF2F2';
+  box.style.background = col;
 }
 
-// ── Go to errors step ──
 function goToErrors() {
   if (pAtt===0) { toast('Enter at least 1 question'); return; }
   const wrong = pAtt - pCor;
   if (wrong===0) { saveSession(); return; }
-
   document.getElementById('ls5p-sub').textContent = `You got ${wrong} wrong — what happened?`;
-  selErr = {};
-  renderErrCards();
-  setProg('prog5p', 5, totalSteps());
-  showStep('ls5p');
+  selErr = {}; renderErrCards(); setProg('prog5p',5,totalSteps()); showStep('ls5p');
 }
 
 function renderErrCards() {
   document.getElementById('err-cards').innerHTML = ERR.map(et => {
-    const sel = selErr[et.id];
-    const isPicked = !!sel;
+    const sel = selErr[et.id], isPicked = !!sel;
     const reasons = et.reasons.map((r,ri) => {
       const rSel = isPicked && sel.reasons.includes(ri);
-      return `<span class="reason-chip ${rSel?'sel':''}"
-        onclick="toggleReason('${et.id}',${ri},event)">${h(r)}</span>`;
+      return `<span class="reason-chip ${rSel?'sel':''}" onclick="toggleReason('${et.id}',${ri},event)">${h(r)}</span>`;
     }).join('');
-    return `<div class="err-card ${isPicked?'picked':''}"
-      style="background:${et.bg};border-color:${isPicked?et.col:'transparent'}"
-      id="ec-${et.id}">
+    return `<div class="err-card ${isPicked?'picked':''}" style="background:${et.bg};border-color:${isPicked?et.col:'var(--border)'}" id="ec-${et.id}">
       <div class="err-card-top" onclick="toggleErr('${et.id}')">
         <span class="err-ico">${et.ico}</span>
-        <div>
-          <div class="err-name" style="color:${et.col}">${h(et.label)}</div>
-          <div class="err-desc">${h(et.desc)}</div>
-        </div>
+        <div><div class="err-name" style="color:${et.col}">${h(et.label)}</div><div class="err-desc">${h(et.desc)}</div></div>
         ${isPicked?`<span class="err-badge" style="color:${et.col}">✓</span>`:''}
       </div>
       <div class="err-reasons">${reasons}</div>
@@ -1542,120 +1203,59 @@ function renderErrCards() {
 }
 
 function toggleErr(id) {
-  if (selErr[id]) delete selErr[id];
-  else selErr[id] = { reasons: [] };
+  if (selErr[id]) delete selErr[id]; else selErr[id] = { reasons: [] };
   renderErrCards();
 }
 
 function toggleReason(errId, ri, e) {
   e.stopPropagation();
   if (!selErr[errId]) selErr[errId] = { reasons: [] };
-  const arr = selErr[errId].reasons;
-  const idx = arr.indexOf(ri);
+  const arr = selErr[errId].reasons, idx = arr.indexOf(ri);
   if (idx>=0) arr.splice(idx,1); else arr.push(ri);
   renderErrCards();
 }
 
-// ── Save session ──
 async function saveSession() {
-  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject/topic/sub-topic'); return; }
+  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   if (pAtt===0) { toast('Enter questions attempted'); return; }
-
-  const s = subjs()[wSubj];
-  const t = s.topics[wTopic];
-  const sub = (t.subtopics||[])[wSub];
-
-  const errors = Object.entries(selErr).map(([id,data])=>({
-    t: id,
-    r: data.reasons
-  }));
-
+  const s = subjs()[wSubj], t = s.topics[wTopic], sub = getSubs(t)[wSub];
+  const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons }));
   const noteEl = document.getElementById('s-note');
-  const row = {
-    date: today(),
-    subject: s.name,
-    topic: t.name,
-    subtopic: sub,
-    attempted: pAtt,
-    correct: pCor,
-    wrong: pAtt - pCor,
-    errors,
-    note: noteEl ? noteEl.value.trim() : ''
-  };
-
+  const row = { date:today(), subject:s.name, topic:t.name, subtopic:sub, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
   if (sb) {
     const { data, error } = await sb.from('gmat_sessions').insert(row).select();
     if (error) { toast('Save failed — check connection'); return; }
     SESSIONS.unshift(data[0]);
-  } else {
-    row.id = uid(); row.created_at = new Date().toISOString();
-    SESSIONS.unshift(row);
-    saveLocal();
-  }
-
-  toast('Session saved ✓');
-  wSubj=-1; wTopic=-1; wSub=-1;
-  nav('map');
+  } else { row.id=uid(); row.created_at=new Date().toISOString(); SESSIONS.unshift(row); saveLocal(); }
+  toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; nav('map');
 }
 
-// ── Notes ──
 function renderQs() {
   document.getElementById('q-list').innerHTML = nQs.map((q,i)=>
-    `<div class="q-row">
-      <span class="q-text">❓ ${h(q)}</span>
-      <button class="q-del" onclick="removeQ(${i})">×</button>
-    </div>`
-  ).join('');
+    `<div class="q-row"><span class="q-text">Q: ${h(q)}</span><button class="q-del" onclick="removeQ(${i})">×</button></div>`).join('');
 }
-
 function addQ() {
-  const inp = document.getElementById('q-inp');
-  const val = inp.value.trim();
-  if (!val) return;
-  nQs.push(val);
-  inp.value = '';
-  renderQs();
+  const inp = document.getElementById('q-inp'), val = inp.value.trim();
+  if (!val) return; nQs.push(val); inp.value = ''; renderQs();
 }
-
 function removeQ(i) { nQs.splice(i,1); renderQs(); }
-
 function pickStatus(s) {
   nStatus = s;
   document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===s));
 }
 
 async function saveNote() {
-  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject/topic/sub-topic'); return; }
+  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   const insight = document.getElementById('n-insight').value.trim();
   if (!insight) { toast('Write at least a short insight'); return; }
-
-  const s   = subjs()[wSubj];
-  const t   = s.topics[wTopic];
-  const sub = (t.subtopics||[])[wSub];
-
-  const row = {
-    date: today(),
-    subject: s.name,
-    topic: t.name,
-    subtopic: sub,
-    insight,
-    questions: nQs,
-    status: nStatus
-  };
-
+  const s = subjs()[wSubj], t = s.topics[wTopic], sub = getSubs(t)[wSub];
+  const row = { date:today(), subject:s.name, topic:t.name, subtopic:sub, insight, questions:nQs, status:nStatus };
   if (sb) {
     const { data, error } = await sb.from('gmat_notes').insert(row).select();
     if (error) { toast('Save failed — check connection'); return; }
     NOTES.unshift(data[0]);
-  } else {
-    row.id = uid(); row.created_at = new Date().toISOString();
-    NOTES.unshift(row);
-    saveLocal();
-  }
-
-  toast('Note saved ✓');
-  wSubj=-1; wTopic=-1; wSub=-1;
-  nav('map');
+  } else { row.id=uid(); row.created_at=new Date().toISOString(); NOTES.unshift(row); saveLocal(); }
+  toast('Note saved'); wSubj=-1; wTopic=-1; wSub=-1; nav('map');
 }
 
 // ─────────────────────────────────────────────
@@ -1665,110 +1265,75 @@ async function saveNote() {
 function setFilter(f, btn) {
   insFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  renderInsights();
+  btn.classList.add('on'); renderInsights();
 }
 
 function renderInsights() {
   const sess  = insFilter==='all' ? SESSIONS : SESSIONS.filter(s=>s.subject===insFilter);
   const notes = insFilter==='all' ? NOTES    : NOTES.filter(n=>n.subject===insFilter);
-
-  const att   = sess.reduce((a,s)=>a+(s.attempted||0),0);
-  const cor   = sess.reduce((a,s)=>a+(s.correct||0),0);
-  const acc   = att>0 ? Math.round(cor/att*100) : null;
-
-  const daysLeft = CFG.examDate
-    ? Math.max(0, Math.round((new Date(CFG.examDate)-new Date())/86400000))
-    : null;
-
-  // KPIs
+  const att = sess.reduce((a,s)=>a+(s.attempted||0),0);
+  const cor = sess.reduce((a,s)=>a+(s.correct||0),0);
+  const acc = att>0 ? Math.round(cor/att*100) : null;
+  const daysLeft = CFG.examDate ? Math.max(0,Math.round((new Date(CFG.examDate)-new Date())/86400000)) : null;
   const accColor = acc===null?'var(--t2)':acc>=75?'var(--green)':acc>=55?'var(--amber)':'var(--red)';
   document.getElementById('ins-kpis').innerHTML = [
-    { label:'Accuracy',      val: acc!==null ? acc+'%' : '—', color: accColor },
-    { label:'Days to exam',  val: daysLeft!==null ? daysLeft : '—', color:'var(--text)' },
-    { label:'Sessions done', val: sess.length,  color:'var(--text)' },
-    { label:'Notes added',   val: notes.length, color:'var(--purple)' }
-  ].map(k=>`<div class="kpi-box">
-    <div class="kpi-val" style="color:${k.color}">${k.val}</div>
-    <div class="kpi-lbl">${k.label}</div>
-  </div>`).join('');
-
+    { label:'Overall accuracy', val:acc!==null?acc+'%':'—', color:accColor },
+    { label:'Days to exam', val:daysLeft!==null?daysLeft:'—', color:'var(--text)' },
+    { label:'Sessions logged', val:sess.length, color:'var(--text)' },
+    { label:'Notes written', val:notes.length, color:'var(--purple)' }
+  ].map(k=>`<div class="kpi-box"><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-lbl">${k.label}</div></div>`).join('');
   renderVoids(insFilter);
   renderErrBreakdown(sess);
   renderAccList(sess);
 }
 
 function renderVoids(filter) {
-  const subs = CFG.subjects || DEFAULT_SUBJECTS;
   const voids = [];
-  subs.forEach(subj => {
+  subjs().forEach(subj => {
     if (filter!=='all' && subj.name!==filter) return;
     subj.topics.forEach(topic => {
-      (topic.subtopics||[]).forEach(sub => {
-        if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub)) {
+      getSubs(topic).forEach(sub => {
+        if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub))
           voids.push({ subj:subj.name, topic:topic.name, sub });
-        }
       });
     });
   });
-
   if (voids.length===0) {
-    document.getElementById('ins-voids').innerHTML =
-      `<div class="card"><div class="empty-state">🎉 All sub-topics practiced!<br><span style="font-size:11px">No gaps found for this filter</span></div></div>`;
+    document.getElementById('ins-voids').innerHTML = `<div class="card"><div class="empty-state">All sub-topics covered</div></div>`;
     return;
   }
-
-  const show = voids.slice(0,6);
   document.getElementById('ins-voids').innerHTML =
-    show.map(v=>`<div class="void-item">
+    voids.slice(0,8).map(v=>`<div class="void-item">
       <div class="void-dot"></div>
-      <div>
-        <div class="void-name">${h(v.sub)}</div>
-        <div class="void-sub">${h(v.subj)} · ${h(v.topic)}</div>
-      </div>
+      <div><div class="void-name">${h(v.sub)}</div><div class="void-path">${h(v.subj)} · ${h(v.topic)}</div></div>
     </div>`).join('') +
-    (voids.length>6 ? `<p class="hint tc mt8">+${voids.length-6} more gaps</p>` : '');
+    (voids.length>8?`<p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">+${voids.length-8} more</p>`:'');
 }
 
 function renderErrBreakdown(sess) {
   const counts = {};
   ERR.forEach(et => counts[et.id] = { total:0, reasons:{} });
-
-  sess.forEach(s => {
-    (s.errors||[]).forEach(e => {
-      // support old format (errType string) and new format (t)
-      const id = e.t || mapOldErrType(e.errType);
-      if (!id || !counts[id]) return;
-      counts[id].total++;
-      (e.r||[]).forEach(ri => { counts[id].reasons[ri] = (counts[id].reasons[ri]||0)+1; });
-    });
-  });
-
+  sess.forEach(s => (s.errors||[]).forEach(e => {
+    const id = e.t || mapOld(e.errType);
+    if (!id||!counts[id]) return;
+    counts[id].total++;
+    (e.r||[]).forEach(ri => { counts[id].reasons[ri] = (counts[id].reasons[ri]||0)+1; });
+  }));
   const maxC = Math.max(...Object.values(counts).map(c=>c.total), 1);
   const rows = ERR.map(et => {
-    const c = counts[et.id];
-    if (c.total===0) return '';
+    const c = counts[et.id]; if (c.total===0) return '';
     const pct = Math.round(c.total/maxC*100);
     const topR = Object.entries(c.reasons).sort((a,b)=>b[1]-a[1])[0];
     const topLabel = topR ? et.reasons[parseInt(topR[0])] : null;
     return `<div class="ebar-row">
-      <div class="ebar-top">
-        <span class="ebar-label" style="color:${et.col}">${et.ico} ${h(et.label)}</span>
-        <span class="ebar-count">${c.total}×</span>
-      </div>
-      ${topLabel ? `<div class="ebar-hint">Most common: ${h(topLabel)}</div>` : ''}
+      <div class="ebar-top"><span class="ebar-label" style="color:${et.col}">${et.ico} ${h(et.label)}</span><span class="ebar-count">${c.total}×</span></div>
+      ${topLabel?`<div class="ebar-hint">${h(topLabel)}</div>`:''}
       <div class="ebar-track"><div class="ebar-fill" style="width:${pct}%;background:${et.col}"></div></div>
     </div>`;
   }).join('');
-
   document.getElementById('ins-errors').innerHTML = rows
     ? `<div class="card">${rows}</div>`
     : `<div class="card"><div class="empty-state">No errors recorded yet</div></div>`;
-}
-
-function mapOldErrType(t) {
-  const m = { comprehension:'comp', pattern:'pattern', optimal:'slow', silly:'calc' };
-  return m[t] || null;
 }
 
 function renderAccList(sess) {
@@ -1776,44 +1341,22 @@ function renderAccList(sess) {
   sess.forEach(s => {
     const k = `${s.subject}::${s.topic}::${s.subtopic}`;
     if (!byKey[k]) byKey[k] = { subj:s.subject, topic:s.topic, sub:s.subtopic, att:0, cor:0, wrg:0, errs:[] };
-    byKey[k].att += s.attempted||0;
-    byKey[k].cor += s.correct||0;
-    byKey[k].wrg += s.wrong||0;
+    byKey[k].att+=s.attempted||0; byKey[k].cor+=s.correct||0; byKey[k].wrg+=s.wrong||0;
     (s.errors||[]).forEach(e=>byKey[k].errs.push(e));
   });
-
-  const sorted = Object.values(byKey).sort((a,b) => {
-    const aA = a.att>0 ? a.cor/a.att : 1;
-    const bA = b.att>0 ? b.cor/b.att : 1;
-    return aA - bA;
-  });
-
-  if (sorted.length===0) {
-    document.getElementById('ins-acc').innerHTML = `<div class="card"><div class="empty-state">No sessions yet</div></div>`;
-    return;
-  }
-
+  const sorted = Object.values(byKey).sort((a,b)=>(a.att>0?a.cor/a.att:1)-(b.att>0?b.cor/b.att:1));
+  if (sorted.length===0) { document.getElementById('ins-acc').innerHTML=`<div class="card"><div class="empty-state">No sessions yet</div></div>`; return; }
   document.getElementById('ins-acc').innerHTML = sorted.slice(0,10).map(item => {
-    const acc = item.att>0 ? Math.round(item.cor/item.att*100) : 0;
+    const acc = item.att>0?Math.round(item.cor/item.att*100):0;
     const cls = acc>=75?'ms-g':acc>=55?'ms-a':'ms-r';
-    const errTypes = [...new Set((item.errs||[]).map(e=>e.t||mapOldErrType(e.errType)).filter(Boolean))];
-    const tags = errTypes.map(id => {
-      const et = ERR.find(e=>e.id===id);
-      return et ? `<span class="err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${et.label}</span>` : '';
-    }).join('');
+    const errTypes = [...new Set((item.errs||[]).map(e=>e.t||mapOld(e.errType)).filter(Boolean))];
+    const tags = errTypes.map(id=>{const et=ERR.find(e=>e.id===id);return et?`<span class="err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${et.label}</span>`:''}).join('');
     return `<div class="acc-item">
       <div class="acc-item-top">
-        <div>
-          <div class="acc-item-name">${h(item.sub)}</div>
-          <div class="acc-item-sub">${h(item.subj)} · ${h(item.topic)}</div>
-        </div>
-        <div class="acc-stats">
-          <span class="mini-stat ms-g">${item.cor}✓</span>
-          <span class="mini-stat ms-r">${item.wrg}✗</span>
-          <span class="mini-stat ${cls}">${acc}%</span>
-        </div>
+        <div><div class="acc-item-name">${h(item.sub)}</div><div class="acc-item-path">${h(item.subj)} · ${h(item.topic)}</div></div>
+        <div class="acc-stats"><span class="mini-stat ms-g">${item.cor}✓</span><span class="mini-stat ms-r">${item.wrg}✗</span><span class="mini-stat ${cls}">${acc}%</span></div>
       </div>
-      ${tags ? `<div style="margin-top:8px">${tags}</div>` : ''}
+      ${tags?`<div style="margin-top:7px">${tags}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -1828,66 +1371,52 @@ function renderSettings() {
   document.getElementById('s-url').value  = localStorage.getItem('sb_url') || '';
   document.getElementById('s-key').value  = localStorage.getItem('sb_key') || '';
   document.getElementById('sql-out').textContent = SQL;
-  renderMgrTabs();
-  renderMgr();
+  renderMgrTabs(); renderMgr();
 }
 
 async function saveSettings() {
-  CFG.examDate   = document.getElementById('s-date').value || null;
+  CFG.examDate = document.getElementById('s-date').value || null;
   CFG.hrsPerWeek = parseInt(document.getElementById('s-hrs').value)||18;
-  await saveCfg();
-  toast('Settings saved ✓');
+  await saveCfg(); toast('Settings saved');
 }
 
 async function connectDb() {
   const url = document.getElementById('s-url').value.trim();
   const key = document.getElementById('s-key').value.trim();
   if (!url||!key) { toast('Enter URL and key'); return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  initSb();
-  await loadAll();
-  renderMap();
-  renderInsights();
-  toast('Connected ✓');
+  localStorage.setItem('sb_url',url); localStorage.setItem('sb_key',key);
+  initSb(); await loadAll(); renderMap(); renderInsights(); toast('Connected');
 }
 
-function copySQL() {
-  navigator.clipboard.writeText(SQL).then(()=>toast('SQL copied ✓'));
-}
+function copySQL() { navigator.clipboard.writeText(SQL).then(()=>toast('SQL copied')); }
 
-// Topic manager
 function renderMgrTabs() {
-  const subs = CFG.subjects || DEFAULT_SUBJECTS;
   document.getElementById('mgr-tabs').innerHTML =
-    subs.map((s,i)=>`<button class="subj-tab ${i===mgrSubj?'on':''}" onclick="setMgrSubj(${i})">${h(s.name)}</button>`).join('') +
+    subjs().map((s,i)=>`<button class="subj-tab ${i===mgrSubj?'on':''}" onclick="setMgrSubj(${i})">${h(s.name)}</button>`).join('') +
     `<button class="subj-tab" onclick="addSubj()">+ Add</button>`;
 }
 
 function setMgrSubj(i) { mgrSubj=i; renderMgrTabs(); renderMgr(); }
 
 function renderMgr() {
-  const subj = (CFG.subjects||DEFAULT_SUBJECTS)[mgrSubj];
-  if (!subj) { document.getElementById('mgr-body').innerHTML=''; return; }
-
+  const subj = subjs()[mgrSubj]; if (!subj) { document.getElementById('mgr-body').innerHTML=''; return; }
   document.getElementById('mgr-body').innerHTML = subj.topics.map((t,ti)=>{
-    const tags = (t.subtopics||[]).map((sub,si)=>
-      `<span class="sub-tag">${h(sub)}<button class="sub-tag-x" onclick="delSub(${ti},${si})">×</button></span>`
-    ).join('');
+    const tags = getSubs(t).map((sub,si)=>
+      `<span class="sub-tag">${h(sub)}<button class="sub-tag-x" onclick="delSub(${ti},${si})">×</button></span>`).join('');
     return `<div class="mgr-item" id="mi-${ti}">
       <div class="mgr-header" onclick="toggleMgr(${ti})">
         <span class="mgr-name">${h(t.name)}</span>
-        <span class="mgr-ct">${(t.subtopics||[]).length} sub-topics</span>
+        <span class="mgr-ct">${getSubs(t).length} sub-topics</span>
         <span class="mgr-arr">▾</span>
       </div>
       <div class="mgr-body">
         <div style="margin:8px 0 10px">${tags||'<span style="font-size:12px;color:var(--t3)">No sub-topics yet</span>'}</div>
         <div class="add-row">
-          <input class="add-inp" id="si-${ti}" placeholder="New sub-topic name..." />
+          <input class="add-inp" id="si-${ti}" placeholder="New sub-topic..." />
           <button class="add-go" onclick="addSub(${ti})">Add</button>
         </div>
         <div style="margin-top:10px">
-          <button style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer" onclick="delTopic(${ti})">Delete topic</button>
+          <button style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer;font-family:inherit" onclick="delTopic(${ti})">Delete topic</button>
         </div>
       </div>
     </div>`;
@@ -1901,40 +1430,28 @@ function renderMgr() {
 function toggleMgr(ti) { document.getElementById('mi-'+ti).classList.toggle('open'); }
 
 async function addTopic() {
-  const val = document.getElementById('ti-new').value.trim();
-  if (!val) return;
-  CFG.subjects[mgrSubj].topics.push({ name: val, subtopics: [] });
-  document.getElementById('ti-new').value = '';
+  const val = document.getElementById('ti-new').value.trim(); if (!val) return;
+  CFG.subjects[mgrSubj].topics.push({name:val,subtopics:[]}); document.getElementById('ti-new').value='';
   await saveCfg(); renderMgr();
 }
-
 async function addSub(ti) {
-  const val = document.getElementById('si-'+ti).value.trim();
-  if (!val) return;
+  const val = document.getElementById('si-'+ti).value.trim(); if (!val) return;
   if (!CFG.subjects[mgrSubj].topics[ti].subtopics) CFG.subjects[mgrSubj].topics[ti].subtopics=[];
-  CFG.subjects[mgrSubj].topics[ti].subtopics.push(val);
-  document.getElementById('si-'+ti).value = '';
+  CFG.subjects[mgrSubj].topics[ti].subtopics.push(val); document.getElementById('si-'+ti).value='';
   await saveCfg(); renderMgr();
 }
-
 async function delSub(ti,si) {
   if (!confirm('Remove this sub-topic?')) return;
-  CFG.subjects[mgrSubj].topics[ti].subtopics.splice(si,1);
-  await saveCfg(); renderMgr();
+  CFG.subjects[mgrSubj].topics[ti].subtopics.splice(si,1); await saveCfg(); renderMgr();
 }
-
 async function delTopic(ti) {
-  if (!confirm('Delete this topic and all its sub-topics?')) return;
-  CFG.subjects[mgrSubj].topics.splice(ti,1);
-  await saveCfg(); renderMgrTabs(); renderMgr();
+  if (!confirm('Delete this topic?')) return;
+  CFG.subjects[mgrSubj].topics.splice(ti,1); await saveCfg(); renderMgrTabs(); renderMgr();
 }
-
 async function addSubj() {
-  const name = prompt('Subject name?');
-  if (!name) return;
+  const name = prompt('Subject name?'); if (!name) return;
   if (!CFG.subjects) CFG.subjects=[];
-  CFG.subjects.push({ name: name.trim(), topics: [] });
-  mgrSubj = CFG.subjects.length-1;
+  CFG.subjects.push({name:name.trim(),topics:[]}); mgrSubj=CFG.subjects.length-1;
   await saveCfg(); renderMgrTabs(); renderMgr();
 }
 
@@ -1943,35 +1460,20 @@ async function addSubj() {
 // ─────────────────────────────────────────────
 
 function subjs() { return CFG.subjects || DEFAULT_SUBJECTS; }
-
-function h(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
+function getSubs(topic) { return topic.subtopics || topic.patterns || []; }
+function mapOld(t) { return {comprehension:'comp',pattern:'pattern',optimal:'slow',silly:'calc'}[t]||null; }
+function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today() { return new Date().toISOString().split('T')[0]; }
-
-function uid() { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+function uid()   { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
 
 let toastT;
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastT);
-  toastT = setTimeout(()=>el.classList.remove('show'), 2400);
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('show'), 2200);
 }
 
-// ─────────────────────────────────────────────
-//  BOOT
-// ─────────────────────────────────────────────
-
-async function boot() {
-  initSb();
-  await loadAll();
-  renderMap();
-}
-
+async function boot() { initSb(); await loadAll(); renderMap(); }
 boot();
 </script>
 </body>
