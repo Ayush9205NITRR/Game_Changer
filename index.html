@@ -1325,6 +1325,8 @@ let nStatus = 0, nQs = [];
 let insFilter = 'Quant', insSubQ = '', insTopicIdx = 0, insSubIdx = -1, insSubSubIdx = -1, insView = 'insights', mgrSubj = 0, mapSubj = 0;
 let selNav = { subj: 0, topic: -1, sub: -1, subsub: -1 };
 let mapView = 'insights';
+let editingNoteId = null;
+let editingSessionId = null;
 
 // ─────────────────────────────────────────────
 //  DB / STORAGE
@@ -1641,6 +1643,17 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
   let sessHtml = '';
   if (recent.length) {
     const rows = recent.map(s => {
+      if (editingSessionId === s.id) {
+        return `<div class="rsess-row" style="flex-wrap:wrap;gap:6px;padding:10px 0">
+          <span class="rsess-date">${s.date||'—'}</span>
+          <input id="edit-sess-att-${s.id}" type="number" value="${s.attempted}" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
+          <span style="font-size:11px;color:var(--t3)">attempted</span>
+          <input id="edit-sess-cor-${s.id}" type="number" value="${s.correct}" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
+          <span style="font-size:11px;color:var(--t3)">correct</span>
+          <button class="btn btn-sm" onclick="cancelEditSession()" style="padding:3px 10px;font-size:11px;margin-left:auto">Cancel</button>
+          <button class="btn btn-dark btn-sm" onclick="saveEditSession('${s.id}')" style="padding:3px 10px;font-size:11px">Save</button>
+        </div>`;
+      }
       const sacc = s.attempted>0 ? Math.round(s.correct/s.attempted*100) : 0;
       const scls = sacc>=75?'ms-g':sacc>=55?'ms-a':'ms-r';
       const sub = s.subsubtopic || s.subtopic || '';
@@ -1649,6 +1662,8 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
         <span class="rsess-sub">${h(sub)}</span>
         <span class="mini-stat ${scls}">${sacc}%</span>
         <span style="font-size:11px;color:var(--t2)">${s.attempted}Q</span>
+        <button class="btn btn-sm" onclick="startEditSession('${s.id}')" title="Edit" style="padding:2px 8px;font-size:10px">Edit</button>
+        <button class="btn btn-sm" onclick="deleteSession('${s.id}')" title="Delete" style="padding:2px 8px;font-size:10px;color:var(--red)">×</button>
       </div>`;
     }).join('');
     sessHtml = `<div class="mp-sec">Recent sessions</div><div class="card" style="padding:8px 14px">${rows}</div>`;
@@ -1659,13 +1674,32 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
 }
 
 function renderMapNotes(ctx) {
-  const statusLabels = ['Got it','Need review','Still confused'];
   const noteItems = ctx.notes.map(n => {
     const qs = (n.questions||[]).map(q=>`<div class="ins-meta" style="margin-top:4px">Q: ${h(q)}</div>`).join('');
     const stText = noteStatusText(n.status||0);
+    if (editingNoteId === n.id) {
+      return `<div class="note-item" style="margin-bottom:8px">
+        <textarea id="edit-note-text-${n.id}" rows="3" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.5">${h(n.insight||'')}</textarea>
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+          <select id="edit-note-status-${n.id}" class="btn btn-sm" style="padding:4px 10px">
+            <option value="0" ${(n.status||0)==0?'selected':''}>✓ Got it</option>
+            <option value="1" ${(n.status||0)==1?'selected':''}>↻ Need review</option>
+            <option value="2" ${(n.status||0)==2?'selected':''}>? Still confused</option>
+          </select>
+          <button class="btn btn-sm" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
+          <button class="btn btn-dark btn-sm" onclick="saveEditNote('${n.id}')">Save</button>
+        </div>
+      </div>`;
+    }
     return `<div class="note-item" style="margin-bottom:8px">
       <div class="ins-row"><span class="note-insight">${h(n.insight||'')}</span><span class="note-date">${n.date||''}</span></div>
-      <div class="ins-meta" style="margin-top:4px">${stText}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px">
+        <span class="ins-meta">${stText}</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="startEditNote('${n.id}')" title="Edit" style="padding:3px 10px;font-size:11px">Edit</button>
+          <button class="btn btn-sm" onclick="deleteNote('${n.id}')" title="Delete" style="padding:3px 10px;font-size:11px;color:var(--red)">Delete</button>
+        </div>
+      </div>
       ${qs}
     </div>`;
   }).join('');
@@ -1684,6 +1718,76 @@ function renderMapNotes(ctx) {
     </div>
     ${noteItems || `<div class="empty-state">No notes yet for this area</div>`}
   `;
+}
+
+function startEditNote(id) { editingNoteId = id; renderMapMain(); }
+function cancelEditNote() { editingNoteId = null; renderMapMain(); }
+
+async function saveEditNote(id) {
+  const insight = document.getElementById('edit-note-text-'+id).value.trim();
+  if (!insight) { toast('Note cannot be empty'); return; }
+  const status = parseInt(document.getElementById('edit-note-status-'+id).value)||0;
+  const idx = NOTES.findIndex(n => n.id === id);
+  if (idx < 0) return;
+  NOTES[idx].insight = insight;
+  NOTES[idx].status = status;
+  if (sb) {
+    const {error} = await sb.from('gmat_notes').update({insight, status}).eq('id', id);
+    if (error) { toast('Save failed: '+(error.message||error.code)); return; }
+  } else { saveLocal(); }
+  editingNoteId = null;
+  toast('Note updated');
+  renderMapMain();
+}
+
+async function deleteNote(id) {
+  if (!confirm('Delete this note?')) return;
+  const idx = NOTES.findIndex(n => n.id === id);
+  if (idx < 0) return;
+  NOTES.splice(idx, 1);
+  if (sb) {
+    const {error} = await sb.from('gmat_notes').delete().eq('id', id);
+    if (error) { toast('Delete failed: '+(error.message||error.code)); }
+  } else { saveLocal(); }
+  toast('Note deleted');
+  renderMapMain();
+  renderMapSidebar();
+}
+
+function startEditSession(id) { editingSessionId = id; renderMapMain(); }
+function cancelEditSession() { editingSessionId = null; renderMapMain(); }
+
+async function saveEditSession(id) {
+  const att = parseInt(document.getElementById('edit-sess-att-'+id).value)||0;
+  const cor = parseInt(document.getElementById('edit-sess-cor-'+id).value)||0;
+  if (att < 0 || cor < 0 || cor > att) { toast('Invalid: correct must be 0-attempted'); return; }
+  const idx = SESSIONS.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  SESSIONS[idx].attempted = att;
+  SESSIONS[idx].correct = cor;
+  SESSIONS[idx].wrong = att - cor;
+  if (sb) {
+    const {error} = await sb.from('gmat_sessions').update({attempted:att, correct:cor, wrong:att-cor}).eq('id', id);
+    if (error) { toast('Save failed: '+(error.message||error.code)); return; }
+  } else { saveLocal(); }
+  editingSessionId = null;
+  toast('Session updated');
+  renderMapMain();
+  renderMapSidebar();
+}
+
+async function deleteSession(id) {
+  if (!confirm('Delete this session? This cannot be undone.')) return;
+  const idx = SESSIONS.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  SESSIONS.splice(idx, 1);
+  if (sb) {
+    const {error} = await sb.from('gmat_sessions').delete().eq('id', id);
+    if (error) { toast('Delete failed: '+(error.message||error.code)); }
+  } else { saveLocal(); }
+  toast('Session deleted');
+  renderMapMain();
+  renderMapSidebar();
 }
 
 async function saveQuickNote() {
