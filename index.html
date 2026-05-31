@@ -240,6 +240,14 @@ body {
 }
 .ssub-row:last-child { border-bottom: none; }
 .ssub-name { font-size: 12px; color: var(--t2); }
+.ssub-hint { font-size: 11px; color: var(--t3); margin-bottom: 6px; }
+.ss-log-btn {
+  font-size: 11px; font-weight: 600; font-family: inherit;
+  padding: 2px 9px; border-radius: 3px; cursor: pointer;
+  background: var(--text); color: #fff; border: none; white-space: nowrap;
+  transition: opacity 0.12s;
+}
+.ss-log-btn:hover { opacity: 0.82; }
 
 /* mini bar chart */
 .mini-chart { margin-top: 8px; }
@@ -1179,7 +1187,7 @@ function renderMap() {
         ? `<span class="acc-bub acc-void">—</span>`
         : `<span class="acc-bub ${Math.round(cor/att*100)>=75?'acc-good':Math.round(cor/att*100)>=55?'acc-warn':'acc-bad'}">${Math.round(cor/att*100)}%</span>`;
       // sub-sub-topic rows in the detail panel
-      const ssRows = ss.map(s2 => {
+      const ssRows = ss.map((s2, s2i) => {
         const s2s = sess.filter(s=>s.subsubtopic===s2);
         const s2a = s2s.reduce((a,s)=>a+(s.attempted||0),0);
         const s2c = s2s.reduce((a,s)=>a+(s.correct||0),0);
@@ -1191,6 +1199,7 @@ function renderMap() {
           <div style="display:flex;gap:5px;align-items:center">
             <span class="acc-bub ${s2cls}" style="font-size:10px;padding:1px 7px;min-width:0">${s2pct!==null?s2pct+'%':'—'}</span>
             ${s2err}
+            <button class="ss-log-btn" title="Log a session for ${h(s2)}" onclick="mapTapLogSS(${mapSubj},${ti},${si},${s2i});event.stopPropagation()">+ Log</button>
           </div>
         </div>`;
       }).join('');
@@ -1206,10 +1215,10 @@ function renderMap() {
         </div>
         <div class="sub-detail">
           ${errHtml ? `<div class="sub-detail-errs">${errHtml}</div>` : (isVoid?`<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Not practiced yet</div>`:'')}
-          ${ss.length>0 ? `<div class="ssub-block">${ssRows}</div>` : ''}
+          ${ss.length>0 ? `<div class="ssub-hint">Tap “+ Log” on a specific item, or log the whole sub-topic below.</div><div class="ssub-block">${ssRows}</div>` : ''}
           ${sessBlock}
           ${chart}
-          <button class="btn" style="font-size:12px;padding:5px 14px;margin-top:10px" onclick="mapTapLog(${mapSubj},${ti},${si});event.stopPropagation()">+ Log session</button>
+          <button class="btn" style="font-size:12px;padding:5px 14px;margin-top:10px" onclick="mapTapLog(${mapSubj},${ti},${si});event.stopPropagation()">+ Log ${ss.length>0?'at sub-topic level':'session'}</button>
         </div>
       </div>`;
     }).join('');
@@ -1224,6 +1233,11 @@ function mapTap(si, ti, subi) {
 }
 function mapTapLog(si, ti, subi) {
   wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; nav('log');
+}
+// Quick-log straight against a specific sub-sub-topic (e.g. "Constant Distance"),
+// skipping the picker since the choice was already made by tapping its row.
+function mapTapLogSS(si, ti, subi, ssi) {
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = ssi; wMapJump = true; nav('log');
 }
 
 // ─────────────────────────────────────────────
