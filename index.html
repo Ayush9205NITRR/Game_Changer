@@ -1425,7 +1425,7 @@ function renderMap() { renderMapTabs(); renderMapSidebar(); }
 
 function renderMapTabs() {
   document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) =>
-    `<button class=”ins-subject-tab ${i===selNav.subj?'on':''}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`
+    `<button class="ins-subject-tab ${i===selNav.subj?'on':''}" onclick="setNavSubj(${i})">${h(s.name)}</button>`
   ).join('');
 }
 
@@ -1448,21 +1448,21 @@ function renderMapSidebar() {
     if (q && !nameMatch && !subMatch) return '';
     const isSel = selNav.topic === ti;
     const st = calcStats(tsess);
-    return `<div class=”ins-topic-card ${isSel?'on':''}” onclick=”selectTopic(${ti})”>
-      <div class=”ins-row”>
+    return `<div class="ins-topic-card ${isSel?'on':''}" onclick="selectTopic(${ti})">
+      <div class="ins-row">
         <div>
-          <div class=”ins-name”>${h(topic.name)}</div>
-          <div class=”ins-meta”>${subCount} sub-topics</div>
+          <div class="ins-name">${h(topic.name)}</div>
+          <div class="ins-meta">${subCount} sub-topics</div>
         </div>
-        ${st.acc!==null?`<span class=”mini-stat ${accClass(st.acc)}”>${st.acc}%</span>`:`<span class=”mini-stat ms-n”>new</span>`}
+        ${st.acc!==null?`<span class="mini-stat ${accClass(st.acc)}">${st.acc}%</span>`:`<span class="mini-stat ms-n">new</span>`}
       </div>
-      <div class=”ins-stat-row”>
-        <span class=”mini-stat ms-n”>${tsess.length} sessions</span>
-        <span class=”mini-stat ms-n”>${tnotes.length} notes</span>
+      <div class="ins-stat-row">
+        <span class="mini-stat ms-n">${tsess.length} sessions</span>
+        <span class="mini-stat ms-n">${tnotes.length} notes</span>
       </div>
     </div>`;
   }).join('');
-  document.getElementById('map-topic-list').innerHTML = html || `<div class=”empty-state”>No topics match your search</div>`;
+  document.getElementById('map-topic-list').innerHTML = html || `<div class="empty-state">No topics match your search</div>`;
 }
 
 function setNavSubj(i) { selNav = {subj:i, topic:-1, sub:-1, subsub:-1}; mapView='insights'; renderMap(); renderMapMain(); }
@@ -1513,7 +1513,7 @@ function getMapContext() {
 function renderMapMain() {
   const el = document.getElementById('map-main-content');
   if (selNav.topic < 0) {
-    el.innerHTML = `<div class=”mp-empty”><div class=”mp-empty-icon”>📊</div><div class=”mp-empty-text”>Select a topic from the sidebar to see insights and notes</div></div>`;
+    el.innerHTML = `<div class="mp-empty"><div class="mp-empty-icon">📊</div><div class="mp-empty-text">Select a topic from the sidebar to see insights and notes</div></div>`;
     return;
   }
   const ctx = getMapContext();
@@ -1526,9 +1526,9 @@ function renderMapMain() {
 
   let header = `
     <div>
-      <div class=”ins-eyebrow”>${h(ctx.breadcrumb)}</div>
-      <div class=”ins-title”>${h(ctx.title)}</div>
-      <div class=”ins-context”>${getSubs(topic).length} trackable areas · <a href=”#” onclick=”event.preventDefault();mgrSubj=selNav.subj;nav('settings')” style=”color:var(--purple);text-decoration:none;font-weight:600”>Edit topics</a></div>
+      <div class="ins-eyebrow">${h(ctx.breadcrumb)}</div>
+      <div class="ins-title">${h(ctx.title)}</div>
+      <div class="ins-context">${getSubs(topic).length} trackable areas · <a href="#" onclick="event.preventDefault();mgrSubj=selNav.subj;nav('settings')" style="color:var(--purple);text-decoration:none;font-weight:600">Edit topics</a></div>
     </div>
   `;
 
@@ -1545,18 +1545,18 @@ function renderMapMain() {
       const isVoid = sAtt === 0;
       const isSel = selNav.sub === si && selNav.subsub < 0;
       const st = calcStats(sSess);
-      return `<div class=”ins-sub-card ${isSel?'on':''}” onclick=”selectSubCard(${si})”>
-        <div class=”ins-row”>
+      return `<div class="ins-sub-card ${isSel?'on':''}" onclick="selectSubCard(${si})">
+        <div class="ins-row">
           <div>
-            <div class=”ins-name”>${h(sn)}</div>
-            <div class=”ins-meta”>${ss.length ? ss.length+' sub-sub-topics' : 'Sub-topic'}</div>
+            <div class="ins-name">${h(sn)}</div>
+            <div class="ins-meta">${ss.length ? ss.length+' sub-sub-topics' : 'Sub-topic'}</div>
           </div>
-          <span class=”mini-stat ms-n”>${sNotes.length} notes</span>
+          <span class="mini-stat ms-n">${sNotes.length} notes</span>
         </div>
-        <div class=”ins-stat-row”>${statChips(st)}</div>
+        <div class="ins-stat-row">${statChips(st)}</div>
       </div>`;
     }).join('');
-    stGrid = `<div class=”sec-title” style=”margin-top:0”>Sub-topics</div><div class=”ins-subtopic-list”>${cards}</div>`;
+    stGrid = `<div class="sec-title" style="margin-top:0">Sub-topics</div><div class="ins-subtopic-list">${cards}</div>`;
   }
 
   // Sub-sub cards (at sub-topic level)
@@ -1573,23 +1573,23 @@ function renderMapMain() {
         const isVoid = ssAtt === 0;
         const isSel = selNav.subsub === ssi;
         const st = calcStats(ssSess);
-        return `<div class=”ins-sub-card ${isSel?'on':''}” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
-          <div class=”ins-row”>
+        return `<div class="ins-sub-card ${isSel?'on':''}" onclick="selectSubSubCard(${selNav.sub},${ssi})">
+          <div class="ins-row">
             <div>
-              <div class=”ins-name”>${h(ssName)}</div>
-              <div class=”ins-meta”>Sub-sub-topic</div>
+              <div class="ins-name">${h(ssName)}</div>
+              <div class="ins-meta">Sub-sub-topic</div>
             </div>
           </div>
-          <div class=”ins-stat-row”>${statChips(st)}</div>
+          <div class="ins-stat-row">${statChips(st)}</div>
         </div>`;
       }).join('');
-      ssGrid = `<div class=”sec-title” style=”margin-top:0”>Sub-sub-topics</div><div class=”ins-subtopic-list”>${cards}</div>`;
+      ssGrid = `<div class="sec-title" style="margin-top:0">Sub-sub-topics</div><div class="ins-subtopic-list">${cards}</div>`;
     }
   }
 
-  const tabs = `<div class=”ins-view-toggle” style=”margin-bottom:18px”>
-    <button class=”${mapView==='insights'?'on':''}” onclick=”setMapView('insights')”>Insights</button>
-    <button class=”${mapView==='notes'?'on':''}” onclick=”setMapView('notes')”>Notes</button>
+  const tabs = `<div class="ins-view-toggle" style="margin-bottom:18px">
+    <button class="${mapView==='insights'?'on':''}" onclick="setMapView('insights')">Insights</button>
+    <button class="${mapView==='notes'?'on':''}" onclick="setMapView('notes')">Notes</button>
   </div>`;
 
   let body = '';
@@ -1604,13 +1604,13 @@ function renderMapMain() {
 
 function renderMapInsights(ctx, att, cor, wrg, acc) {
   if (att === 0) {
-    return `<div class=”empty-state” style=”padding:30px”>
-      <div style=”font-size:14px;color:var(--t2);margin-bottom:12px”>Not practiced yet — this is a void!</div>
-      <button class=”btn btn-dark” onclick=”logFromNav()”>+ Log first session</button>
+    return `<div class="empty-state" style="padding:30px">
+      <div style="font-size:14px;color:var(--t2);margin-bottom:12px">Not practiced yet — this is a void!</div>
+      <button class="btn btn-dark" onclick="logFromNav()">+ Log first session</button>
     </div>`;
   }
   const accCol = accColor(acc);
-  const kpis = `<div class=”ins-kpi-row”>
+  const kpis = `<div class="ins-kpi-row">
     ${kpi('Accuracy', acc+'%', accCol)}
     ${kpi('Questions', String(att), 'var(--text)')}
     ${kpi('Wrong', String(wrg), 'var(--red)')}
@@ -1625,17 +1625,17 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
   const errRows = ERR.map(et => {
     const cnt = errCounts[et.id]||0; if(!cnt) return '';
     const pct = Math.round(cnt/maxErr*100);
-    return `<div class=”cerr-row”>
-      <span style=”font-size:14px”>${et.ico}</span>
-      <span class=”cerr-label” style=”color:${et.col}”>${h(et.label)}</span>
-      <div class=”cerr-bar-wrap”><div class=”cerr-bar” style=”width:${pct}%;background:${et.col}”></div></div>
-      <span class=”cerr-count”>×${cnt}</span>
+    return `<div class="cerr-row">
+      <span style="font-size:14px">${et.ico}</span>
+      <span class="cerr-label" style="color:${et.col}">${h(et.label)}</span>
+      <div class="cerr-bar-wrap"><div class="cerr-bar" style="width:${pct}%;background:${et.col}"></div></div>
+      <span class="cerr-count">×${cnt}</span>
     </div>`;
   }).join('');
-  if (errRows) errHtml = `<div class=”mp-sec”>Where you're going wrong</div><div class=”card” style=”padding:8px 14px”>${errRows}</div>`;
+  if (errRows) errHtml = `<div class="mp-sec">Where you're going wrong</div><div class="card" style="padding:8px 14px">${errRows}</div>`;
 
   const chart = miniChart(ctx.sess);
-  const chartHtml = chart ? `<div class=”mp-sec”>Accuracy trend</div>${chart}` : '';
+  const chartHtml = chart ? `<div class="mp-sec">Accuracy trend</div>${chart}` : '';
 
   const recent = [...ctx.sess].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1).slice(0,8);
   let sessHtml = '';
@@ -1644,45 +1644,45 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
       const sacc = s.attempted>0 ? Math.round(s.correct/s.attempted*100) : 0;
       const scls = sacc>=75?'ms-g':sacc>=55?'ms-a':'ms-r';
       const sub = s.subsubtopic || s.subtopic || '';
-      return `<div class=”rsess-row”>
-        <span class=”rsess-date”>${s.date||'—'}</span>
-        <span class=”rsess-sub”>${h(sub)}</span>
-        <span class=”mini-stat ${scls}”>${sacc}%</span>
-        <span style=”font-size:11px;color:var(--t2)”>${s.attempted}Q</span>
+      return `<div class="rsess-row">
+        <span class="rsess-date">${s.date||'—'}</span>
+        <span class="rsess-sub">${h(sub)}</span>
+        <span class="mini-stat ${scls}">${sacc}%</span>
+        <span style="font-size:11px;color:var(--t2)">${s.attempted}Q</span>
       </div>`;
     }).join('');
-    sessHtml = `<div class=”mp-sec”>Recent sessions</div><div class=”card” style=”padding:8px 14px”>${rows}</div>`;
+    sessHtml = `<div class="mp-sec">Recent sessions</div><div class="card" style="padding:8px 14px">${rows}</div>`;
   }
 
   return kpis + errHtml + chartHtml + sessHtml +
-    `<button class=”btn btn-dark” style=”margin-top:20px;width:100%” onclick=”logFromNav()”>+ Log session</button>`;
+    `<button class="btn btn-dark" style="margin-top:20px;width:100%" onclick="logFromNav()">+ Log session</button>`;
 }
 
 function renderMapNotes(ctx) {
   const statusLabels = ['Got it','Need review','Still confused'];
   const noteItems = ctx.notes.map(n => {
-    const qs = (n.questions||[]).map(q=>`<div class=”ins-meta” style=”margin-top:4px”>Q: ${h(q)}</div>`).join('');
+    const qs = (n.questions||[]).map(q=>`<div class="ins-meta" style="margin-top:4px">Q: ${h(q)}</div>`).join('');
     const stText = noteStatusText(n.status||0);
-    return `<div class=”note-item” style=”margin-bottom:8px”>
-      <div class=”ins-row”><span class=”note-insight”>${h(n.insight||'')}</span><span class=”note-date”>${n.date||''}</span></div>
-      <div class=”ins-meta” style=”margin-top:4px”>${stText}</div>
+    return `<div class="note-item" style="margin-bottom:8px">
+      <div class="ins-row"><span class="note-insight">${h(n.insight||'')}</span><span class="note-date">${n.date||''}</span></div>
+      <div class="ins-meta" style="margin-top:4px">${stText}</div>
       ${qs}
     </div>`;
   }).join('');
 
   return `
-    <div class=”card” style=”padding:12px;margin-bottom:14px”>
-      <textarea id=”quick-note-inp” rows=”3” placeholder=”Write a quick insight or summary...” style=”width:100%;border:none;outline:none;font-family:inherit;font-size:13px;resize:none;background:transparent;color:var(--text);line-height:1.6”></textarea>
-      <div style=”display:flex;gap:6px;margin-top:8px;align-items:center”>
-        <select id=”quick-note-status” class=”btn btn-sm” style=”padding:4px 10px”>
-          <option value=”0”>✓ Got it</option>
-          <option value=”1”>↻ Need review</option>
-          <option value=”2”>? Still confused</option>
+    <div class="card" style="padding:12px;margin-bottom:14px">
+      <textarea id="quick-note-inp" rows="3" placeholder="Write a quick insight or summary..." style="width:100%;border:none;outline:none;font-family:inherit;font-size:13px;resize:none;background:transparent;color:var(--text);line-height:1.6"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+        <select id="quick-note-status" class="btn btn-sm" style="padding:4px 10px">
+          <option value="0">✓ Got it</option>
+          <option value="1">↻ Need review</option>
+          <option value="2">? Still confused</option>
         </select>
-        <button class=”btn btn-dark btn-sm” onclick=”saveQuickNote()” style=”margin-left:auto”>Save note</button>
+        <button class="btn btn-dark btn-sm" onclick="saveQuickNote()" style="margin-left:auto">Save note</button>
       </div>
     </div>
-    ${noteItems || `<div class=”empty-state”>No notes yet for this area</div>`}
+    ${noteItems || `<div class="empty-state">No notes yet for this area</div>`}
   `;
 }
 
