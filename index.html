@@ -408,6 +408,16 @@ body {
   display: none; flex-wrap: wrap; gap: 5px; padding: 0 14px 12px;
 }
 .err-card.picked .err-reasons { display: flex; }
+.err-qnote { display: none; padding: 8px 14px 12px; border-top: 1px solid rgba(0,0,0,0.08); margin-top: 4px; }
+.err-card.picked .err-qnote { display: block; }
+.err-qinp {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.15); border-radius: var(--r-sm);
+  padding: 5px 9px; font-size: 12px; font-family: inherit;
+  background: rgba(255,255,255,0.6); color: var(--text); outline: none;
+}
+.err-qinp::placeholder { color: rgba(0,0,0,0.3); }
+.err-qinp:focus { border-color: rgba(0,0,0,0.3); background: rgba(255,255,255,0.9); }
 .reason-chip {
   padding: 3px 10px; border-radius: 3px;
   font-size: 11px; font-weight: 500;
@@ -519,13 +529,21 @@ body {
 .void-name { font-size: 13px; font-weight: 500; }
 .void-path { font-size: 11px; color: var(--t3); margin-top: 1px; }
 
-.ebar-row { margin-bottom: 12px; }
-.ebar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.ebar-label { font-size: 13px; font-weight: 600; }
-.ebar-count { font-size: 12px; color: var(--t2); }
-.ebar-hint  { font-size: 11px; color: var(--t3); margin-bottom: 4px; }
-.ebar-track { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-.ebar-fill  { height: 100%; border-radius: 3px; }
+.chapter-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 12px 14px; margin-bottom: 6px;
+}
+.chapter-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.chapter-name { font-size: 13px; font-weight: 600; }
+.chapter-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.chapter-errs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.chapter-err-tag {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px;
+}
+.chapter-subtops { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.csub-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+.csub-name { color: var(--t2); }
+.csub-acc  { font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 3px; }
 
 .acc-item {
   background: var(--card); border: 1px solid var(--border);
@@ -805,8 +823,8 @@ body {
         <div id="ins-acc"></div>
       </div>
       <div id="ins-right">
-        <div class="sec-title">Why you're getting things wrong</div>
-        <div id="ins-errors"></div>
+        <div class="sec-title">Chapter breakdown</div>
+        <div id="ins-chapters"></div>
       </div>
     </div>
   </div>
@@ -916,6 +934,10 @@ const DEFAULT_SUBJECTS = [
 ];
 
 const SQL = `-- Run once in Supabase SQL Editor
+-- If tables already exist, run the ALTER lines to add missing columns:
+alter table if exists gmat_sessions add column if not exists note text;
+alter table if exists gmat_sessions add column if not exists errors jsonb;
+
 create table if not exists gmat_config (
   id text primary key, exam_date date, hrs_per_week int default 18,
   subjects jsonb, updated_at timestamptz default now()
@@ -1207,6 +1229,7 @@ function renderErrCards() {
       const rSel = isPicked && sel.reasons.includes(ri);
       return `<span class="reason-chip ${rSel?'sel':''}" onclick="toggleReason('${et.id}',${ri},event)">${h(r)}</span>`;
     }).join('');
+    const qVal = isPicked && sel.q ? sel.q : '';
     return `<div class="err-card ${isPicked?'picked':''}" style="background:${et.bg};border-color:${isPicked?et.col:'var(--border)'}" id="ec-${et.id}">
       <div class="err-card-top" onclick="toggleErr('${et.id}')">
         <span class="err-ico">${et.ico}</span>
@@ -1214,12 +1237,17 @@ function renderErrCards() {
         ${isPicked?`<span class="err-badge" style="color:${et.col}">✓</span>`:''}
       </div>
       <div class="err-reasons">${reasons}</div>
+      <div class="err-qnote">
+        <input class="err-qinp" placeholder="Which question was this? (optional)" value="${h(qVal)}"
+          onclick="event.stopPropagation()"
+          oninput="if(selErr['${et.id}'])selErr['${et.id}'].q=this.value">
+      </div>
     </div>`;
   }).join('');
 }
 
 function toggleErr(id) {
-  if (selErr[id]) delete selErr[id]; else selErr[id] = { reasons: [] };
+  if (selErr[id]) delete selErr[id]; else selErr[id] = { reasons: [], q: '' };
   renderErrCards();
 }
 
@@ -1235,12 +1263,12 @@ async function saveSession() {
   if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   if (pAtt===0) { toast('Enter questions attempted'); return; }
   const s = subjs()[wSubj], t = s.topics[wTopic], sub = getSubs(t)[wSub];
-  const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons }));
+  const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons, q:data.q||'' }));
   const noteEl = document.getElementById('s-note');
   const row = { date:today(), subject:s.name, topic:t.name, subtopic:sub, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
   if (sb) {
     const { data, error } = await sb.from('gmat_sessions').insert(row).select();
-    if (error) { toast('Save failed — check connection'); return; }
+    if (error) { toast('Save failed: ' + (error.message||error.code||'unknown')); console.error(error); return; }
     SESSIONS.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); SESSIONS.unshift(row); saveLocal(); }
   toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; nav('map');
@@ -1299,7 +1327,7 @@ function renderInsights() {
     { label:'Notes written', val:notes.length, color:'var(--purple)' }
   ].map(k=>`<div class="kpi-box"><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-lbl">${k.label}</div></div>`).join('');
   renderVoids(insFilter);
-  renderErrBreakdown(sess);
+  renderChapterBreakdown(sess);
   renderAccList(sess);
 }
 
@@ -1326,30 +1354,76 @@ function renderVoids(filter) {
     (voids.length>8?`<p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">+${voids.length-8} more</p>`:'');
 }
 
-function renderErrBreakdown(sess) {
-  const counts = {};
-  ERR.forEach(et => counts[et.id] = { total:0, reasons:{} });
-  sess.forEach(s => (s.errors||[]).forEach(e => {
-    const id = e.t || mapOld(e.errType);
-    if (!id||!counts[id]) return;
-    counts[id].total++;
-    (e.r||[]).forEach(ri => { counts[id].reasons[ri] = (counts[id].reasons[ri]||0)+1; });
-  }));
-  const maxC = Math.max(...Object.values(counts).map(c=>c.total), 1);
-  const rows = ERR.map(et => {
-    const c = counts[et.id]; if (c.total===0) return '';
-    const pct = Math.round(c.total/maxC*100);
-    const topR = Object.entries(c.reasons).sort((a,b)=>b[1]-a[1])[0];
-    const topLabel = topR ? et.reasons[parseInt(topR[0])] : null;
-    return `<div class="ebar-row">
-      <div class="ebar-top"><span class="ebar-label" style="color:${et.col}">${et.ico} ${h(et.label)}</span><span class="ebar-count">${c.total}×</span></div>
-      ${topLabel?`<div class="ebar-hint">${h(topLabel)}</div>`:''}
-      <div class="ebar-track"><div class="ebar-fill" style="width:${pct}%;background:${et.col}"></div></div>
+function renderChapterBreakdown(sess) {
+  // Group by subject + topic, then break into subtopics
+  const byTopic = {};
+  sess.forEach(s => {
+    const k = `${s.subject}::${s.topic}`;
+    if (!byTopic[k]) byTopic[k] = { subj:s.subject, topic:s.topic, att:0, cor:0, errs:[], subs:{} };
+    byTopic[k].att += s.attempted||0;
+    byTopic[k].cor += s.correct||0;
+    (s.errors||[]).forEach(e => byTopic[k].errs.push(e));
+    const sk = s.subtopic||'—';
+    if (!byTopic[k].subs[sk]) byTopic[k].subs[sk] = { att:0, cor:0 };
+    byTopic[k].subs[sk].att += s.attempted||0;
+    byTopic[k].subs[sk].cor += s.correct||0;
+  });
+
+  const sorted = Object.values(byTopic).sort((a,b) => {
+    const aA = a.att>0 ? a.cor/a.att : 1;
+    const bA = b.att>0 ? b.cor/b.att : 1;
+    return aA - bA;
+  });
+
+  if (sorted.length===0) {
+    document.getElementById('ins-chapters').innerHTML = `<div class="card"><div class="empty-state">No sessions yet</div></div>`;
+    return;
+  }
+
+  document.getElementById('ins-chapters').innerHTML = sorted.map(item => {
+    const acc = item.att>0 ? Math.round(item.cor/item.att*100) : null;
+    const cls = acc===null?'':acc>=75?'ms-g':acc>=55?'ms-a':'ms-r';
+
+    // Top 2 error types for this topic
+    const errCount = {};
+    item.errs.forEach(e => {
+      const id = e.t||mapOld(e.errType); if (!id) return;
+      errCount[id] = (errCount[id]||0) + 1;
+    });
+    const topErrs = Object.entries(errCount).sort((a,b)=>b[1]-a[1]).slice(0,2);
+    const errTags = topErrs.map(([id,cnt]) => {
+      const et = ERR.find(e=>e.id===id);
+      return et ? `<span class="chapter-err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${h(et.label)} ×${cnt}</span>` : '';
+    }).join('');
+
+    // Sub-topic rows for this topic
+    const subRows = Object.entries(item.subs).map(([name, st]) => {
+      const sa = st.att>0 ? Math.round(st.cor/st.att*100) : null;
+      const sc = sa===null?'':sa>=75?'ms-g':sa>=55?'ms-a':'ms-r';
+      return `<div class="csub-row">
+        <span class="csub-name">${h(name)}</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <span class="csub-acc ${sc}">${sa!==null?sa+'%':'—'}</span>
+          <span style="font-size:11px;color:var(--t3)">${st.att}Q</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="chapter-item">
+      <div class="chapter-top">
+        <div>
+          <div class="chapter-name">${h(item.topic)}</div>
+          <div class="chapter-sub">${h(item.subj)}</div>
+        </div>
+        <div class="acc-stats">
+          ${acc!==null?`<span class="mini-stat ${cls}">${acc}%</span>`:'<span class="mini-stat" style="color:var(--t3)">—</span>'}
+          <span class="mini-stat" style="background:var(--bg);color:var(--t2)">${item.att}Q</span>
+        </div>
+      </div>
+      ${errTags ? `<div class="chapter-errs">${errTags}</div>` : ''}
+      ${subRows ? `<div class="chapter-subtops">${subRows}</div>` : ''}
     </div>`;
   }).join('');
-  document.getElementById('ins-errors').innerHTML = rows
-    ? `<div class="card">${rows}</div>`
-    : `<div class="card"><div class="empty-state">No errors recorded yet</div></div>`;
 }
 
 function renderAccList(sess) {
