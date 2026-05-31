@@ -619,6 +619,17 @@ body {
   font-size: 9px; display: flex; align-items: center; justify-content: center; color: var(--t2);
 }
 
+/* sub-sub-topic manager */
+.sub-mgr-item { border: 1px solid var(--border); border-radius: var(--r-sm); margin-bottom: 5px; overflow: hidden; }
+.sub-mgr-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; cursor: pointer; background: var(--bg);
+}
+.sub-mgr-name { font-size: 12px; font-weight: 600; flex: 1; }
+.sub-mgr-ct   { font-size: 11px; color: var(--t3); }
+.sub-mgr-body { display: none; padding: 8px 10px 10px; border-top: 1px solid var(--border); background: var(--card); }
+.sub-mgr-item.open .sub-mgr-body { display: block; }
+
 /* ── buttons ── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -727,6 +738,15 @@ body {
         </div>
         <div class="prog-bar" id="prog3"></div>
         <div class="pick-list" id="subtopic-list"></div>
+      </div>
+
+      <div id="ls3b" class="log-step">
+        <div class="step-head">
+          <div class="back-btn" onclick="logBack()">←</div>
+          <div><div class="step-ttl">Pick a sub-sub-topic</div><div class="step-sub" id="ls3b-sub"></div></div>
+        </div>
+        <div class="prog-bar" id="prog3b"></div>
+        <div class="pick-list" id="subsub-list"></div>
       </div>
 
       <div id="ls4p" class="log-step">
@@ -940,6 +960,8 @@ const SQL = `-- Run once in Supabase SQL Editor
 -- If tables already exist, run the ALTER lines to add missing columns:
 alter table if exists gmat_sessions add column if not exists note text;
 alter table if exists gmat_sessions add column if not exists errors jsonb;
+alter table if exists gmat_sessions add column if not exists subsubtopic text;
+alter table if exists gmat_notes add column if not exists subsubtopic text;
 
 create table if not exists gmat_config (
   id text primary key, exam_date date, hrs_per_week int default 18,
@@ -971,7 +993,7 @@ let sb = null;
 let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS };
 let SESSIONS = [], NOTES = [];
 
-let wMode = null, wSubj = -1, wTopic = -1, wSub = -1, wMapJump = false;
+let wMode = null, wSubj = -1, wTopic = -1, wSub = -1, wSubSub = -1, wMapJump = false;
 let pAtt = 0, pCor = 0, selErr = {};
 let nStatus = 0, nQs = [];
 let insFilter = 'all', mgrSubj = 0, mapSubj = 0;
@@ -1073,8 +1095,9 @@ function renderMap() {
   const subj = subs[mapSubj];
   document.getElementById('map-body').innerHTML = subj.topics.map((topic, ti) => {
     const rows = getSubs(topic).map((sub, si) => {
-      const sess  = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub);
-      const notes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===sub);
+      const subName = getSubName(sub);
+      const sess  = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName);
+      const notes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName);
       const att = sess.reduce((a,s)=>a+(s.attempted||0),0);
       const cor = sess.reduce((a,s)=>a+(s.correct||0),0);
       const isVoid = att===0;
@@ -1086,7 +1109,7 @@ function renderMap() {
         bub = `<span class="acc-bub ${acc>=75?'acc-good':acc>=55?'acc-warn':'acc-bad'}">${acc}%</span>`;
       }
       return `<div class="sub-row ${isVoid?'void-row':''}" onclick="mapTap(${mapSubj},${ti},${si})">
-        <div class="sub-name ${isVoid?'dim':''}">${h(sub)}</div>
+        <div class="sub-name ${isVoid?'dim':''}">${h(subName)}</div>
         ${bub}
         <div class="note-dot ${notes.length?'has':''}" title="${notes.length?'Has notes':'No notes'}"></div>
       </div>`;
@@ -1112,7 +1135,7 @@ function showStep(id) {
 
 function resetWizard() {
   wMode = null; pAtt = 0; pCor = 0; selErr = {}; nStatus = 0; nQs = [];
-  if (!wMapJump) { wSubj = -1; wTopic = -1; wSub = -1; }
+  if (!wMapJump) { wSubj = -1; wTopic = -1; wSub = -1; wSubSub = -1; }
   wMapJump = false;
   showStep('ls0');
 }
@@ -1129,7 +1152,15 @@ function startMode(mode) {
   showStep('ls1'); setProg('prog1', 1, totalSteps());
 }
 
-function totalSteps() { return wMode==='practice' ? 5 : 4; }
+function hasSubSubs() {
+  if (wSubj<0||wTopic<0||wSub<0) return false;
+  const sub = getSubs(subjs()[wSubj].topics[wTopic])[wSub];
+  return getSubSubs(sub).length > 0;
+}
+function totalSteps() {
+  const extra = hasSubSubs() ? 1 : 0;
+  return wMode==='practice' ? 5+extra : 4+extra;
+}
 
 function setProg(id, done, total) {
   const el = document.getElementById(id); if (!el) return;
@@ -1151,17 +1182,42 @@ function pickTopic(ti) {
   wTopic = ti;
   const topic = subjs()[wSubj].topics[ti];
   document.getElementById('ls3-sub').textContent = `${subjs()[wSubj].name} → ${topic.name}`;
-  document.getElementById('subtopic-list').innerHTML = getSubs(topic).map((sub,si)=>
-    `<div class="pick-item" onclick="pickSub(${si})"><div class="pick-ttl">${h(sub)}</div></div>`).join('');
+  document.getElementById('subtopic-list').innerHTML = getSubs(topic).map((sub,si)=> {
+    const name = getSubName(sub), ss = getSubSubs(sub);
+    return `<div class="pick-item" onclick="pickSub(${si})">
+      <div><div class="pick-ttl">${h(name)}</div>${ss.length?`<div class="pick-sub">${ss.length} sub-sub-topics</div>`:''}</div>
+      <span class="pick-arrow">›</span></div>`;
+  }).join('');
   showStep('ls3'); setProg('prog3', 3, totalSteps());
 }
 
-function pickSub(si) { wSub = si; afterSubtopicPicked(); }
+function pickSub(si) {
+  wSub = si;
+  const sub = getSubs(subjs()[wSubj].topics[wTopic])[si];
+  const ss = getSubSubs(sub);
+  if (ss.length > 0) {
+    wSubSub = -1;
+    document.getElementById('ls3b-sub').textContent =
+      `${subjs()[wSubj].topics[wTopic].name} → ${getSubName(sub)}`;
+    document.getElementById('subsub-list').innerHTML =
+      ss.map((s,i)=>`<div class="pick-item" onclick="pickSubSub(${i})"><div class="pick-ttl">${h(s)}</div></div>`).join('') +
+      `<div class="pick-item" onclick="pickSubSub(-1)">
+        <div class="pick-ttl" style="color:var(--t2)">Log at sub-topic level (skip)</div></div>`;
+    setProg('prog3b', 3, totalSteps()); showStep('ls3b');
+  } else {
+    wSubSub = -1;
+    afterSubtopicPicked();
+  }
+}
+function pickSubSub(i) { wSubSub = i; afterSubtopicPicked(); }
 
 function afterSubtopicPicked() {
   const topic = subjs()[wSubj].topics[wTopic];
   const sub   = getSubs(topic)[wSub];
-  const bc    = `${topic.name} → ${h(sub)}`;
+  const subName = getSubName(sub);
+  const ss    = getSubSubs(sub);
+  const ssName = (wSubSub >= 0 && ss[wSubSub]) ? ss[wSubSub] : null;
+  const bc    = ssName ? `${topic.name} → ${h(subName)} → ${h(ssName)}` : `${topic.name} → ${h(subName)}`;
   if (wMode === 'practice') {
     document.getElementById('ls4p-sub').textContent = bc;
     pAtt = 0; pCor = 0;
@@ -1181,9 +1237,10 @@ function afterSubtopicPicked() {
 function logBack() {
   const cur = document.querySelector('.log-step.on'); if (!cur) return;
   const id = cur.id;
-  if (id==='ls1'||id==='ls4p'||id==='ls4n') { wSubj=-1; wTopic=-1; wSub=-1; wMode=null; showStep('ls0'); }
+  if (id==='ls1'||id==='ls4p'||id==='ls4n') { wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; wMode=null; showStep('ls0'); }
   else if (id==='ls2') showStep('ls1');
   else if (id==='ls3') showStep('ls2');
+  else if (id==='ls3b') showStep('ls3');
   else if (id==='ls5p') showStep('ls4p');
   else showStep('ls0');
 }
@@ -1265,16 +1322,18 @@ function toggleReason(errId, ri, e) {
 async function saveSession() {
   if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   if (pAtt===0) { toast('Enter questions attempted'); return; }
-  const s = subjs()[wSubj], t = s.topics[wTopic], sub = getSubs(t)[wSub];
+  const s = subjs()[wSubj], t = s.topics[wTopic];
+  const subRaw = getSubs(t)[wSub], subName = getSubName(subRaw);
+  const ssArr = getSubSubs(subRaw), ssName = (wSubSub >= 0 && ssArr[wSubSub]) ? ssArr[wSubSub] : '';
   const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons, q:data.q||'' }));
   const noteEl = document.getElementById('s-note');
-  const row = { date:today(), subject:s.name, topic:t.name, subtopic:sub, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
+  const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName, subsubtopic:ssName, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
   if (sb) {
     const { data, error } = await sb.from('gmat_sessions').insert(row).select();
     if (error) { toast('Save failed: ' + (error.message||error.code||'unknown')); console.error(error); return; }
     SESSIONS.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); SESSIONS.unshift(row); saveLocal(); }
-  toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; nav('map');
+  toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
 }
 
 function renderQs() {
@@ -1295,14 +1354,16 @@ async function saveNote() {
   if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   const insight = document.getElementById('n-insight').value.trim();
   if (!insight) { toast('Write at least a short insight'); return; }
-  const s = subjs()[wSubj], t = s.topics[wTopic], sub = getSubs(t)[wSub];
-  const row = { date:today(), subject:s.name, topic:t.name, subtopic:sub, insight, questions:nQs, status:nStatus };
+  const s = subjs()[wSubj], t = s.topics[wTopic];
+  const subRaw2 = getSubs(t)[wSub], subName2 = getSubName(subRaw2);
+  const ssArr2 = getSubSubs(subRaw2), ssName2 = (wSubSub >= 0 && ssArr2[wSubSub]) ? ssArr2[wSubSub] : '';
+  const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName2, subsubtopic:ssName2, insight, questions:nQs, status:nStatus };
   if (sb) {
     const { data, error } = await sb.from('gmat_notes').insert(row).select();
     if (error) { toast('Save failed — check connection'); return; }
     NOTES.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); NOTES.unshift(row); saveLocal(); }
-  toast('Note saved'); wSubj=-1; wTopic=-1; wSub=-1; nav('map');
+  toast('Note saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
 }
 
 // ─────────────────────────────────────────────
@@ -1340,8 +1401,16 @@ function renderVoids(filter) {
     if (filter!=='all' && subj.name!==filter) return;
     subj.topics.forEach(topic => {
       getSubs(topic).forEach(sub => {
-        if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub))
-          voids.push({ subj:subj.name, topic:topic.name, sub });
+        const subName = getSubName(sub), ss = getSubSubs(sub);
+        if (ss.length > 0) {
+          ss.forEach(s2 => {
+            if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName&&s.subsubtopic===s2))
+              voids.push({ subj:subj.name, topic:topic.name, sub:subName, subsub:s2 });
+          });
+        } else {
+          if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName))
+            voids.push({ subj:subj.name, topic:topic.name, sub:subName });
+        }
       });
     });
   });
@@ -1352,7 +1421,10 @@ function renderVoids(filter) {
   document.getElementById('ins-voids').innerHTML =
     voids.slice(0,8).map(v=>`<div class="void-item">
       <div class="void-dot"></div>
-      <div><div class="void-name">${h(v.sub)}</div><div class="void-path">${h(v.subj)} · ${h(v.topic)}</div></div>
+      <div>
+        <div class="void-name">${v.subsub ? h(v.subsub) : h(v.sub)}</div>
+        <div class="void-path">${h(v.subj)} · ${h(v.topic)}${v.subsub ? ' · '+h(v.sub) : ''}</div>
+      </div>
     </div>`).join('') +
     (voids.length>8?`<p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">+${voids.length-8} more</p>`:'');
 }
@@ -1500,8 +1572,25 @@ function setMgrSubj(i) { mgrSubj=i; renderMgrTabs(); renderMgr(); }
 function renderMgr() {
   const subj = subjs()[mgrSubj]; if (!subj) { document.getElementById('mgr-body').innerHTML=''; return; }
   document.getElementById('mgr-body').innerHTML = subj.topics.map((t,ti)=>{
-    const tags = getSubs(t).map((sub,si)=>
-      `<span class="sub-tag">${h(sub)}<button class="sub-tag-x" onclick="delSub(${ti},${si})">×</button></span>`).join('');
+    const subRows = getSubs(t).map((sub,si)=>{
+      const subName = getSubName(sub), ss = getSubSubs(sub);
+      const ssTags = ss.map((s2,ssi)=>
+        `<span class="sub-tag">${h(s2)}<button class="sub-tag-x" onclick="delSubSub(${ti},${si},${ssi});event.stopPropagation()">×</button></span>`).join('');
+      return `<div class="sub-mgr-item" id="smi-${ti}-${si}">
+        <div class="sub-mgr-header" onclick="toggleSubMgr(${ti},${si})">
+          <span class="sub-mgr-name">${h(subName)}</span>
+          <span class="sub-mgr-ct">${ss.length ? ss.length+' sub-sub' : 'expand to add sub-sub'}</span>
+          <button class="sub-tag-x" style="margin-left:auto" onclick="delSub(${ti},${si});event.stopPropagation()">×</button>
+        </div>
+        <div class="sub-mgr-body">
+          <div style="margin:6px 0 8px">${ssTags||'<span style="font-size:12px;color:var(--t3)">No sub-sub-topics yet</span>'}</div>
+          <div class="add-row">
+            <input class="add-inp" id="ssi-${ti}-${si}" placeholder="New sub-sub-topic..." />
+            <button class="add-go" onclick="addSubSub(${ti},${si})">Add</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
     return `<div class="mgr-item" id="mi-${ti}">
       <div class="mgr-header" onclick="toggleMgr(${ti})">
         <span class="mgr-name">${h(t.name)}</span>
@@ -1509,7 +1598,7 @@ function renderMgr() {
         <span class="mgr-arr">▾</span>
       </div>
       <div class="mgr-body">
-        <div style="margin:8px 0 10px">${tags||'<span style="font-size:12px;color:var(--t3)">No sub-topics yet</span>'}</div>
+        <div style="margin:6px 0 8px">${subRows||'<span style="font-size:12px;color:var(--t3)">No sub-topics yet</span>'}</div>
         <div class="add-row">
           <input class="add-inp" id="si-${ti}" placeholder="New sub-topic..." />
           <button class="add-go" onclick="addSub(${ti})">Add</button>
@@ -1527,6 +1616,23 @@ function renderMgr() {
 }
 
 function toggleMgr(ti) { document.getElementById('mi-'+ti).classList.toggle('open'); }
+function toggleSubMgr(ti,si) { document.getElementById(`smi-${ti}-${si}`).classList.toggle('open'); }
+
+async function addSubSub(ti,si) {
+  const val = document.getElementById(`ssi-${ti}-${si}`).value.trim(); if (!val) return;
+  const subs = CFG.subjects[mgrSubj].topics[ti].subtopics;
+  if (typeof subs[si] === 'string') subs[si] = { name: subs[si], subs: [] };
+  if (!subs[si].subs) subs[si].subs = [];
+  subs[si].subs.push(val);
+  document.getElementById(`ssi-${ti}-${si}`).value = '';
+  await saveCfg(); renderMgr();
+}
+async function delSubSub(ti,si,ssi) {
+  if (!confirm('Remove this sub-sub-topic?')) return;
+  const sub = CFG.subjects[mgrSubj].topics[ti].subtopics[si];
+  if (typeof sub !== 'string') sub.subs.splice(ssi,1);
+  await saveCfg(); renderMgr();
+}
 
 async function addTopic() {
   const val = document.getElementById('ti-new').value.trim(); if (!val) return;
@@ -1560,6 +1666,8 @@ async function addSubj() {
 
 function subjs() { return CFG.subjects || DEFAULT_SUBJECTS; }
 function getSubs(topic) { return topic.subtopics || topic.patterns || []; }
+function getSubName(sub) { return typeof sub === 'string' ? sub : (sub.name || ''); }
+function getSubSubs(sub) { return typeof sub === 'string' ? [] : (sub.subs || []); }
 function mapOld(t) { return {comprehension:'comp',pattern:'pattern',optimal:'slow',silly:'calc'}[t]||null; }
 function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today() { return new Date().toISOString().split('T')[0]; }
