@@ -2372,12 +2372,26 @@ function renderNotes() {
   );
   filtered.sort((a, b) => String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || '')));
 
-  if (!filtered.length) {
+  // Session memos (sessions with a .note field)
+  let memos = SESSIONS.filter(s => s.note && s.note.trim());
+  if (notesSubjFilter) memos = memos.filter(s => s.subject === notesSubjFilter);
+  if (q) memos = memos.filter(s =>
+    String(s.note || '').toLowerCase().includes(q) ||
+    String(s.topic || '').toLowerCase().includes(q) ||
+    String(s.subtopic || '').toLowerCase().includes(q)
+  );
+  memos.sort((a, b) => String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || '')));
+
+  // Status filter only applies to concept notes, not session memos
+  const noNotes = !filtered.length;
+  const noMemos = !memos.length;
+
+  if (noNotes && noMemos) {
     listEl.innerHTML = `<div class="card"><div class="empty-state">No notes yet</div></div>`;
     return;
   }
 
-  listEl.innerHTML = filtered.map(n => {
+  const notesHtml = filtered.map(n => {
     const qs = (n.questions || []).filter(Boolean);
     const statCls = n.status === 2 ? 'ms-r' : n.status === 1 ? 'ms-a' : 'ms-g';
     if (editingNoteId === n.id) {
@@ -2413,6 +2427,30 @@ function renderNotes() {
       </div>
     </div>`;
   }).join('');
+
+  const memosHtml = memos.map(s => {
+    const a = s.attempted || 0, c = s.correct || 0;
+    const pct = a > 0 ? Math.round(c / a * 100) : null;
+    const statCls = pct === null ? 'ms-n' : pct >= 75 ? 'ms-g' : pct >= 55 ? 'ms-a' : 'ms-r';
+    return `<div class="note-item" style="margin-bottom:8px">
+      <div class="note-top">
+        <div>
+          <div class="acc-item-name">${h(s.topic || 'Session')}</div>
+          <div class="note-path">${h(s.subject || '')}${s.subtopic ? ' &middot; '+h(s.subtopic) : ''}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+          ${pct !== null ? `<span class="mini-stat ${statCls}">${pct}%</span>` : ''}
+          <span class="mini-stat ms-n">${a}Q</span>
+          <span class="note-date">${h(s.date || '')}</span>
+        </div>
+      </div>
+      <div class="note-insight">${h(s.note)}</div>
+    </div>`;
+  }).join('');
+
+  listEl.innerHTML =
+    (noNotes ? '' : `<div class="sec-title" style="margin-bottom:10px">Concept notes</div>${notesHtml}`) +
+    (noMemos ? '' : `<div class="sec-title" style="margin-top:${noNotes?'0':'18px'};margin-bottom:10px">Session memos</div>${memosHtml}`);
 }
 
 // ─────────────────────────────────────────────
