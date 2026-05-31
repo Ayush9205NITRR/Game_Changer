@@ -968,7 +968,7 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
   <!-- ══ MAP ══ -->
   <div id="screen-map" class="screen on">
     <div id="map-sidebar">
-      <div id="map-subj-tabs"></div>
+      <div class="ins-subject-tabs" id="map-subj-tabs" style="margin-bottom:0;padding:10px 10px 8px"></div>
       <div id="map-search-wrap"><input id="map-search" type="text" placeholder="Search topics or sub-topics..." oninput="renderMapSidebar()"></div>
       <div id="map-topic-list"></div>
     </div>
@@ -1421,10 +1421,9 @@ function nav(name) {
 function renderMap() { renderMapTabs(); renderMapSidebar(); }
 
 function renderMapTabs() {
-  document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) => {
-    const on = i===selNav.subj;
-    return `<button class=”ms-tab ${on?'on':''}” style=”flex:1;padding:7px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:none;border-radius:8px;font-family:inherit;-webkit-appearance:none;appearance:none;${on?'background:#111110;color:#fff':'background:transparent;color:#65655F'}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`;
-  }).join('');
+  document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) =>
+    `<button class=”ins-subject-tab ${i===selNav.subj?'on':''}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`
+  ).join('');
 }
 
 function renderMapSidebar() {
@@ -1445,22 +1444,22 @@ function renderMapSidebar() {
     });
     if (q && !nameMatch && !subMatch) return '';
     const isSel = selNav.topic === ti;
-    const accChip = tAcc!==null
-      ? `<span style=”font-size:10px;padding:2px 7px;border-radius:4px;color:#fff;font-weight:700;background:${tAcc>=75?'#15803D':tAcc>=55?'#B45309':'#B91C1C'}”>${tAcc}%</span>`
-      : '';
-    const newChip = tAtt===0 ? `<span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#EDE9FE;color:#6D28D9;font-weight:600”>new</span>` : '';
-    const selStyle = isSel ? 'border:2px solid #111110;background:#FAFAF8;' : 'border:1px solid #E2E1DC;';
-    return `<div class=”mt-card ${isSel?'sel':''}” style=”${selStyle}border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;background:${isSel?'#FAFAF8':'#fff'}” onclick=”selectTopic(${ti})”>
-      <div style=”font-size:13px;font-weight:700;color:#111110;display:flex;align-items:center;gap:6px”>${h(topic.name)} ${accChip}</div>
-      <div style=”display:flex;gap:5px;flex-wrap:wrap;margin-top:5px”>
-        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${subCount} sub-topics</span>
-        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${tsess.length} sessions</span>
-        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${tnotes.length} notes</span>
-        ${newChip}
+    const st = calcStats(tsess);
+    return `<div class=”ins-topic-card ${isSel?'on':''}” onclick=”selectTopic(${ti})”>
+      <div class=”ins-row”>
+        <div>
+          <div class=”ins-name”>${h(topic.name)}</div>
+          <div class=”ins-meta”>${subCount} sub-topics</div>
+        </div>
+        ${st.acc!==null?`<span class=”mini-stat ${accClass(st.acc)}”>${st.acc}%</span>`:`<span class=”mini-stat ms-n”>new</span>`}
+      </div>
+      <div class=”ins-stat-row”>
+        <span class=”mini-stat ms-n”>${tsess.length} sessions</span>
+        <span class=”mini-stat ms-n”>${tnotes.length} notes</span>
       </div>
     </div>`;
   }).join('');
-  document.getElementById('map-topic-list').innerHTML = html || `<div style=”text-align:center;padding:30px;color:var(--t3);font-size:12px”>No topics match your search</div>`;
+  document.getElementById('map-topic-list').innerHTML = html || `<div class=”empty-state”>No topics match your search</div>`;
 }
 
 function setNavSubj(i) { selNav = {subj:i, topic:-1, sub:-1, subsub:-1}; mapView='insights'; renderMap(); renderMapMain(); }
@@ -1523,12 +1522,11 @@ function renderMapMain() {
   const acc = att>0 ? Math.round(cor/att*100) : null;
 
   let header = `
-    <div style=”font-size:11px;color:#A5A59E;text-transform:uppercase;letter-spacing:0.4px”>${h(ctx.breadcrumb)}</div>
-    <div style=”display:flex;align-items:center;gap:12px;margin:6px 0 4px”>
-      <div style=”font-size:22px;font-weight:800;color:#111110”>${h(ctx.title)}</div>
-      <button style=”font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #E2E1DC;background:#fff;color:#65655F;cursor:pointer;font-family:inherit;font-weight:600;margin-left:auto” onclick=”mgrSubj=selNav.subj;nav('settings')”>Edit</button>
+    <div>
+      <div class=”ins-eyebrow”>${h(ctx.breadcrumb)}</div>
+      <div class=”ins-title”>${h(ctx.title)}</div>
+      <div class=”ins-context”>${getSubs(topic).length} trackable areas · <a href=”#” onclick=”event.preventDefault();mgrSubj=selNav.subj;nav('settings')” style=”color:var(--purple);text-decoration:none;font-weight:600”>Edit topics</a></div>
     </div>
-    <div style=”font-size:12px;color:#A5A59E;margin-bottom:20px”>${getSubs(topic).length} trackable areas in this view</div>
   `;
 
   // Sub-topic card grid (only at topic level)
@@ -1543,24 +1541,19 @@ function renderMapMain() {
       const sAcc = sAtt>0 ? Math.round(sCor/sAtt*100) : null;
       const isVoid = sAtt === 0;
       const isSel = selNav.sub === si && selNav.subsub < 0;
-      const chip = (txt, bg, col) => `<span style=”font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;background:${bg};color:${col}”>${txt}</span>`;
-      const accChip = sAcc!==null ? chip(sAcc+'%', sAcc>=75?'#DCFCE7':sAcc>=55?'#FEF3C7':'#FEE2E2', sAcc>=75?'#15803D':sAcc>=55?'#B45309':'#B91C1C') : '';
-      const cardBorder = isSel ? 'border:2px solid #4F46E5;background:#F5F3FF' : isVoid ? 'border:1px dashed #E2E1DC;background:#fff' : 'border:1px solid #E2E1DC;background:#fff';
-      return `<div style=”${cardBorder};border-radius:10px;padding:12px 14px;cursor:pointer” onclick=”selectSubCard(${si})”>
-        <div style=”display:flex;justify-content:space-between;align-items:center;margin-bottom:4px”>
-          <span style=”font-size:13px;font-weight:700;color:#111110”>${h(sn)}</span>
-          <span style=”font-size:10px;color:#A5A59E”>${sNotes.length} notes</span>
+      const st = calcStats(sSess);
+      return `<div class=”ins-sub-card ${isSel?'on':''}” onclick=”selectSubCard(${si})”>
+        <div class=”ins-row”>
+          <div>
+            <div class=”ins-name”>${h(sn)}</div>
+            <div class=”ins-meta”>${ss.length ? ss.length+' sub-sub-topics' : 'Sub-topic'}</div>
+          </div>
+          <span class=”mini-stat ms-n”>${sNotes.length} notes</span>
         </div>
-        <div style=”display:flex;gap:4px;flex-wrap:wrap;margin-top:5px”>
-          ${sSess.length ? chip(sSess.length+' sessions','#F5F4F0','#65655F') : ''}
-          ${sAtt ? chip(sAtt+'Q','#F5F4F0','#65655F') : ''}
-          ${accChip}
-          ${isVoid ? chip('new','#EDE9FE','#6D28D9') : ''}
-          ${ss.length ? chip(ss.length+' sub-sub','#F5F4F0','#65655F') : ''}
-        </div>
+        <div class=”ins-stat-row”>${statChips(st)}</div>
       </div>`;
     }).join('');
-    stGrid = `<div style=”font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A5A59E;margin:0 0 8px”>Sub-topics</div><div style=”display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px”>${cards}</div>`;
+    stGrid = `<div class=”sec-title” style=”margin-top:0”>Sub-topics</div><div class=”ins-subtopic-list”>${cards}</div>`;
   }
 
   // Sub-sub cards (at sub-topic level)
@@ -1576,30 +1569,24 @@ function renderMapMain() {
         const ssAcc = ssAtt>0 ? Math.round(ssCor/ssAtt*100) : null;
         const isVoid = ssAtt === 0;
         const isSel = selNav.subsub === ssi;
-        const chip = (txt, bg, col) => `<span style=”font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;background:${bg};color:${col}”>${txt}</span>`;
-        const accChip = ssAcc!==null ? chip(ssAcc+'%', ssAcc>=75?'#DCFCE7':ssAcc>=55?'#FEF3C7':'#FEE2E2', ssAcc>=75?'#15803D':ssAcc>=55?'#B45309':'#B91C1C') : '';
-        const cardBorder = isSel ? 'border:2px solid #4F46E5;background:#F5F3FF' : isVoid ? 'border:1px dashed #E2E1DC;background:#fff' : 'border:1px solid #E2E1DC;background:#fff';
-        return `<div style=”${cardBorder};border-radius:10px;padding:12px 14px;cursor:pointer” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
-          <div style=”display:flex;justify-content:space-between;align-items:center;margin-bottom:4px”>
-            <span style=”font-size:13px;font-weight:700;color:#111110”>${h(ssName)}</span>
-            <span style=”font-size:10px;color:#A5A59E”>Sub-sub-topic</span>
+        const st = calcStats(ssSess);
+        return `<div class=”ins-sub-card ${isSel?'on':''}” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
+          <div class=”ins-row”>
+            <div>
+              <div class=”ins-name”>${h(ssName)}</div>
+              <div class=”ins-meta”>Sub-sub-topic</div>
+            </div>
           </div>
-          <div style=”display:flex;gap:4px;flex-wrap:wrap;margin-top:5px”>
-            ${ssSess.length ? chip(ssSess.length+' sessions','#F5F4F0','#65655F') : ''}
-            ${ssAtt ? chip(ssAtt+'Q','#F5F4F0','#65655F') : ''}
-            ${accChip}
-            ${isVoid ? chip('new','#EDE9FE','#6D28D9') : ''}
-          </div>
+          <div class=”ins-stat-row”>${statChips(st)}</div>
         </div>`;
       }).join('');
-      ssGrid = `<div style=”font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A5A59E;margin:0 0 8px”>Sub-sub-topics</div><div style=”display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px”>${cards}</div>`;
+      ssGrid = `<div class=”sec-title” style=”margin-top:0”>Sub-sub-topics</div><div class=”ins-subtopic-list”>${cards}</div>`;
     }
   }
 
-  const tabStyle = (on) => `padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2px solid ${on?'#111110':'transparent'};margin-bottom:-1px;color:${on?'#111110':'#65655F'}`;
-  const tabs = `<div style=”display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid #E2E1DC”>
-    <button style=”${tabStyle(mapView==='insights')}” onclick=”setMapView('insights')”>Insights</button>
-    <button style=”${tabStyle(mapView==='notes')}” onclick=”setMapView('notes')”>Notes</button>
+  const tabs = `<div class=”ins-view-toggle” style=”margin-bottom:18px”>
+    <button class=”${mapView==='insights'?'on':''}” onclick=”setMapView('insights')”>Insights</button>
+    <button class=”${mapView==='notes'?'on':''}” onclick=”setMapView('notes')”>Notes</button>
   </div>`;
 
   let body = '';
@@ -1614,20 +1601,17 @@ function renderMapMain() {
 
 function renderMapInsights(ctx, att, cor, wrg, acc) {
   if (att === 0) {
-    return `<div class=”mp-void”>
-      <div class=”mp-void-lbl”>Not practiced yet — this is a void!</div>
+    return `<div class=”empty-state” style=”padding:30px”>
+      <div style=”font-size:14px;color:var(--t2);margin-bottom:12px”>Not practiced yet — this is a void!</div>
       <button class=”btn btn-dark” onclick=”logFromNav()”>+ Log first session</button>
     </div>`;
   }
-  const accCol = acc>=75?'#15803D':acc>=55?'#B45309':'#B91C1C';
-  const kpiBox = 'background:#fff;border:1px solid #E2E1DC;border-radius:10px;padding:14px 18px;flex:1;min-width:90px';
-  const kpiVal = 'font-size:24px;font-weight:800';
-  const kpiLbl = 'font-size:10px;color:#A5A59E;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px';
-  const kpis = `<div style=”display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap”>
-    <div style=”${kpiBox}”><div style=”${kpiVal};color:${accCol}”>${acc}%</div><div style=”${kpiLbl}”>Accuracy</div></div>
-    <div style=”${kpiBox}”><div style=”${kpiVal}”>${att}</div><div style=”${kpiLbl}”>Questions attempted</div></div>
-    <div style=”${kpiBox}”><div style=”${kpiVal};color:#B91C1C”>${wrg}</div><div style=”${kpiLbl}”>Wrong</div></div>
-    <div style=”${kpiBox}”><div style=”${kpiVal}”>${ctx.sess.length}</div><div style=”${kpiLbl}”>Sessions logged</div></div>
+  const accCol = accColor(acc);
+  const kpis = `<div class=”ins-kpi-row”>
+    ${kpi('Accuracy', acc+'%', accCol)}
+    ${kpi('Questions', String(att), 'var(--text)')}
+    ${kpi('Wrong', String(wrg), 'var(--red)')}
+    ${kpi('Sessions', String(ctx.sess.length), 'var(--text)')}
   </div>`;
 
   const allErrs = ctx.sess.flatMap(s=>s.errors||[]);
@@ -1673,23 +1657,21 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
 
 function renderMapNotes(ctx) {
   const statusLabels = ['Got it','Need review','Still confused'];
-  const dotCls = ['note-dot-g','note-dot-a','note-dot-r'];
   const noteItems = ctx.notes.map(n => {
-    const qs = (n.questions||[]).map(q=>`<div class=”mp-note-q”>Q: ${h(q)}</div>`).join('');
-    return `<div class=”mp-note-item”>
-      <div class=”mp-note-date”>
-        <span class=”${dotCls[n.status||0]}”></span>${n.date||''} · ${statusLabels[n.status||0]}
-      </div>
-      <div class=”mp-note-text”>${h(n.insight||'')}</div>
+    const qs = (n.questions||[]).map(q=>`<div class=”ins-meta” style=”margin-top:4px”>Q: ${h(q)}</div>`).join('');
+    const stText = noteStatusText(n.status||0);
+    return `<div class=”note-item” style=”margin-bottom:8px”>
+      <div class=”ins-row”><span class=”note-insight”>${h(n.insight||'')}</span><span class=”note-date”>${n.date||''}</span></div>
+      <div class=”ins-meta” style=”margin-top:4px”>${stText}</div>
       ${qs}
     </div>`;
   }).join('');
 
   return `
-    <div class=”mp-note-box”>
-      <textarea id=”quick-note-inp” rows=”3” placeholder=”Write a quick insight or summary...”></textarea>
+    <div class=”card” style=”padding:12px;margin-bottom:14px”>
+      <textarea id=”quick-note-inp” rows=”3” placeholder=”Write a quick insight or summary...” style=”width:100%;border:none;outline:none;font-family:inherit;font-size:13px;resize:none;background:transparent;color:var(--text);line-height:1.6”></textarea>
       <div style=”display:flex;gap:6px;margin-top:8px;align-items:center”>
-        <select id=”quick-note-status” style=”font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--bg)”>
+        <select id=”quick-note-status” class=”btn btn-sm” style=”padding:4px 10px”>
           <option value=”0”>✓ Got it</option>
           <option value=”1”>↻ Need review</option>
           <option value=”2”>? Still confused</option>
@@ -1697,7 +1679,7 @@ function renderMapNotes(ctx) {
         <button class=”btn btn-dark btn-sm” onclick=”saveQuickNote()” style=”margin-left:auto”>Save note</button>
       </div>
     </div>
-    ${noteItems || `<div style=”font-size:12px;color:var(--t3);text-align:center;padding:30px 0”>No notes yet for this area</div>`}
+    ${noteItems || `<div class=”empty-state”>No notes yet for this area</div>`}
   `;
 }
 
