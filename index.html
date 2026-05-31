@@ -360,11 +360,16 @@ body {
 }
 .step-btn:hover { background: var(--border); }
 .step-val {
-  min-width: 40px; text-align: center;
+  width: 52px; min-width: 52px; text-align: center;
   font-size: 16px; font-weight: 700;
   background: var(--card);
-  padding: 0 4px;
+  border: none; outline: none;
+  padding: 4px 2px;
+  -moz-appearance: textfield;
+  cursor: text;
 }
+.step-val::-webkit-inner-spin-button,
+.step-val::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 .wrong-box {
   display: flex;
@@ -714,7 +719,7 @@ body {
             <div class="stepper-info"><div class="lbl">Attempted</div><div class="sub">Total questions tried</div></div>
             <div class="stepper">
               <button class="step-btn" onclick="step('att',-1)">−</button>
-              <div class="step-val" id="v-att">0</div>
+              <input type="number" class="step-val" id="v-att" value="0" min="0" oninput="inputChanged('att')">
               <button class="step-btn" onclick="step('att',1)">+</button>
             </div>
           </div>
@@ -722,7 +727,7 @@ body {
             <div class="stepper-info"><div class="lbl">Got right</div><div class="sub">Correct answers</div></div>
             <div class="stepper">
               <button class="step-btn" onclick="step('cor',-1)">−</button>
-              <div class="step-val" id="v-cor">0</div>
+              <input type="number" class="step-val" id="v-cor" value="0" min="0" oninput="inputChanged('cor')">
               <button class="step-btn" onclick="step('cor',1)">+</button>
             </div>
           </div>
@@ -1135,8 +1140,8 @@ function afterSubtopicPicked() {
   if (wMode === 'practice') {
     document.getElementById('ls4p-sub').textContent = bc;
     pAtt = 0; pCor = 0;
-    document.getElementById('v-att').textContent = 0;
-    document.getElementById('v-cor').textContent = 0;
+    document.getElementById('v-att').value = 0;
+    document.getElementById('v-cor').value = 0;
     document.getElementById('v-wrong').textContent = 0;
     updateWrongBox(); setProg('prog4p', 4, totalSteps()); showStep('ls4p');
   } else {
@@ -1161,8 +1166,19 @@ function logBack() {
 function step(f, d) {
   if (f==='att') { pAtt=Math.max(0,pAtt+d); if(pCor>pAtt)pCor=pAtt; }
   else           { pCor=Math.max(0,Math.min(pAtt,pCor+d)); }
-  document.getElementById('v-att').textContent = pAtt;
-  document.getElementById('v-cor').textContent = pCor;
+  document.getElementById('v-att').value = pAtt;
+  document.getElementById('v-cor').value = pCor;
+  document.getElementById('v-wrong').textContent = pAtt-pCor;
+  updateWrongBox();
+}
+
+function inputChanged(f) {
+  const attEl = document.getElementById('v-att');
+  const corEl = document.getElementById('v-cor');
+  let a = Math.max(0, parseInt(attEl.value)||0);
+  let c = Math.max(0, parseInt(corEl.value)||0);
+  if (f==='att') { pAtt=a; if(pCor>pAtt){pCor=pAtt; corEl.value=pCor;} }
+  else           { pCor=Math.min(c,pAtt); corEl.value=pCor; }
   document.getElementById('v-wrong').textContent = pAtt-pCor;
   updateWrongBox();
 }
