@@ -947,6 +947,164 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
 .mb12 { margin-bottom: 12px; }
 .tc   { text-align: center; }
 .empty-state { text-align: center; padding: 24px 0; color: var(--t3); font-size: 13px; }
+
+/* === NEW LOG FLOW === */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 7px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--t2);
+  font-weight: 500;
+}
+.chip:hover { border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+.chip.on {
+  background: var(--text); border-color: var(--text);
+  color: #fff; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.qn-dropdowns { display: flex; flex-direction: column; gap: 12px; }
+.qn-dropdown label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--t2);
+  margin-bottom: 5px;
+}
+.qn-dropdown select, .wa-ss-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.12s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23A5A59E' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 32px;
+}
+.qn-dropdown select:focus, .wa-ss-select:focus { outline: none; border-color: var(--text); }
+.qn-dropdown select:disabled { color: var(--t3); background-color: var(--bg); cursor: not-allowed; }
+
+.wrong-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  margin-bottom: 10px;
+}
+.wp-text { font-size: 12px; font-weight: 600; color: var(--t2); white-space: nowrap; }
+.wp-bar { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.wp-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.25s ease; }
+
+.wa-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--card);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.wa-card.complete { border-color: #86EFAC; box-shadow: 0 1px 4px rgba(34,197,94,0.08); }
+.wa-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.wa-card.complete .wa-head { background: #F0FDF4; }
+.wa-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--red); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.wa-card.complete .wa-num { background: var(--green); }
+.wa-check { margin-left: auto; color: var(--green); font-size: 12px; font-weight: 600; }
+.wa-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.wa-section-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--t3);
+  margin-bottom: 6px;
+}
+.wa-err-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+@media (max-width: 480px) { .wa-err-btns { grid-template-columns: 1fr; } }
+.wa-err-btn {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.12s;
+  color: var(--text);
+}
+.wa-err-btn:hover:not(.sel) { border-color: var(--border2); transform: translateY(-1px); }
+.wa-err-btn.sel { color: #fff !important; border-color: transparent; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+
+.wa-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.wa-reason {
+  padding: 6px 11px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--t2);
+  transition: all 0.1s;
+}
+.wa-reason:hover { color: var(--text); border-color: var(--border2); }
+.wa-reason.sel {
+  background: var(--text); color: #fff;
+  border-color: var(--text); font-weight: 600;
+}
 </style>
 </head>
 <body>
@@ -987,65 +1145,101 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
     <div class="inner">
 
       <div id="ls0" class="log-step on">
-        <div class="step-ttl" style="margin-bottom:16px">What did you do?</div>
+        <div class="step-ttl" style="margin-bottom:16px">What do you want to add?</div>
         <button class="mode-btn" onclick="startMode('practice')">
           <span class="ico">📚</span>
           <div>
-            <span class="mttl">I practiced questions</span>
-            <span class="mhint">Log what you tried and what went wrong</span>
+            <span class="mttl">Log a practice session</span>
+            <span class="mhint">Total Q's, correct, wrong — then tag each wrong</span>
           </div>
         </button>
         <button class="mode-btn" onclick="startMode('notes')">
           <span class="ico">📖</span>
           <div>
-            <span class="mttl">I read / studied something</span>
-            <span class="mhint">Add a note or save what you learned</span>
+            <span class="mttl">Quick note</span>
+            <span class="mhint">Write what you learned, tag the topic</span>
           </div>
         </button>
       </div>
 
-      <div id="ls1" class="log-step">
+      <!-- Quick note: single screen with cascading dropdowns -->
+      <div id="ls-note" class="log-step">
         <div class="step-head">
           <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">Pick a subject</div><div class="step-sub" id="ls1-sub"></div></div>
+          <div><div class="step-ttl">Quick note</div><div class="step-sub">Write first, tag the topic below</div></div>
         </div>
-        <div class="prog-bar" id="prog1"></div>
-        <div class="pick-list" id="subj-list"></div>
+
+        <div class="card mb8">
+          <div class="card-label">Your note</div>
+          <textarea class="note-textarea" id="qn-insight" placeholder="What did you learn? Write the key insight or method..."></textarea>
+        </div>
+
+        <div class="card mb8">
+          <div class="card-label">Where does this belong?</div>
+          <div class="qn-dropdowns">
+            <div class="qn-dropdown">
+              <label>Subject</label>
+              <select id="qn-subj" onchange="onQnSubjChange()"></select>
+            </div>
+            <div class="qn-dropdown">
+              <label>Topic</label>
+              <select id="qn-topic" onchange="onQnTopicChange()"></select>
+            </div>
+            <div class="qn-dropdown">
+              <label>Sub-topic</label>
+              <select id="qn-sub" onchange="onQnSubChange()"></select>
+            </div>
+            <div class="qn-dropdown">
+              <label>Sub-sub-topic <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+              <select id="qn-subsub"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb12">
+          <div class="card-label">How well do you understand this?</div>
+          <div class="status-row">
+            <button class="status-opt s0 on" onclick="pickQnStatus(0)">✓ Got it</button>
+            <button class="status-opt s1" onclick="pickQnStatus(1)">↻ Need review</button>
+            <button class="status-opt s2" onclick="pickQnStatus(2)">? Still confused</button>
+          </div>
+        </div>
+
+        <button class="btn btn-dark btn-full" onclick="saveQuickNoteSingle()">Save note</button>
       </div>
 
-      <div id="ls2" class="log-step">
+      <!-- Practice: pick subject/topic/sub-topic on one screen -->
+      <div id="ls-prac-where" class="log-step">
         <div class="step-head">
           <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">Pick a topic</div><div class="step-sub" id="ls2-sub"></div></div>
+          <div><div class="step-ttl">Where did you practice?</div><div class="step-sub">Pick subject → topic → sub-topic</div></div>
         </div>
-        <div class="prog-bar" id="prog2"></div>
-        <div class="pick-list" id="topic-list"></div>
+
+        <div class="card mb8">
+          <div class="card-label">Subject</div>
+          <div class="chip-row" id="pw-subj-chips"></div>
+        </div>
+
+        <div class="card mb8">
+          <div class="card-label">Topic</div>
+          <div class="chip-row" id="pw-topic-chips"></div>
+        </div>
+
+        <div class="card mb12">
+          <div class="card-label">Sub-topic</div>
+          <div class="chip-row" id="pw-sub-chips"></div>
+        </div>
+
+        <button class="btn btn-dark btn-full" onclick="pwNext()">Continue →</button>
       </div>
 
-      <div id="ls3" class="log-step">
+      <!-- Practice: how many questions -->
+      <div id="ls-prac-count" class="log-step">
         <div class="step-head">
           <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">Pick a sub-topic</div><div class="step-sub" id="ls3-sub"></div></div>
+          <div><div class="step-ttl">How many questions?</div><div class="step-sub" id="pc-sub"></div></div>
         </div>
-        <div class="prog-bar" id="prog3"></div>
-        <div class="pick-list" id="subtopic-list"></div>
-      </div>
 
-      <div id="ls3b" class="log-step">
-        <div class="step-head">
-          <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">Pick a sub-sub-topic</div><div class="step-sub" id="ls3b-sub"></div></div>
-        </div>
-        <div class="prog-bar" id="prog3b"></div>
-        <div class="pick-list" id="subsub-list"></div>
-      </div>
-
-      <div id="ls4p" class="log-step">
-        <div class="step-head">
-          <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">How many questions?</div><div class="step-sub" id="ls4p-sub"></div></div>
-        </div>
-        <div class="prog-bar" id="prog4p"></div>
         <div class="card">
           <div class="stepper-row">
             <div class="stepper-info"><div class="lbl">Attempted</div><div class="sub">Total questions tried</div></div>
@@ -1071,50 +1265,25 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
             <div class="wnum" id="v-wrong">0</div>
           </div>
         </div>
-        <button class="btn btn-dark btn-full mt12" onclick="goToErrors()">Next →</button>
+        <button class="btn btn-dark btn-full mt12" onclick="goToWrongDetails()">Continue →</button>
       </div>
 
-      <div id="ls4n" class="log-step">
+      <!-- Practice: tag each wrong with sub-sub-topic + reason -->
+      <div id="ls-prac-wrong" class="log-step">
         <div class="step-head">
           <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">Add a note</div><div class="step-sub" id="ls4n-sub"></div></div>
+          <div><div class="step-ttl">Tag each wrong answer</div><div class="step-sub" id="pw-sub-display"></div></div>
         </div>
-        <div class="prog-bar" id="prog4n"></div>
-        <div class="card mb8">
-          <div class="card-label">Key insight — what did you learn?</div>
-          <textarea class="note-textarea" id="n-insight" placeholder="Write the main thing you understood or learned..."></textarea>
-        </div>
-        <div class="card mb8">
-          <div class="card-label">Questions I still have</div>
-          <div class="q-list" id="q-list"></div>
-          <div class="add-row">
-            <input class="add-inp" id="q-inp" placeholder="Type a question..." onkeydown="if(event.key==='Enter'){event.preventDefault();addQ()}" />
-            <button class="add-go" onclick="addQ()">Add</button>
-          </div>
-        </div>
-        <div class="card mb12">
-          <div class="card-label">How well do you understand this?</div>
-          <div class="status-row">
-            <button class="status-opt s0" onclick="pickStatus(0)">✓ Got it</button>
-            <button class="status-opt s1" onclick="pickStatus(1)">↻ Need review</button>
-            <button class="status-opt s2" onclick="pickStatus(2)">? Still confused</button>
-          </div>
-        </div>
-        <button class="btn btn-dark btn-full" onclick="saveNote()">Save note</button>
-      </div>
 
-      <div id="ls5p" class="log-step">
-        <div class="step-head">
-          <div class="back-btn" onclick="logBack()">←</div>
-          <div><div class="step-ttl">What went wrong?</div><div class="step-sub" id="ls5p-sub"></div></div>
-        </div>
-        <div class="prog-bar" id="prog5p"></div>
-        <div class="err-cards" id="err-cards"></div>
+        <div id="wrong-progress" class="wrong-progress"></div>
+        <div id="wrong-cards"></div>
+
         <div class="card mb12">
-          <div class="card-label">Quick note (optional)</div>
-          <textarea class="note-textarea" id="s-note" placeholder="Anything to remember about this session..."></textarea>
+          <div class="card-label">Note (optional)</div>
+          <textarea class="note-textarea" id="s-note-new" placeholder="Anything else to remember about this session..."></textarea>
         </div>
-        <button class="btn btn-dark btn-full" onclick="saveSession()">Save session</button>
+
+        <button class="btn btn-dark btn-full" onclick="saveSessionNew()">Save session</button>
       </div>
 
     </div>
@@ -1320,8 +1489,9 @@ let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS };
 let SESSIONS = [], NOTES = [];
 
 let wMode = null, wSubj = -1, wTopic = -1, wSub = -1, wSubSub = -1, wMapJump = false;
-let pAtt = 0, pCor = 0, selErr = {};
-let nStatus = 0, nQs = [];
+let pAtt = 0, pCor = 0;
+let wWrongs = []; // [{ subsubIdx, errType, reasons:[] }]
+let qnSubj = 0, qnTopic = -1, qnSub = -1, qnSubSub = -1, qnStatus = 0;
 let insFilter = 'Quant', insSubQ = '', insTopicIdx = 0, insSubIdx = -1, insSubSubIdx = -1, insView = 'insights', mgrSubj = 0, mapSubj = 0;
 let selNav = { subj: 0, topic: -1, sub: -1, subsub: -1 };
 let mapView = 'insights';
@@ -1818,26 +1988,25 @@ function logFromNav() {
   wSubj = selNav.subj; wTopic = selNav.topic;
   wSub = selNav.sub >= 0 ? selNav.sub : -1;
   wSubSub = selNav.subsub;
-  wMapJump = wSub >= 0;
+  wMapJump = true;
+  wMode = 'practice';
   nav('log');
 }
 
 function setMapSubj(i) { mapSubj = i; }
 
 function mapTap(si, ti, subi) {
-  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; wMode = 'practice'; nav('log');
 }
 function mapTapLog(si, ti, subi) {
-  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; wMode = 'practice'; nav('log');
 }
-// Quick-log straight against a specific sub-sub-topic (e.g. "Constant Distance"),
-// skipping the picker since the choice was already made by tapping its row.
 function mapTapLogSS(si, ti, subi, ssi) {
-  wSubj = si; wTopic = ti; wSub = subi; wSubSub = ssi; wMapJump = true; nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = ssi; wMapJump = true; wMode = 'practice'; nav('log');
 }
 
 // ─────────────────────────────────────────────
-//  LOG WIZARD
+//  LOG WIZARD (new simplified flow)
 // ─────────────────────────────────────────────
 
 function showStep(id) {
@@ -1846,116 +2015,151 @@ function showStep(id) {
 }
 
 function resetWizard() {
-  wMode = null; pAtt = 0; pCor = 0; selErr = {}; nStatus = 0; nQs = [];
-  if (!wMapJump) { wSubj = -1; wTopic = -1; wSub = -1; wSubSub = -1; }
+  pAtt = 0; pCor = 0; wWrongs = [];
+  if (!wMapJump) { wSubj = -1; wTopic = -1; wSub = -1; wSubSub = -1; wMode = null; }
+  if (wMode) { startMode(wMode); }
+  else { showStep('ls0'); }
   wMapJump = false;
-  showStep('ls0');
 }
 
 function startMode(mode) {
   wMode = mode;
-  document.getElementById('ls1-sub').textContent = mode==='practice'?'Practicing questions':'Reading / studying';
-  if (wSubj >= 0) { afterSubtopicPicked(); return; }
+  if (mode === 'notes') { setupQuickNote(); showStep('ls-note'); }
+  else                  { setupPracticeWhere(); showStep('ls-prac-where'); }
+}
+
+// ─── QUICK NOTE: single screen ───
+function setupQuickNote() {
+  qnSubj = wSubj >= 0 ? wSubj : 0;
+  qnTopic = wTopic >= 0 ? wTopic : -1;
+  qnSub = wSub >= 0 ? wSub : -1;
+  qnSubSub = wSubSub >= 0 ? wSubSub : -1;
+  qnStatus = 0;
+  document.getElementById('qn-insight').value = '';
+  renderQnDropdowns();
+  document.querySelectorAll('#ls-note .status-opt').forEach((el,i)=>el.classList.toggle('on',i===0));
+}
+
+function renderQnDropdowns() {
   const subs = subjs();
-  document.getElementById('subj-list').innerHTML = subs.map((s,i)=>
-    `<div class="pick-item" onclick="pickSubj(${i})">
-      <div><div class="pick-ttl">${h(s.name)}</div><div class="pick-sub">${s.topics.length} topics</div></div>
-      <span class="pick-arrow">›</span></div>`).join('');
-  showStep('ls1'); setProg('prog1', 1, totalSteps());
-}
+  document.getElementById('qn-subj').innerHTML = subs.map((s,i)=>
+    `<option value="${i}" ${i===qnSubj?'selected':''}>${h(s.name)}</option>`).join('');
 
-function hasSubSubs() {
-  if (wSubj<0||wTopic<0||wSub<0) return false;
-  const sub = getSubs(subjs()[wSubj].topics[wTopic])[wSub];
-  return getSubSubs(sub).length > 0;
-}
-function totalSteps() {
-  const extra = hasSubSubs() ? 1 : 0;
-  return wMode==='practice' ? 5+extra : 4+extra;
-}
+  const topics = (subs[qnSubj] && subs[qnSubj].topics) || [];
+  document.getElementById('qn-topic').innerHTML =
+    `<option value="-1">— pick topic —</option>` +
+    topics.map((t,i)=>`<option value="${i}" ${i===qnTopic?'selected':''}>${h(t.name)}</option>`).join('');
 
-function setProg(id, done, total) {
-  const el = document.getElementById(id); if (!el) return;
-  el.innerHTML = Array.from({length:total},(_,i)=>`<div class="prog-seg ${i<done?'done':i===done?'active':''}"></div>`).join('');
-}
+  const topic = qnTopic >= 0 ? topics[qnTopic] : null;
+  const subList = topic ? getSubs(topic) : [];
+  document.getElementById('qn-sub').innerHTML =
+    `<option value="-1">— pick sub-topic —</option>` +
+    subList.map((s,i)=>`<option value="${i}" ${i===qnSub?'selected':''}>${h(getSubName(s))}</option>`).join('');
 
-function pickSubj(i) {
-  wSubj = i;
-  const subj = subjs()[i];
-  document.getElementById('ls2-sub').textContent = subj.name;
-  document.getElementById('topic-list').innerHTML = subj.topics.map((t,ti)=>
-    `<div class="pick-item" onclick="pickTopic(${ti})">
-      <div><div class="pick-ttl">${h(t.name)}</div><div class="pick-sub">${getSubs(t).length} sub-topics</div></div>
-      <span class="pick-arrow">›</span></div>`).join('');
-  showStep('ls2'); setProg('prog2', 2, totalSteps());
-}
-
-function pickTopic(ti) {
-  wTopic = ti;
-  const topic = subjs()[wSubj].topics[ti];
-  document.getElementById('ls3-sub').textContent = `${subjs()[wSubj].name} → ${topic.name}`;
-  document.getElementById('subtopic-list').innerHTML = getSubs(topic).map((sub,si)=> {
-    const name = getSubName(sub), ss = getSubSubs(sub);
-    return `<div class="pick-item" onclick="pickSub(${si})">
-      <div><div class="pick-ttl">${h(name)}</div>${ss.length?`<div class="pick-sub">${ss.length} sub-sub-topics</div>`:''}</div>
-      <span class="pick-arrow">›</span></div>`;
-  }).join('');
-  showStep('ls3'); setProg('prog3', 3, totalSteps());
-}
-
-function pickSub(si) {
-  wSub = si;
-  const sub = getSubs(subjs()[wSubj].topics[wTopic])[si];
-  const ss = getSubSubs(sub);
-  if (ss.length > 0) {
-    wSubSub = -1;
-    document.getElementById('ls3b-sub').textContent =
-      `${subjs()[wSubj].topics[wTopic].name} → ${getSubName(sub)}`;
-    document.getElementById('subsub-list').innerHTML =
-      ss.map((s,i)=>`<div class="pick-item" onclick="pickSubSub(${i})"><div class="pick-ttl">${h(s)}</div></div>`).join('') +
-      `<div class="pick-item" onclick="pickSubSub(-1)">
-        <div class="pick-ttl" style="color:var(--t2)">Log at sub-topic level (skip)</div></div>`;
-    setProg('prog3b', 3, totalSteps()); showStep('ls3b');
+  const sub = qnSub >= 0 ? subList[qnSub] : null;
+  const ssList = sub ? getSubSubs(sub) : [];
+  const ssEl = document.getElementById('qn-subsub');
+  if (ssList.length === 0) {
+    ssEl.innerHTML = `<option value="-1">— none available —</option>`;
+    ssEl.disabled = true;
   } else {
-    wSubSub = -1;
-    afterSubtopicPicked();
-  }
-}
-function pickSubSub(i) { wSubSub = i; afterSubtopicPicked(); }
-
-function afterSubtopicPicked() {
-  const topic = subjs()[wSubj].topics[wTopic];
-  const sub   = getSubs(topic)[wSub];
-  const subName = getSubName(sub);
-  const ss    = getSubSubs(sub);
-  const ssName = (wSubSub >= 0 && ss[wSubSub]) ? ss[wSubSub] : null;
-  // Assigned via textContent below, so use raw names — h() would show literal "&amp;".
-  const bc    = ssName ? `${topic.name} → ${subName} → ${ssName}` : `${topic.name} → ${subName}`;
-  if (wMode === 'practice') {
-    document.getElementById('ls4p-sub').textContent = bc;
-    pAtt = 0; pCor = 0;
-    document.getElementById('v-att').value = 0;
-    document.getElementById('v-cor').value = 0;
-    document.getElementById('v-wrong').textContent = 0;
-    updateWrongBox(); setProg('prog4p', 4, totalSteps()); showStep('ls4p');
-  } else {
-    document.getElementById('ls4n-sub').textContent = bc;
-    document.getElementById('n-insight').value = '';
-    nQs = []; nStatus = 0; renderQs();
-    document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===0));
-    setProg('prog4n', 4, totalSteps()); showStep('ls4n');
+    ssEl.disabled = false;
+    ssEl.innerHTML = `<option value="-1">— skip —</option>` +
+      ssList.map((s,i)=>`<option value="${i}" ${i===qnSubSub?'selected':''}>${h(s)}</option>`).join('');
   }
 }
 
-function logBack() {
-  const cur = document.querySelector('.log-step.on'); if (!cur) return;
-  const id = cur.id;
-  if (id==='ls1'||id==='ls4p'||id==='ls4n') { wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; wMode=null; showStep('ls0'); }
-  else if (id==='ls2') showStep('ls1');
-  else if (id==='ls3') showStep('ls2');
-  else if (id==='ls3b') showStep('ls3');
-  else if (id==='ls5p') showStep('ls4p');
-  else showStep('ls0');
+function onQnSubjChange() {
+  qnSubj = parseInt(document.getElementById('qn-subj').value);
+  qnTopic = -1; qnSub = -1; qnSubSub = -1;
+  renderQnDropdowns();
+}
+function onQnTopicChange() {
+  qnTopic = parseInt(document.getElementById('qn-topic').value);
+  qnSub = -1; qnSubSub = -1;
+  renderQnDropdowns();
+}
+function onQnSubChange() {
+  qnSub = parseInt(document.getElementById('qn-sub').value);
+  qnSubSub = -1;
+  renderQnDropdowns();
+}
+function pickQnStatus(s) {
+  qnStatus = s;
+  document.querySelectorAll('#ls-note .status-opt').forEach((el,i)=>el.classList.toggle('on',i===s));
+}
+
+async function saveQuickNoteSingle() {
+  const insight = document.getElementById('qn-insight').value.trim();
+  if (!insight) { toast('Write something first'); return; }
+  if (qnTopic < 0) { toast('Pick a topic'); return; }
+  if (qnSub < 0) { toast('Pick a sub-topic'); return; }
+  const ssSelEl = document.getElementById('qn-subsub');
+  qnSubSub = ssSelEl.disabled ? -1 : (parseInt(ssSelEl.value) || -1);
+  if (Number.isNaN(qnSubSub)) qnSubSub = -1;
+
+  const s = subjs()[qnSubj];
+  const t = s.topics[qnTopic];
+  const subRaw = getSubs(t)[qnSub];
+  const subName = getSubName(subRaw);
+  const ssArr = getSubSubs(subRaw);
+  const ssName = (qnSubSub >= 0 && ssArr[qnSubSub]) ? ssArr[qnSubSub] : '';
+
+  const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName, subsubtopic:ssName, insight, questions:[], status:qnStatus };
+  row.id = uid(); row.created_at = new Date().toISOString(); row._pending = true;
+  NOTES.unshift(row); saveLocal();
+
+  if (sb) {
+    const res = await pushRow('gmat_notes', row, NOTES);
+    if (res.ok) toast('Note saved & synced');
+    else { toast(saveErrMsg(res.error), 6500); console.error(res.error); }
+  } else { toast('Note saved'); }
+  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; wMode=null;
+  nav('map');
+}
+
+// ─── PRACTICE: WHERE (subject + topic + sub-topic chips) ───
+function setupPracticeWhere() {
+  if (wSubj < 0) wSubj = 0;
+  renderPracticeWhere();
+}
+
+function renderPracticeWhere() {
+  const subs = subjs();
+  document.getElementById('pw-subj-chips').innerHTML = subs.map((s,i)=>
+    `<button class="chip ${i===wSubj?'on':''}" onclick="pickPwSubj(${i})">${h(s.name)}</button>`).join('');
+
+  const topics = (subs[wSubj] && subs[wSubj].topics) || [];
+  document.getElementById('pw-topic-chips').innerHTML = topics.length ?
+    topics.map((t,i)=>`<button class="chip ${i===wTopic?'on':''}" onclick="pickPwTopic(${i})">${h(t.name)}</button>`).join('') :
+    `<div style="font-size:12px;color:var(--t3)">No topics in this subject. Add some in Settings.</div>`;
+
+  const topic = wTopic >= 0 ? topics[wTopic] : null;
+  const subList = topic ? getSubs(topic) : [];
+  document.getElementById('pw-sub-chips').innerHTML = wTopic < 0 ?
+    `<div style="font-size:12px;color:var(--t3)">Pick a topic first</div>` :
+    (subList.length ?
+      subList.map((s,i)=>`<button class="chip ${i===wSub?'on':''}" onclick="pickPwSub(${i})">${h(getSubName(s))}</button>`).join('') :
+      `<div style="font-size:12px;color:var(--t3)">No sub-topics yet</div>`);
+}
+
+function pickPwSubj(i) { wSubj = i; wTopic = -1; wSub = -1; wSubSub = -1; renderPracticeWhere(); }
+function pickPwTopic(i) { wTopic = i; wSub = -1; wSubSub = -1; renderPracticeWhere(); }
+function pickPwSub(i) { wSub = i; wSubSub = -1; renderPracticeWhere(); }
+
+function pwNext() {
+  if (wSubj < 0) { toast('Pick a subject'); return; }
+  if (wTopic < 0) { toast('Pick a topic'); return; }
+  if (wSub < 0) { toast('Pick a sub-topic'); return; }
+  const s = subjs()[wSubj], t = s.topics[wTopic];
+  const sub = getSubs(t)[wSub], subName = getSubName(sub);
+  document.getElementById('pc-sub').textContent = `${t.name} → ${subName}`;
+  pAtt = 0; pCor = 0;
+  document.getElementById('v-att').value = 0;
+  document.getElementById('v-cor').value = 0;
+  document.getElementById('v-wrong').textContent = 0;
+  updateWrongBox();
+  showStep('ls-prac-count');
 }
 
 function step(f, d) {
@@ -1987,49 +2191,105 @@ function updateWrongBox() {
   box.style.background = col;
 }
 
-function goToErrors() {
-  if (pAtt===0) { toast('Enter at least 1 question'); return; }
+// ─── PRACTICE: tag each wrong with sub-sub-topic + reason ───
+function goToWrongDetails() {
+  if (pAtt === 0) { toast('Enter at least 1 question'); return; }
   const wrong = pAtt - pCor;
-  if (wrong===0) { saveSession(); return; }
-  document.getElementById('ls5p-sub').textContent = `You got ${wrong} wrong — what happened?`;
-  selErr = {}; renderErrCards(); setProg('prog5p',5,totalSteps()); showStep('ls5p');
+  if (wrong === 0) { saveSessionNew(); return; }
+
+  wWrongs = [];
+  for (let i = 0; i < wrong; i++) wWrongs.push({ subsubIdx: -1, errType: '', reasons: [] });
+
+  const s = subjs()[wSubj], t = s.topics[wTopic];
+  const sub = getSubs(t)[wSub], subName = getSubName(sub);
+  document.getElementById('pw-sub-display').textContent = `${pCor}/${pAtt} correct · ${wrong} wrong in ${subName}`;
+  renderWrongCards();
+  document.getElementById('s-note-new').value = '';
+  showStep('ls-prac-wrong');
 }
 
-function renderErrCards() {
-  document.getElementById('err-cards').innerHTML = ERR.map(et => {
-    const sel = selErr[et.id], isPicked = !!sel;
-    const reasons = et.reasons.map((r,ri) => {
-      const rSel = isPicked && sel.reasons.includes(ri);
-      return `<span class="reason-chip ${rSel?'sel':''}" onclick="toggleReason('${et.id}',${ri},event)">${h(r)}</span>`;
+function renderWrongCards() {
+  const sub = getSubs(subjs()[wSubj].topics[wTopic])[wSub];
+  const ssList = getSubSubs(sub);
+  const done = wWrongs.filter(w => w.errType).length;
+  const total = wWrongs.length;
+  document.getElementById('wrong-progress').innerHTML =
+    `<span class="wp-text">${done} of ${total} tagged</span>
+     <div class="wp-bar"><div class="wp-bar-fill" style="width:${total?Math.round(done/total*100):0}%"></div></div>`;
+
+  document.getElementById('wrong-cards').innerHTML = wWrongs.map((w, idx) => {
+    const isComplete = !!w.errType;
+    const ssOptions = ssList.map((ss, ssi) =>
+      `<option value="${ssi}" ${w.subsubIdx===ssi?'selected':''}>${h(ss)}</option>`).join('');
+    const errBtns = ERR.map(et => {
+      const isSel = w.errType === et.id;
+      const style = isSel ? `background:${et.col};color:#fff` : '';
+      return `<button class="wa-err-btn ${isSel?'sel':''}" style="${style}" onclick="pickWrongErr(${idx},'${et.id}')">
+        <span style="font-size:14px">${et.ico}</span><span>${h(et.label)}</span>
+      </button>`;
     }).join('');
-    const qVal = isPicked && sel.q ? sel.q : '';
-    return `<div class="err-card ${isPicked?'picked':''}" style="background:${et.bg};border-color:${isPicked?et.col:'var(--border)'}" id="ec-${et.id}">
-      <div class="err-card-top" onclick="toggleErr('${et.id}')">
-        <span class="err-ico">${et.ico}</span>
-        <div><div class="err-name" style="color:${et.col}">${h(et.label)}</div><div class="err-desc">${h(et.desc)}</div></div>
-        ${isPicked?`<span class="err-badge" style="color:${et.col}">✓</span>`:''}
+    const et = ERR.find(e=>e.id===w.errType);
+    const reasons = et ? et.reasons.map((r, ri) => {
+      const isSel = w.reasons.includes(ri);
+      return `<button class="wa-reason ${isSel?'sel':''}" onclick="toggleWrongReason(${idx},${ri})">${h(r)}</button>`;
+    }).join('') : '';
+
+    return `<div class="wa-card ${isComplete?'complete':''}">
+      <div class="wa-head">
+        <div class="wa-num">${idx+1}</div>
+        <div>Wrong answer #${idx+1}</div>
+        ${isComplete ? '<span class="wa-check">✓ tagged</span>' : ''}
       </div>
-      <div class="err-reasons">${reasons}</div>
-      <div class="err-qnote">
-        <textarea class="err-qinp" rows="2" placeholder="Which question was this? Paste the question or write a short description..."
-          onclick="event.stopPropagation()"
-          oninput="if(selErr['${et.id}'])selErr['${et.id}'].q=this.value">${h(qVal)}</textarea>
+      <div class="wa-body">
+        ${ssList.length ? `<div>
+          <div class="wa-section-lbl">Which sub-sub-topic?</div>
+          <select class="wa-ss-select" onchange="setWrongSubsub(${idx}, this.value)">
+            <option value="-1">— skip / unsure —</option>
+            ${ssOptions}
+          </select>
+        </div>` : ''}
+        <div>
+          <div class="wa-section-lbl">What went wrong?</div>
+          <div class="wa-err-btns">${errBtns}</div>
+        </div>
+        ${et ? `<div>
+          <div class="wa-section-lbl">Why? (pick one or more)</div>
+          <div class="wa-reasons">${reasons}</div>
+        </div>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
-function toggleErr(id) {
-  if (selErr[id]) delete selErr[id]; else selErr[id] = { reasons: [], q: '' };
-  renderErrCards();
+function setWrongSubsub(idx, val) {
+  wWrongs[idx].subsubIdx = parseInt(val);
+  renderWrongCards();
+}
+function pickWrongErr(idx, errId) {
+  if (wWrongs[idx].errType === errId) { wWrongs[idx].errType = ''; wWrongs[idx].reasons = []; }
+  else { wWrongs[idx].errType = errId; wWrongs[idx].reasons = []; }
+  renderWrongCards();
+}
+function toggleWrongReason(idx, ri) {
+  const arr = wWrongs[idx].reasons;
+  const i = arr.indexOf(ri);
+  if (i >= 0) arr.splice(i, 1); else arr.push(ri);
+  renderWrongCards();
 }
 
-function toggleReason(errId, ri, e) {
-  e.stopPropagation();
-  if (!selErr[errId]) selErr[errId] = { reasons: [] };
-  const arr = selErr[errId].reasons, idx = arr.indexOf(ri);
-  if (idx>=0) arr.splice(idx,1); else arr.push(ri);
-  renderErrCards();
+function logBack() {
+  const cur = document.querySelector('.log-step.on'); if (!cur) return;
+  const id = cur.id;
+  if (id === 'ls-note' || id === 'ls-prac-where') {
+    wMode = null; wSubj = -1; wTopic = -1; wSub = -1; wSubSub = -1;
+    showStep('ls0');
+  } else if (id === 'ls-prac-count') {
+    setupPracticeWhere(); showStep('ls-prac-where');
+  } else if (id === 'ls-prac-wrong') {
+    showStep('ls-prac-count');
+  } else {
+    showStep('ls0');
+  }
 }
 
 // ── cloud sync plumbing (local-first) ────────────────────────────────
@@ -2062,18 +2322,26 @@ async function flushPending() {
   if (synced && typeof renderMap === 'function') renderMap();
 }
 
-async function saveSession() {
+async function saveSessionNew() {
   if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   if (pAtt===0) { toast('Enter questions attempted'); return; }
   const s = subjs()[wSubj], t = s.topics[wTopic];
   const subRaw = getSubs(t)[wSub], subName = getSubName(subRaw);
-  const ssArr = getSubSubs(subRaw), ssName = (wSubSub >= 0 && ssArr[wSubSub]) ? ssArr[wSubSub] : '';
-  const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons, q:data.q||'' }));
-  const noteEl = document.getElementById('s-note');
-  const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName, subsubtopic:ssName, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
-  // Local-first: the session is saved to this browser immediately so it can never be
-  // lost, then pushed to the cloud if connected. A cloud rejection (e.g. a missing
-  // column) no longer throws the session away — it stays pending and re-syncs later.
+  const ssArr = getSubSubs(subRaw);
+
+  // Each wrong becomes its own error entry, carrying its own sub-sub-topic
+  const errors = wWrongs.filter(w => w.errType).map(w => {
+    const ssName = (w.subsubIdx >= 0 && ssArr[w.subsubIdx]) ? ssArr[w.subsubIdx] : '';
+    return { t: w.errType, r: w.reasons, q: '', ss: ssName };
+  });
+
+  const noteEl = document.getElementById('s-note-new');
+  const row = {
+    date:today(), subject:s.name, topic:t.name,
+    subtopic:subName, subsubtopic:'',     // session logged at sub-topic level
+    attempted:pAtt, correct:pCor, wrong:pAtt-pCor,
+    errors, note:noteEl?noteEl.value.trim():''
+  };
   row.id = uid(); row.created_at = new Date().toISOString(); row._pending = true;
   SESSIONS.unshift(row); saveLocal();
   if (sb) {
@@ -2081,40 +2349,8 @@ async function saveSession() {
     if (res.ok) toast('Session saved & synced');
     else { toast(saveErrMsg(res.error), 6500); console.error(res.error); }
   } else { toast('Session saved'); }
-  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
-}
-
-function renderQs() {
-  document.getElementById('q-list').innerHTML = nQs.map((q,i)=>
-    `<div class="q-row"><span class="q-text">Q: ${h(q)}</span><button class="q-del" onclick="removeQ(${i})">×</button></div>`).join('');
-}
-function addQ() {
-  const inp = document.getElementById('q-inp'), val = inp.value.trim();
-  if (!val) return; nQs.push(val); inp.value = ''; renderQs();
-}
-function removeQ(i) { nQs.splice(i,1); renderQs(); }
-function pickStatus(s) {
-  nStatus = s;
-  document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===s));
-}
-
-async function saveNote() {
-  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
-  const insight = document.getElementById('n-insight').value.trim();
-  if (!insight) { toast('Write at least a short insight'); return; }
-  const s = subjs()[wSubj], t = s.topics[wTopic];
-  const subRaw2 = getSubs(t)[wSub], subName2 = getSubName(subRaw2);
-  const ssArr2 = getSubSubs(subRaw2), ssName2 = (wSubSub >= 0 && ssArr2[wSubSub]) ? ssArr2[wSubSub] : '';
-  const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName2, subsubtopic:ssName2, insight, questions:nQs, status:nStatus };
-  // Local-first (see saveSession): never lose a note to a cloud error.
-  row.id = uid(); row.created_at = new Date().toISOString(); row._pending = true;
-  NOTES.unshift(row); saveLocal();
-  if (sb) {
-    const res = await pushRow('gmat_notes', row, NOTES);
-    if (res.ok) toast('Note saved & synced');
-    else { toast(saveErrMsg(res.error), 6500); console.error(res.error); }
-  } else { toast('Note saved'); }
-  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
+  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; wMode=null;
+  nav('map');
 }
 
 // ─────────────────────────────────────────────
@@ -2666,7 +2902,7 @@ function findPath(subjName, topicName, subName) {
 function jumpLog(subjName, topicName, subName) {
   const p = findPath(subjName, topicName, subName);
   if (!p) { toast('Could not find that sub-topic'); return; }
-  wSubj=p.si; wTopic=p.ti; wSub=p.bi; wSubSub=-1; wMapJump=true; nav('log');
+  wSubj=p.si; wTopic=p.ti; wSub=p.bi; wSubSub=-1; wMapJump=true; wMode='practice'; nav('log');
 }
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-jump]'); if (!el) return;
