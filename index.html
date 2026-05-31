@@ -667,6 +667,23 @@ body {
 .sub-mgr-body { display: none; padding: 8px 10px 10px; border-top: 1px solid var(--border); background: var(--card); }
 .sub-mgr-item.open .sub-mgr-body { display: block; }
 
+/* ── session list (map detail) ── */
+.sess-lbl  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--t3); margin:10px 0 4px; }
+.sess-list { display:flex; flex-direction:column; gap:4px; }
+.sess-row  { display:flex; align-items:center; gap:8px; font-size:11px; padding:5px 9px; background:var(--bg); border-radius:4px; min-width:0; }
+.sd-date   { color:var(--t3); white-space:nowrap; }
+.sd-frac   { font-weight:700; white-space:nowrap; }
+.sd-ss     { color:var(--t3); white-space:nowrap; }
+.sd-note   { color:var(--t2); font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+
+/* ── jump-to-log affordance (Insights → logging) ── */
+.jumpable { cursor:pointer; }
+.jumpable:hover { border-color: var(--border2); }
+
+/* ── bulk-add textareas (Settings) ── */
+.add-row { align-items: flex-start; }
+textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
+
 /* ── buttons ── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -834,7 +851,7 @@ body {
           <div class="card-label">Questions I still have</div>
           <div class="q-list" id="q-list"></div>
           <div class="add-row">
-            <input class="add-inp" id="q-inp" placeholder="Type a question..." />
+            <input class="add-inp" id="q-inp" placeholder="Type a question..." onkeydown="if(event.key==='Enter'){event.preventDefault();addQ()}" />
             <button class="add-go" onclick="addQ()">Add</button>
           </div>
         </div>
@@ -869,12 +886,7 @@ body {
   <!-- ══ INSIGHTS ══ -->
   <div id="screen-insights" class="screen">
     <div class="ins-kpi-row" id="ins-kpis"></div>
-    <div class="filter-bar">
-      <button class="filter-btn on" onclick="setFilter('all',this)">All</button>
-      <button class="filter-btn" onclick="setFilter('Quant',this)">Quant</button>
-      <button class="filter-btn" onclick="setFilter('VARC',this)">VARC</button>
-      <button class="filter-btn" onclick="setFilter('DI/LR',this)">DI/LR</button>
-    </div>
+    <div class="filter-bar" id="ins-filters"></div>
     <div class="ins-body">
       <div id="ins-left">
         <div class="sec-title">Where you haven't practiced yet</div>
@@ -1160,6 +1172,7 @@ function renderMap() {
       }).join('');
       const errHtml = getErrTagsHtml(sess.flatMap(s=>s.errors||[]), 3);
       const chart   = !isVoid ? miniChart(sess) : '';
+      const sessBlock = renderSessBlock(sess);
       return `<div class="sub-row-wrap">
         <div class="sub-row ${isVoid?'void-row':''}" onclick="this.parentElement.classList.toggle('open')">
           <div class="sub-name ${isVoid?'dim':''}">${h(subName)}</div>
@@ -1170,6 +1183,7 @@ function renderMap() {
         <div class="sub-detail">
           ${errHtml ? `<div class="sub-detail-errs">${errHtml}</div>` : (isVoid?`<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Not practiced yet</div>`:'')}
           ${ss.length>0 ? `<div class="ssub-block">${ssRows}</div>` : ''}
+          ${sessBlock}
           ${chart}
           <button class="btn" style="font-size:12px;padding:5px 14px;margin-top:10px" onclick="mapTapLog(${mapSubj},${ti},${si});event.stopPropagation()">+ Log session</button>
         </div>
@@ -1182,10 +1196,10 @@ function renderMap() {
 function setMapSubj(i) { mapSubj = i; renderMap(); }
 
 function mapTap(si, ti, subi) {
-  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true; nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; nav('log');
 }
 function mapTapLog(si, ti, subi) {
-  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true; nav('log');
+  wSubj = si; wTopic = ti; wSub = subi; wSubSub = -1; wMapJump = true; nav('log');
 }
 
 // ─────────────────────────────────────────────
@@ -1434,13 +1448,19 @@ async function saveNote() {
 //  INSIGHTS
 // ─────────────────────────────────────────────
 
-function setFilter(f, btn) {
-  insFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on'); renderInsights();
+function setFilter(f) { insFilter = f; renderInsights(); }
+function setFilterIdx(i) { const s = subjs()[i]; insFilter = s ? s.name : 'all'; renderInsights(); }
+function renderInsFilters() {
+  const subs = subjs();
+  const btns = [`<button class="filter-btn ${insFilter==='all'?'on':''}" onclick="setFilter('all')">All</button>`]
+    .concat(subs.map((s,i)=>`<button class="filter-btn ${insFilter===s.name?'on':''}" onclick="setFilterIdx(${i})">${h(s.name)}</button>`));
+  const bar = document.getElementById('ins-filters');
+  if (bar) bar.innerHTML = btns.join('');
 }
 
 function renderInsights() {
+  if (insFilter!=='all' && !subjs().some(s=>s.name===insFilter)) insFilter='all';
+  renderInsFilters();
   const sess  = insFilter==='all' ? SESSIONS : SESSIONS.filter(s=>s.subject===insFilter);
   const notes = insFilter==='all' ? NOTES    : NOTES.filter(n=>n.subject===insFilter);
   const att = sess.reduce((a,s)=>a+(s.attempted||0),0);
@@ -1483,7 +1503,7 @@ function renderVoids(filter) {
     return;
   }
   document.getElementById('ins-voids').innerHTML =
-    voids.slice(0,8).map(v=>`<div class="void-item">
+    voids.slice(0,8).map(v=>`<div class="void-item jumpable" data-jump data-subj="${h(v.subj)}" data-topic="${h(v.topic)}" data-sub="${h(v.sub)}" title="Log a session here →">
       <div class="void-dot"></div>
       <div>
         <div class="void-name">${v.subsub ? h(v.subsub) : h(v.sub)}</div>
@@ -1606,9 +1626,9 @@ function renderAccList(sess) {
     const cls = acc>=75?'ms-g':acc>=55?'ms-a':'ms-r';
     const errTypes = [...new Set((item.errs||[]).map(e=>e.t||mapOld(e.errType)).filter(Boolean))];
     const tags = errTypes.map(id=>{const et=ERR.find(e=>e.id===id);return et?`<span class="err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${et.label}</span>`:''}).join('');
-    return `<div class="acc-item">
+    return `<div class="acc-item jumpable" data-jump data-subj="${h(item.subj)}" data-topic="${h(item.topic)}" data-sub="${h(item.sub)}" title="Log a session here →">
       <div class="acc-item-top">
-        <div><div class="acc-item-name">${h(item.sub)}</div><div class="acc-item-path">${h(item.subj)} · ${h(item.topic)}</div></div>
+        <div><div class="acc-item-name">${h(item.sub||'—')}</div><div class="acc-item-path">${h(item.subj)} · ${h(item.topic)}</div></div>
         <div class="acc-stats"><span class="mini-stat ms-g">${item.cor}✓</span><span class="mini-stat ms-r">${item.wrg}✗</span><span class="mini-stat ${cls}">${acc}%</span></div>
       </div>
       ${tags?`<div style="margin-top:7px">${tags}</div>`:''}
@@ -1653,7 +1673,7 @@ function renderMgrTabs() {
 
 function setMgrSubj(i) { mgrSubj=i; renderMgrTabs(); renderMgr(); }
 
-function renderMgr() {
+function renderMgr(openIds = []) {
   const subj = subjs()[mgrSubj]; if (!subj) { document.getElementById('mgr-body').innerHTML=''; return; }
   document.getElementById('mgr-body').innerHTML = subj.topics.map((t,ti)=>{
     const subRows = getSubs(t).map((sub,si)=>{
@@ -1669,7 +1689,7 @@ function renderMgr() {
         <div class="sub-mgr-body">
           <div style="margin:6px 0 8px">${ssTags||'<span style="font-size:12px;color:var(--t3)">No sub-sub-topics yet</span>'}</div>
           <div class="add-row">
-            <input class="add-inp" id="ssi-${ti}-${si}" placeholder="New sub-sub-topic..." />
+            <textarea class="add-inp" id="ssi-${ti}-${si}" rows="2" placeholder="Add sub-sub-topics — one per line, paste a whole list" onkeydown="bulkKey(event,()=>addSubSub(${ti},${si}))"></textarea>
             <button class="add-go" onclick="addSubSub(${ti},${si})">Add</button>
           </div>
         </div>
@@ -1684,7 +1704,7 @@ function renderMgr() {
       <div class="mgr-body">
         <div style="margin:6px 0 8px">${subRows||'<span style="font-size:12px;color:var(--t3)">No sub-topics yet</span>'}</div>
         <div class="add-row">
-          <input class="add-inp" id="si-${ti}" placeholder="New sub-topic..." />
+          <textarea class="add-inp" id="si-${ti}" rows="2" placeholder="Add sub-topics — one per line, paste a whole list (⌘/Ctrl+Enter)" onkeydown="bulkKey(event,()=>addSub(${ti}))"></textarea>
           <button class="add-go" onclick="addSub(${ti})">Add</button>
         </div>
         <div style="margin-top:10px">
@@ -1694,22 +1714,27 @@ function renderMgr() {
     </div>`;
   }).join('') +
   `<div class="add-row" style="margin-top:10px">
-    <input class="add-inp" id="ti-new" placeholder="New topic in ${h(subj.name)}..." />
+    <textarea class="add-inp" id="ti-new" rows="2" placeholder="Add topics to ${h(subj.name)} — one per line" onkeydown="bulkKey(event,()=>addTopic())"></textarea>
     <button class="add-go" onclick="addTopic()">Add</button>
   </div>`;
+  openIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('open'); });
 }
 
 function toggleMgr(ti) { document.getElementById('mi-'+ti).classList.toggle('open'); }
 function toggleSubMgr(ti,si) { document.getElementById(`smi-${ti}-${si}`).classList.toggle('open'); }
 
 async function addSubSub(ti,si) {
-  const val = document.getElementById(`ssi-${ti}-${si}`).value.trim(); if (!val) return;
+  const el = document.getElementById(`ssi-${ti}-${si}`);
+  const names = splitBulk(el.value); if (!names.length) return;
   const subs = CFG.subjects[mgrSubj].topics[ti].subtopics;
   if (typeof subs[si] === 'string') subs[si] = { name: subs[si], subs: [] };
   if (!subs[si].subs) subs[si].subs = [];
-  subs[si].subs.push(val);
-  document.getElementById(`ssi-${ti}-${si}`).value = '';
-  await saveCfg(); renderMgr();
+  const seen = new Set(subs[si].subs.map(s=>String(s).toLowerCase()));
+  let added = 0;
+  names.forEach(n => { if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); subs[si].subs.push(n); added++; } });
+  el.value = '';
+  await saveCfg(); renderMgr(['mi-'+ti, `smi-${ti}-${si}`]);
+  toast(added ? `Added ${added} sub-sub-topic${added>1?'s':''}` : 'Already added');
 }
 async function delSubSub(ti,si,ssi) {
   if (!confirm('Remove this sub-sub-topic?')) return;
@@ -1719,15 +1744,27 @@ async function delSubSub(ti,si,ssi) {
 }
 
 async function addTopic() {
-  const val = document.getElementById('ti-new').value.trim(); if (!val) return;
-  CFG.subjects[mgrSubj].topics.push({name:val,subtopics:[]}); document.getElementById('ti-new').value='';
+  const el = document.getElementById('ti-new');
+  const names = splitBulk(el.value); if (!names.length) return;
+  const topics = CFG.subjects[mgrSubj].topics;
+  const seen = new Set(topics.map(t=>String(t.name||'').toLowerCase()));
+  let added = 0;
+  names.forEach(n => { if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); topics.push({name:n,subtopics:[]}); added++; } });
+  el.value='';
   await saveCfg(); renderMgr();
+  toast(added ? `Added ${added} topic${added>1?'s':''}` : 'Already added');
 }
 async function addSub(ti) {
-  const val = document.getElementById('si-'+ti).value.trim(); if (!val) return;
-  if (!CFG.subjects[mgrSubj].topics[ti].subtopics) CFG.subjects[mgrSubj].topics[ti].subtopics=[];
-  CFG.subjects[mgrSubj].topics[ti].subtopics.push(val); document.getElementById('si-'+ti).value='';
-  await saveCfg(); renderMgr();
+  const el = document.getElementById('si-'+ti);
+  const names = splitBulk(el.value); if (!names.length) return;
+  const topic = CFG.subjects[mgrSubj].topics[ti];
+  if (!topic.subtopics) topic.subtopics = [];
+  const seen = new Set(topic.subtopics.map(s=>getSubName(s).toLowerCase()));
+  let added = 0;
+  names.forEach(n => { if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); topic.subtopics.push(n); added++; } });
+  el.value = '';
+  await saveCfg(); renderMgr(['mi-'+ti]);
+  toast(added ? `Added ${added} sub-topic${added>1?'s':''}` : 'Already added');
 }
 async function delSub(ti,si) {
   if (!confirm('Remove this sub-topic?')) return;
@@ -1785,6 +1822,60 @@ function miniChart(sessions) {
 function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today() { return new Date().toISOString().split('T')[0]; }
 function uid()   { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+
+// Split a textarea into a clean list — one item per line. Newline (not comma) is the
+// separator so sub-topic names that legitimately contain commas (e.g. "Mean, Median, Mode")
+// stay intact when you paste a whole list at once.
+function splitBulk(str) { return (str||'').split('\n').map(t=>t.trim()).filter(Boolean); }
+function bulkKey(e, fn) { if ((e.metaKey||e.ctrlKey) && e.key==='Enter') { e.preventDefault(); fn(); } }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(String(d).slice(0,10)+'T00:00:00');
+  return isNaN(dt) ? d : dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+// Recent sessions for a sub-topic — so logged sessions are actually visible, not just rolled
+// into an aggregate %.
+function renderSessBlock(sess) {
+  if (!sess || !sess.length) return '';
+  const rows = [...sess].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1).slice(0,5).map(s => {
+    const a=s.attempted||0, c=s.correct||0, pct=a>0?Math.round(c/a*100):0;
+    const pc = pct>=75?'var(--green)':pct>=55?'var(--amber)':'var(--red)';
+    return `<div class="sess-row">
+      <span class="sd-date">${fmtDate(s.date)}</span>
+      <span class="sd-frac" style="color:${pc}">${c}/${a}</span>
+      ${s.subsubtopic?`<span class="sd-ss">${h(s.subsubtopic)}</span>`:''}
+      ${s.note?`<span class="sd-note">${h(s.note)}</span>`:'<span style="flex:1"></span>'}
+    </div>`;
+  }).join('');
+  const more = sess.length>5 ? `<div style="font-size:10px;color:var(--t3);text-align:center;margin-top:3px">+${sess.length-5} older</div>` : '';
+  return `<div class="sess-lbl">Recent sessions · ${sess.length}</div><div class="sess-list">${rows}</div>${more}`;
+}
+
+// Resolve subject/topic/sub-topic names back to wizard indices so Insights can deep-link
+// straight into the logging flow for a weak spot or a gap.
+function findPath(subjName, topicName, subName) {
+  const subs = subjs();
+  for (let si=0; si<subs.length; si++) {
+    if (subs[si].name!==subjName) continue;
+    const tps = subs[si].topics||[];
+    for (let ti=0; ti<tps.length; ti++) {
+      if (tps[ti].name!==topicName) continue;
+      const sl = getSubs(tps[ti]);
+      for (let bi=0; bi<sl.length; bi++) if (getSubName(sl[bi])===subName) return {si,ti,bi};
+    }
+  }
+  return null;
+}
+function jumpLog(subjName, topicName, subName) {
+  const p = findPath(subjName, topicName, subName);
+  if (!p) { toast('Could not find that sub-topic'); return; }
+  wSubj=p.si; wTopic=p.ti; wSub=p.bi; wSubSub=-1; wMapJump=true; nav('log');
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-jump]'); if (!el) return;
+  jumpLog(el.dataset.subj, el.dataset.topic, el.dataset.sub);
+});
 
 let toastT;
 function toast(msg) {
