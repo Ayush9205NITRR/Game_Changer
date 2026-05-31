@@ -1005,12 +1005,27 @@ const DEFAULT_SUBJECTS = [
   }
 ];
 
-const SQL = `-- Run once in Supabase SQL Editor
--- If tables already exist, run the ALTER lines to add missing columns:
-alter table if exists gmat_sessions add column if not exists note text;
-alter table if exists gmat_sessions add column if not exists errors jsonb;
+const SQL = `-- Run once in Supabase SQL Editor.
+-- Safe to re-run: every line is idempotent. If your tables already exist,
+-- these ALTERs add any missing columns (older versions were missing 'subtopic').
+alter table if exists gmat_sessions add column if not exists date date;
+alter table if exists gmat_sessions add column if not exists subject text;
+alter table if exists gmat_sessions add column if not exists topic text;
+alter table if exists gmat_sessions add column if not exists subtopic text;
 alter table if exists gmat_sessions add column if not exists subsubtopic text;
+alter table if exists gmat_sessions add column if not exists attempted int;
+alter table if exists gmat_sessions add column if not exists correct int;
+alter table if exists gmat_sessions add column if not exists wrong int;
+alter table if exists gmat_sessions add column if not exists errors jsonb;
+alter table if exists gmat_sessions add column if not exists note text;
+alter table if exists gmat_notes add column if not exists date date;
+alter table if exists gmat_notes add column if not exists subject text;
+alter table if exists gmat_notes add column if not exists topic text;
+alter table if exists gmat_notes add column if not exists subtopic text;
 alter table if exists gmat_notes add column if not exists subsubtopic text;
+alter table if exists gmat_notes add column if not exists insight text;
+alter table if exists gmat_notes add column if not exists questions jsonb;
+alter table if exists gmat_notes add column if not exists status int default 0;
 
 create table if not exists gmat_config (
   id text primary key, exam_date date, hrs_per_week int default 18,
@@ -1032,7 +1047,10 @@ create table if not exists gmat_mocks (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(), date date,
   name text, score int, sections jsonb
-);`;
+);
+
+-- Tell PostgREST to refresh its schema cache so new columns are visible immediately.
+notify pgrst, 'reload schema';`;
 
 // ─────────────────────────────────────────────
 //  STATE
@@ -1295,7 +1313,8 @@ function afterSubtopicPicked() {
   const subName = getSubName(sub);
   const ss    = getSubSubs(sub);
   const ssName = (wSubSub >= 0 && ss[wSubSub]) ? ss[wSubSub] : null;
-  const bc    = ssName ? `${topic.name} → ${h(subName)} → ${h(ssName)}` : `${topic.name} → ${h(subName)}`;
+  // Assigned via textContent below, so use raw names — h() would show literal "&amp;".
+  const bc    = ssName ? `${topic.name} → ${subName} → ${ssName}` : `${topic.name} → ${subName}`;
   if (wMode === 'practice') {
     document.getElementById('ls4p-sub').textContent = bc;
     pAtt = 0; pCor = 0;
@@ -1408,7 +1427,7 @@ async function saveSession() {
   const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName, subsubtopic:ssName, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
   if (sb) {
     const { data, error } = await sb.from('gmat_sessions').insert(row).select();
-    if (error) { toast('Save failed: ' + (error.message||error.code||'unknown')); console.error(error); return; }
+    if (error) { toast(saveErrMsg(error), 6500); console.error(error); return; }
     SESSIONS.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); SESSIONS.unshift(row); saveLocal(); }
   toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
@@ -1438,7 +1457,7 @@ async function saveNote() {
   const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName2, subsubtopic:ssName2, insight, questions:nQs, status:nStatus };
   if (sb) {
     const { data, error } = await sb.from('gmat_notes').insert(row).select();
-    if (error) { toast('Save failed — check connection'); return; }
+    if (error) { toast(saveErrMsg(error), 6500); console.error(error); return; }
     NOTES.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); NOTES.unshift(row); saveLocal(); }
   toast('Note saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
@@ -1877,11 +1896,20 @@ document.addEventListener('click', e => {
   jumpLog(el.dataset.subj, el.dataset.topic, el.dataset.sub);
 });
 
+// Turn a Supabase insert error into something the user can act on. The
+// "schema cache / column not found" case means their DB is missing columns.
+function saveErrMsg(error) {
+  const m = (error && (error.message || error.code)) || 'unknown';
+  return /column|schema cache|does not exist|PGRST/i.test(m)
+    ? 'Save failed — your database is missing columns. Open Settings → Copy SQL → run it in Supabase, then Save again.'
+    : 'Save failed: ' + m;
+}
+
 let toastT;
-function toast(msg) {
+function toast(msg, ms) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('show'), 2200);
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('show'), ms || 2200);
 }
 
 async function boot() { initSb(); await loadAll(); renderMap(); }
