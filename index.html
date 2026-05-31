@@ -1114,7 +1114,7 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
   <span id="app-name">Study OS</span>
   <div id="top-nav">
     <button class="nav-tab on" id="nt-map" onclick="nav('map')">Map</button>
-    <button class="nav-tab" id="nt-insights" onclick="nav('insights')">Insights</button>
+    <button class="nav-tab" id="nt-notes" onclick="nav('notes')">Notes</button>
     <button class="nav-tab" id="nt-settings" onclick="nav('settings')">Settings</button>
   </div>
   <button class="nav-tab-add" id="nt-log" onclick="nav('log')">+ Add</button>
@@ -1290,35 +1290,20 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
   </div>
 
   <!-- ══ INSIGHTS ══ -->
-  <div id="screen-insights" class="screen">
-    <div class="ins-subject-tabs" id="ins-filters"></div>
-    <div class="ins-layout">
-      <aside class="ins-topic-pane">
-        <div class="sec-title">Topics</div>
-        <div class="ins-topic-list" id="ins-topic-list"></div>
-      </aside>
-      <section class="ins-workspace">
-        <div class="ins-detail-head">
-          <div>
-            <div class="ins-eyebrow" id="ins-breadcrumb"></div>
-            <div class="ins-title" id="ins-title"></div>
-            <div class="ins-context" id="ins-context"></div>
-          </div>
-          <div class="ins-view-toggle">
-            <button id="ins-view-insights" onclick="setInsightView('insights')">Insights</button>
-            <button id="ins-view-notes" onclick="setInsightView('notes')">Notes</button>
-          </div>
-        </div>
-        <div class="ins-section">
-          <div class="sec-title">Sub-topics</div>
-          <div class="ins-sub-head">
-            <input type="search" class="ins-search-input" id="ins-sub-search" placeholder="Search sub-topic or sub-sub-topic" oninput="updateInsightSearch()" />
-          </div>
-          <div class="ins-subtopic-list" id="ins-subtopic-list"></div>
-        </div>
-        <div id="ins-detail-body"></div>
-      </section>
+  <div id="screen-notes" class="screen">
+    <div style="padding:14px 14px 0">
+      <div class="ins-subject-tabs" id="notes-subj-tabs"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+        <input type="search" class="ins-search-input" id="notes-search" placeholder="Search notes..." oninput="renderNotes()" style="flex:1" />
+        <select id="notes-status-filter" class="btn btn-sm" style="padding:6px 10px;font-size:12px" onchange="renderNotes()">
+          <option value="-1">All</option>
+          <option value="0">Got it</option>
+          <option value="1">Need review</option>
+          <option value="2">Still confused</option>
+        </select>
       </div>
+    </div>
+    <div id="notes-list" style="padding:0 14px 80px"></div>
   </div>
 
   <!-- ══ SETTINGS ══ -->
@@ -1493,6 +1478,7 @@ let pAtt = 0, pCor = 0;
 let wWrongs = []; // [{ subsubIdx, errType, reasons:[] }]
 let qnSubj = 0, qnTopic = -1, qnSub = -1, qnSubSub = -1, qnStatus = 0;
 let insFilter = 'Quant', insSubQ = '', insTopicIdx = 0, insSubIdx = -1, insSubSubIdx = -1, insView = 'insights', mgrSubj = 0, mapSubj = 0;
+let notesSubjFilter = '';
 let selNav = { subj: 0, topic: -1, sub: -1, subsub: -1 };
 let mapView = 'insights';
 let editingNoteId = null;
@@ -1575,7 +1561,7 @@ function setDb(color, label) {
 //  NAVIGATION
 // ─────────────────────────────────────────────
 
-const NAVS = ['map','log','insights','settings'];
+const NAVS = ['map','log','notes','settings'];
 
 function nav(name) {
   NAVS.forEach(n => {
@@ -1585,7 +1571,7 @@ function nav(name) {
   });
   if (name==='map')      { renderMap(); renderMapMain(); }
   if (name==='log')      resetWizard();
-  if (name==='insights') renderInsights();
+  if (name==='notes')    renderNotes();
   if (name==='settings') renderSettings();
 }
 
@@ -1890,8 +1876,8 @@ function renderMapNotes(ctx) {
   `;
 }
 
-function startEditNote(id) { editingNoteId = id; renderMapMain(); }
-function cancelEditNote() { editingNoteId = null; renderMapMain(); }
+function startEditNote(id) { editingNoteId = id; renderMapMain(); renderNotes(); }
+function cancelEditNote() { editingNoteId = null; renderMapMain(); renderNotes(); }
 
 async function saveEditNote(id) {
   const insight = document.getElementById('edit-note-text-'+id).value.trim();
@@ -1908,6 +1894,7 @@ async function saveEditNote(id) {
   editingNoteId = null;
   toast('Note updated');
   renderMapMain();
+  renderNotes();
 }
 
 async function deleteNote(id) {
@@ -1922,6 +1909,7 @@ async function deleteNote(id) {
   toast('Note deleted');
   renderMapMain();
   renderMapSidebar();
+  renderNotes();
 }
 
 function startEditSession(id) { editingSessionId = id; renderMapMain(); }
@@ -2354,7 +2342,81 @@ async function saveSessionNew() {
 }
 
 // ─────────────────────────────────────────────
-//  INSIGHTS
+//  NOTES SCREEN
+// ─────────────────────────────────────────────
+
+function setNotesSubj(name) { notesSubjFilter = name; renderNotes(); }
+
+function renderNotes() {
+  const tabsEl = document.getElementById('notes-subj-tabs');
+  const listEl = document.getElementById('notes-list');
+  if (!tabsEl || !listEl) return;
+
+  const allSubjs = subjs();
+  tabsEl.innerHTML =
+    `<button class="ins-subject-tab ${notesSubjFilter===''?'on':''}" onclick="setNotesSubj('')">All</button>` +
+    allSubjs.map(s =>
+      `<button class="ins-subject-tab ${notesSubjFilter===s.name?'on':''}" onclick="setNotesSubj('${s.name}')">${h(s.name)}</button>`
+    ).join('');
+
+  const q = (document.getElementById('notes-search')?.value || '').toLowerCase().trim();
+  const statusFilter = parseInt(document.getElementById('notes-status-filter')?.value ?? '-1');
+
+  let filtered = NOTES.slice();
+  if (notesSubjFilter) filtered = filtered.filter(n => n.subject === notesSubjFilter);
+  if (statusFilter >= 0) filtered = filtered.filter(n => (n.status || 0) === statusFilter);
+  if (q) filtered = filtered.filter(n =>
+    String(n.insight || '').toLowerCase().includes(q) ||
+    String(n.topic || '').toLowerCase().includes(q) ||
+    String(n.subtopic || '').toLowerCase().includes(q)
+  );
+  filtered.sort((a, b) => String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || '')));
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="card"><div class="empty-state">No notes yet</div></div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(n => {
+    const qs = (n.questions || []).filter(Boolean);
+    const statCls = n.status === 2 ? 'ms-r' : n.status === 1 ? 'ms-a' : 'ms-g';
+    if (editingNoteId === n.id) {
+      return `<div class="note-item" style="margin-bottom:8px">
+        <textarea id="edit-note-text-${n.id}" rows="3" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.5">${h(n.insight || '')}</textarea>
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+          <select id="edit-note-status-${n.id}" class="btn btn-sm" style="padding:4px 10px">
+            <option value="0" ${(n.status||0)===0?'selected':''}>Got it</option>
+            <option value="1" ${(n.status||0)===1?'selected':''}>Need review</option>
+            <option value="2" ${(n.status||0)===2?'selected':''}>Still confused</option>
+          </select>
+          <button class="btn btn-sm" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
+          <button class="btn btn-dark btn-sm" onclick="saveEditNote('${n.id}')">Save</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="note-item" style="margin-bottom:8px">
+      <div class="note-top">
+        <div>
+          <div class="acc-item-name">${h(n.topic || 'Untitled')}</div>
+          <div class="note-path">${h(n.subject || '')}${n.subtopic ? ' &middot; '+h(n.subtopic) : ''}${n.subsubtopic ? ' &middot; '+h(n.subsubtopic) : ''}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+          <span class="mini-stat ${statCls}">${noteStatusText(n.status)}</span>
+          <span class="note-date">${h(n.date || '')}</span>
+        </div>
+      </div>
+      <div class="note-insight">${h(n.insight || '')}</div>
+      ${qs.length ? `<div class="note-qs">${qs.map(q => `<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>` : ''}
+      <div style="display:flex;gap:4px;margin-top:8px">
+        <button class="btn btn-sm" onclick="startEditNote('${n.id}')" style="padding:3px 10px;font-size:11px">Edit</button>
+        <button class="btn btn-sm" onclick="deleteNote('${n.id}')" style="padding:3px 10px;font-size:11px;color:var(--red)">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+//  INSIGHTS (used by Map panel)
 // ─────────────────────────────────────────────
 
 function setFilter(f) { insFilter = f; resetInsightSelection(true); renderInsights(); }
@@ -2664,8 +2726,8 @@ function renderNotesPanel(notes, ctx) {
 }
 
 function filterToSubject(subj) {
-  const btn = [...document.querySelectorAll('.ins-subject-tab')].find(b => b.textContent.trim() === subj);
-  if (btn) { setFilter(subj); document.getElementById('screen-insights').scrollTo(0,0); }
+  notesSubjFilter = subj;
+  nav('notes');
 }
 
 // ─────────────────────────────────────────────
@@ -2692,7 +2754,7 @@ async function connectDb() {
   const key = document.getElementById('s-key').value.trim();
   if (!url||!key) { toast('Enter URL and key'); return; }
   localStorage.setItem('sb_url',url); localStorage.setItem('sb_key',key);
-  initSb(); await loadAll(); renderMap(); renderMapMain(); renderInsights(); toast('Connected');
+  initSb(); await loadAll(); renderMap(); renderMapMain(); renderNotes(); toast('Connected');
 }
 
 function copySQL() { navigator.clipboard.writeText(SQL).then(()=>toast('SQL copied')); }
