@@ -3,1046 +3,1976 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GMAT Study OS</title>
+<title>Study OS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  /* ── reset & base ── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #e8e8e6;
-    --text: #1a1a1a; --text2: #6b7280; --text3: #9ca3af;
-    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
-    --teal: #5DCAA5; --teal-bg: #E1F5EE; --teal-text: #085041; --teal-border: #5DCAA5;
-    --coral: #F0997B; --coral-bg: #FAECE7; --coral-text: #712B13; --coral-border: #F0997B;
-    --purple-bg: #EEEDFE; --purple-text: #3C3489; --purple-border: #AFA9EC;
-    --amber-bg: #FAEEDA; --amber-text: #633806; --amber-border: #FAC775;
-    --red: #D85A30; --green: #1D9E75; --amber: #BA7517;
-    --radius: 8px; --radius-lg: 12px;
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+/* ── reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── layout ── */
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
-  .topbar { display: flex; align-items: center; gap: 12px; padding: 0 24px; height: 52px; border-bottom: 0.5px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 10; }
-  .topbar-title { font-size: 15px; font-weight: 500; color: var(--text); }
-  .topbar-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
-  .nav-tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); background: var(--bg); padding: 0 24px; }
-  .nav-tab { font-size: 13px; padding: 10px 16px; border: none; background: none; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font); transition: color .15s; }
-  .nav-tab.on { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-  .main { padding: 24px; max-width: 860px; margin: 0 auto; width: 100%; }
-  .panel { display: none; } .panel.on { display: block; }
+:root {
+  --bg:     #F7F6F3;
+  --card:   #FFFFFF;
+  --border: #E5E4DF;
+  --text:   #1A1A18;
+  --t2:     #6B6B68;
+  --t3:     #ABABAB;
 
-  /* ── components ── */
-  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 12px; }
-  .sec { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: var(--text2); margin-bottom: 10px; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-  .kpi { background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; }
-  .kpi-val { font-size: 24px; font-weight: 500; color: var(--text); }
-  .kpi-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .04em; }
-  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
-  input, select, textarea { font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 8px 10px; background: var(--bg); color: var(--text); width: 100%; outline: none; }
-  input:focus, select:focus, textarea:focus { border-color: #6b7280; }
-  textarea { resize: vertical; min-height: 64px; }
-  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
-  .btn { font-size: 13px; padding: 8px 16px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; font-family: var(--font); white-space: nowrap; transition: background .12s; }
-  .btn:hover { background: var(--bg2); }
-  .btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
-  .btn-primary:hover { background: #333; }
-  .btn-sm { font-size: 12px; padding: 5px 12px; }
-  .btn-danger { color: var(--red); border-color: var(--coral); }
-  .btn-danger:hover { background: var(--coral-bg); }
-  .btn-icon { padding: 5px 8px; border-radius: var(--radius); border: 0.5px solid var(--border); background: none; color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1; }
-  .btn-icon:hover { background: var(--bg2); color: var(--text); }
-  .btn-icon.del:hover { background: var(--coral-bg); color: var(--red); border-color: var(--coral); }
-  .flex { display: flex; align-items: center; gap: 8px; }
-  .flex1 { flex: 1; }
-  .divider { border: none; border-top: 0.5px solid var(--border); margin: 14px 0; }
-  .chip { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-right: 4px; }
-  .chip-coral { background: var(--coral-bg); color: var(--coral-text); border: 0.5px solid var(--coral-border); }
-  .chip-purple { background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
-  .chip-amber { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
-  .chip-teal { background: var(--teal-bg); color: var(--teal-text); border: 0.5px solid var(--teal-border); }
-  .chip-gray { background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border2); }
-  .empty { text-align: center; padding: 2rem; color: var(--text2); font-size: 13px; }
-  .bar-row { display: grid; grid-template-columns: 150px 1fr 48px; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .bar-bg { height: 7px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
-  .bar-f { height: 100%; border-radius: 4px; }
-  .bname { font-size: 13px; color: var(--text); }
-  .bpct { font-size: 12px; color: var(--text2); text-align: right; }
-  .streak-dot { width: 28px; height: 28px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 10px; background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); }
-  .streak-dot.done { background: #C0DD97; border-color: #639922; color: #27500A; }
-  .streak-dot.today { border: 1.5px solid var(--text); }
-  .topt { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); cursor: pointer; margin: 3px; }
-  .topt:hover { background: var(--bg3); }
-  .topt.sel { background: var(--purple-bg); border-color: var(--purple-border); color: var(--purple-text); }
-  .item-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
-  .item-row:last-child { border-bottom: none; }
-  .item-name { flex: 1; font-size: 13px; }
-  .inline-edit { flex: 1; font-size: 13px; padding: 4px 8px; }
-  .subtab-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-  .subtab { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; }
-  .subtab.on { background: var(--text); color: var(--bg); border-color: transparent; }
-  .pool-bar-wrap { height: 10px; background: var(--bg2); border-radius: 5px; overflow: hidden; margin-top: 8px; }
-  .pool-bar-fill { height: 100%; border-radius: 5px; background: var(--teal); transition: width .4s; }
-  .pool-bar-fill.low { background: var(--coral); }
-  .patt-table-row { display: grid; grid-template-columns: 1fr 56px 56px 56px 130px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
-  .patt-table-head { font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); }
-  .patt-num { text-align: center; }
-  .mock-item { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 8px; cursor: pointer; transition: background .12s; }
-  .mock-item:hover { background: var(--bg2); }
-  .loading { text-align: center; padding: 3rem; color: var(--text2); font-size: 13px; }
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 100; display: none; }
-  .setup-notice { background: var(--amber-bg); border: 0.5px solid var(--amber-border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 16px; }
-  .setup-notice h3 { font-size: 14px; font-weight: 500; color: var(--amber-text); margin-bottom: 8px; }
-  .setup-notice p { font-size: 13px; color: var(--amber-text); line-height: 1.6; }
-  .setup-notice code { font-family: monospace; background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
-  @media (max-width: 640px) {
-    .kpi-grid, .g4 { grid-template-columns: 1fr 1fr; }
-    .g3 { grid-template-columns: 1fr 1fr; }
-    .main { padding: 16px; }
-    .patt-table-row { grid-template-columns: 1fr 44px 44px 44px; }
-    .patt-table-row .patt-top-err { display: none; }
-  }
+  --green:  #1D9E75;
+  --amber:  #D4A017;
+  --red:    #D85A30;
+  --void:   #DDDDD8;
+  --purple: #7B68EE;
+
+  /* error type colors */
+  --c-comp:    #E8684A;
+  --c-pattern: #7B68EE;
+  --c-misread: #2196F3;
+  --c-calc:    #D4A017;
+  --c-slow:    #1D9E75;
+
+  --r: 10px;
+  --r-sm: 7px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── app shell ── */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 68px;
+}
+
+/* ── topbar ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 20;
+}
+#topbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; }
+#db-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--t2);
+}
+#db-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+#db-dot.green { background: var(--green); }
+#db-dot.red   { background: var(--red); }
+
+/* ── screens ── */
+.screen { display: none; padding: 0 16px 8px; flex: 1; }
+.screen.on { display: block; }
+
+/* ── bottom nav ── */
+#bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 30;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 4px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--t3);
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.nav-btn.on { color: var(--green); }
+.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+
+/* ── cards & typography ── */
+.card {
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 10px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--t2);
+  margin-bottom: 12px;
+}
+h2 { font-size: 17px; font-weight: 700; }
+.hint { font-size: 12px; color: var(--t3); }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.btn-dark  { background: var(--text); color: #fff; }
+.btn-dark:hover { opacity: 0.85; }
+.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--text); }
+.btn-full  { width: 100%; }
+.btn-sm    { padding: 7px 14px; font-size: 13px; }
+
+/* big mode buttons on Log step 0 */
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 16px;
+  border-radius: var(--r);
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.mode-btn:hover, .mode-btn.picked {
+  border-color: var(--text);
+  background: var(--text);
+  color: #fff;
+}
+.mode-btn .ico  { font-size: 26px; }
+.mode-btn .mttl { font-size: 15px; font-weight: 600; display: block; }
+.mode-btn .mhint{ font-size: 12px; opacity: 0.65; display: block; }
+
+/* ── subject tabs ── */
+.subj-tabs {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.subj-tab {
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.subj-tab.on { background: var(--text); border-color: var(--text); color: #fff; }
+
+/* ── map: topic groups & subtopic rows ── */
+.topic-group { margin-bottom: 14px; }
+.topic-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--card);
+  border-radius: var(--r-sm);
+  margin-bottom: 5px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.sub-row:hover { border-color: var(--border); }
+.sub-row.void-row {
+  background: var(--bg);
+  border: 1.5px dashed var(--border);
+}
+.sub-name { flex: 1; font-size: 14px; font-weight: 500; }
+.sub-name.dim { color: var(--t3); }
+
+/* accuracy bubble */
+.acc-bub {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  min-width: 52px;
+  text-align: center;
+}
+.acc-good { background: #D4F1E7; color: var(--green); }
+.acc-warn { background: #FEF3D0; color: var(--amber); }
+.acc-bad  { background: #FCE8E0; color: var(--red); }
+.acc-void { background: var(--void); color: var(--t3); }
+
+/* note dot */
+.note-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.note-dot.has { background: var(--purple); }
+
+/* ── log wizard ── */
+.log-step { display: none; }
+.log-step.on { display: block; }
+
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.back-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 17px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-ttl  { font-size: 18px; font-weight: 700; }
+.step-sub  { font-size: 12px; color: var(--t2); margin-top: 2px; }
+
+/* progress bar */
+.prog-bar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+.prog-seg {
+  height: 3px;
+  border-radius: 2px;
+  flex: 1;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.prog-seg.done   { background: var(--text); }
+.prog-seg.active { background: var(--green); }
+
+/* pick list (subject / topic / subtopic selection) */
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 58vh;
+  overflow-y: auto;
+}
+.pick-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--card);
+  border-radius: var(--r-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.pick-item:hover { border-color: var(--border); }
+.pick-item.sel   { background: var(--text); border-color: var(--text); color: #fff; }
+.pick-ttl  { font-size: 14px; font-weight: 600; }
+.pick-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.pick-item.sel .pick-sub { color: rgba(255,255,255,0.65); }
+.pick-arrow { font-size: 14px; color: var(--t3); }
+.pick-item.sel .pick-arrow { color: rgba(255,255,255,0.6); }
+
+/* ── steppers (±) ── */
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+.stepper-row + .stepper-row { border-top: 1px solid var(--border); }
+.stepper-info .lbl { font-size: 14px; font-weight: 600; }
+.stepper-info .sub { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--bg);
+}
+.step-btn {
+  width: 38px; height: 38px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.1s;
+}
+.step-btn:hover { background: var(--border); }
+.step-val {
+  min-width: 42px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* wrong summary box */
+.wrong-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--r-sm);
+  margin-top: 12px;
+}
+.wrong-box .num { font-size: 32px; font-weight: 800; }
+.wrong-box .lbl { font-size: 13px; }
+
+/* ── error type cards ── */
+.err-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+
+.err-card {
+  border-radius: var(--r);
+  border: 2px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.err-card.picked { border-color: rgba(0,0,0,0.3); }
+
+.err-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+}
+.err-ico  { font-size: 22px; }
+.err-name { font-size: 14px; font-weight: 700; }
+.err-desc { font-size: 12px; opacity: 0.7; margin-top: 1px; }
+.err-badge {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.12);
+  padding: 1px 9px;
+  border-radius: 100px;
+}
+
+.err-reasons {
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 14px 13px;
+}
+.err-card.picked .err-reasons { display: flex; }
+
+.reason-chip {
+  padding: 4px 11px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255,255,255,0.45);
+  border: 1.5px solid rgba(0,0,0,0.10);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.reason-chip.sel {
+  background: rgba(0,0,0,0.14);
+  border-color: transparent;
+  font-weight: 700;
+}
+
+/* ── notes form ── */
+.note-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+.note-textarea:focus { outline: none; border-color: var(--text); }
+
+.status-row { display: flex; gap: 7px; }
+.status-opt {
+  flex: 1;
+  padding: 9px 6px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  text-align: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--card);
+  transition: all 0.12s;
+}
+.status-opt.s0.on { background: #D4F1E7; border-color: var(--green); color: var(--green); }
+.status-opt.s1.on { background: #FEF3D0; border-color: var(--amber); color: var(--amber); }
+.status-opt.s2.on { background: #FCE8E0; border-color: var(--red); color: var(--red); }
+
+/* questions in notes */
+.q-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.q-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--bg);
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+.q-text { flex: 1; line-height: 1.4; }
+.q-del {
+  background: none;
+  border: none;
+  color: var(--t3);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.add-row {
+  display: flex;
+  gap: 7px;
+}
+.add-inp {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+}
+.add-inp:focus { outline: none; border-color: var(--text); }
+.add-go {
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── insights ── */
+.kpi-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.kpi-box { background: var(--card); border-radius: var(--r); padding: 13px 14px; }
+.kpi-val { font-size: 26px; font-weight: 800; }
+.kpi-lbl { font-size: 11px; color: var(--t2); margin-top: 2px; }
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.filter-btn {
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.filter-btn.on { background: var(--text); border-color: var(--text); color: #fff; }
+
+.sec-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+
+/* void list */
+.void-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  border: 1.5px dashed var(--border);
+  margin-bottom: 6px;
+}
+.void-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--void); flex-shrink: 0; }
+.void-name { font-size: 13px; font-weight: 600; }
+.void-sub  { font-size: 11px; color: var(--t3); }
+
+/* error bar */
+.ebar-row { margin-bottom: 14px; }
+.ebar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.ebar-label { font-size: 13px; font-weight: 700; }
+.ebar-count { font-size: 13px; color: var(--t2); }
+.ebar-hint  { font-size: 11px; color: var(--t3); margin-bottom: 5px; }
+.ebar-track { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.ebar-fill  { height: 100%; border-radius: 4px; }
+
+/* subtopic accuracy */
+.acc-item {
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 7px;
+}
+.acc-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.acc-item-name { font-size: 14px; font-weight: 600; }
+.acc-item-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.acc-stats { display: flex; gap: 5px; flex-shrink: 0; }
+.mini-stat {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+.ms-g { background: #D4F1E7; color: var(--green); }
+.ms-r { background: #FCE8E0; color: var(--red); }
+.ms-a { background: #FEF3D0; color: var(--amber); }
+.ms-b { background: var(--void); color: var(--t2); }
+.err-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 600;
+  margin: 3px 3px 0 0;
+}
+
+/* ── settings ── */
+.sset-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--t2);
+  margin-bottom: 8px;
+}
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 12px; color: var(--t2); font-weight: 500; margin-bottom: 5px; }
+.field input, .field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--text); }
+
+.sql-box {
+  background: #1C1C1A;
+  color: #D4D4CF;
+  border-radius: var(--r-sm);
+  padding: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  margin-bottom: 10px;
+}
+
+/* topic manager */
+.mgr-item {
+  background: var(--card);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+.mgr-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 13px;
+  cursor: pointer;
+}
+.mgr-name { flex: 1; font-size: 14px; font-weight: 600; }
+.mgr-ct   { font-size: 11px; color: var(--t3); }
+.mgr-arr  { font-size: 11px; color: var(--t3); transition: transform 0.15s; }
+.mgr-item.open .mgr-arr { transform: rotate(180deg); }
+.mgr-body {
+  display: none;
+  padding: 0 13px 13px;
+  border-top: 1px solid var(--border);
+}
+.mgr-item.open .mgr-body { display: block; }
+
+.sub-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--bg);
+  font-size: 12px;
+  margin: 4px 3px 0 0;
+}
+.sub-tag-x {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t2);
+}
+
+/* ── toast ── */
+#toast {
+  position: fixed;
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: #fff;
+  padding: 9px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.22s;
+  z-index: 200;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── utilities ── */
+.mt4  { margin-top: 4px; }
+.mt8  { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mb8  { margin-bottom: 8px; }
+.mb12 { margin-bottom: 12px; }
+.tc   { text-align: center; }
+.t2   { color: var(--t2); }
+.t3   { color: var(--t3); }
+.empty-state {
+  text-align: center;
+  padding: 28px 0;
+  color: var(--t3);
+  font-size: 13px;
+}
+
+@media (min-width: 480px) {
+  #app { box-shadow: 0 0 60px rgba(0,0,0,0.07); }
+}
 </style>
 </head>
 <body>
-<div class="app">
+<div id="app">
 
-<!-- topbar -->
-<div class="topbar">
-  <div class="topbar-title">GMAT Study OS</div>
-  <span class="topbar-badge" id="db-status">⬤ connecting…</span>
-  <div style="flex:1"></div>
-  <button class="btn btn-sm" onclick="showPanel('setup')">Setup</button>
-</div>
-
-<!-- nav -->
-<div class="nav-tabs">
-  <button class="nav-tab on" onclick="showPanel('dash')">Dashboard</button>
-  <button class="nav-tab" onclick="showPanel('training')">Training log</button>
-  <button class="nav-tab" onclick="showPanel('mocks')">Mocks</button>
-  <button class="nav-tab" onclick="showPanel('analysis')">Analysis</button>
-  <button class="nav-tab" onclick="showPanel('topics')">Topics & patterns</button>
-</div>
-
-<div class="main">
-
-<!-- ═══════════════════════════════════════════════════
-     CONFIG NOTICE (shown when keys not set)
-═══════════════════════════════════════════════════ -->
-<div class="setup-notice" id="config-notice" style="display:none">
-  <h3>⚙ Connect Supabase — one-time setup</h3>
-  <p>
-    Open <code>index.html</code> in a text editor and find the two lines near the top of the &lt;script&gt; section:<br><br>
-    <code>const SUPABASE_URL = 'YOUR_SUPABASE_URL'</code><br>
-    <code>const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'</code><br><br>
-    Replace with your values from <strong>Supabase → Project Settings → API</strong>. Save, refresh — done.
-  </p>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     DASHBOARD
-═══════════════════════════════════════════════════ -->
-<div id="dash" class="panel on">
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-val" id="d-pool">—</div><div class="kpi-lbl">Hours left</div></div>
-    <div class="kpi"><div class="kpi-val" id="d-days">—</div><div class="kpi-lbl">Days to exam</div></div>
-    <div class="kpi"><div class="kpi-val" id="d-qacc">—</div><div class="kpi-lbl">Quant accuracy</div></div>
-    <div class="kpi"><div class="kpi-val" id="d-mocks">0</div><div class="kpi-lbl">Mocks given</div></div>
-  </div>
-
-  <div class="card">
-    <div class="sec">Time pool — auto-subtracts daily</div>
-    <div style="font-size:13px;color:var(--text2)" id="d-pool-text">Set exam date in Setup tab.</div>
-    <div class="pool-bar-wrap"><div class="pool-bar-fill" id="d-pool-bar" style="width:0%"></div></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px" id="d-streak"></div>
-  </div>
-
-  <div class="card">
-    <div class="sec">Topic accuracy — training</div>
-    <div id="d-topic-bars"><div class="empty" style="padding:.5rem">No sessions yet</div></div>
-  </div>
-
-  <div class="card">
-    <div class="sec">Error breakdown</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--red)" id="ec-comp">0</div><div class="kpi-lbl">Comprehension</div></div>
-      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:#7F77DD" id="ec-patt">0</div><div class="kpi-lbl">Pattern miss</div></div>
-      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--amber)" id="ec-opt">0</div><div class="kpi-lbl">Optimal soln</div></div>
-      <div class="kpi"><div class="kpi-val" style="font-size:20px;color:var(--text2)" id="ec-silly">0</div><div class="kpi-lbl">Silly / calc</div></div>
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span id="topbar-title">Study OS</span>
+    <div id="db-badge">
+      <span id="db-label">Local</span>
+      <div id="db-dot"></div>
     </div>
   </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════
-     TRAINING LOG
-═══════════════════════════════════════════════════ -->
-<div id="training" class="panel">
-  <div class="card">
-    <div class="sec">Log session — bulk entry</div>
-    <div class="g3">
-      <div><label>Subject</label>
-        <select id="t-subj" onchange="refreshTopics();refreshPatterns()"></select>
+  <!-- ══ MAP ══ -->
+  <div id="screen-map" class="screen on">
+    <div class="subj-tabs" id="map-tabs"></div>
+    <div id="map-body"></div>
+  </div>
+
+  <!-- ══ LOG (wizard) ══ -->
+  <div id="screen-log" class="screen">
+
+    <!-- Step 0: Pick mode -->
+    <div id="ls0" class="log-step on">
+      <div class="step-head">
+        <div>
+          <div class="step-ttl">What did you do?</div>
+          <div class="step-sub">Pick one to get started</div>
+        </div>
       </div>
-      <div><label>Topic</label>
-        <select id="t-topic" onchange="refreshPatterns()"></select>
-      </div>
-      <div><label>Pattern</label>
-        <select id="t-patt"></select>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="mode-btn" onclick="startMode('practice')">
+          <span class="ico">📚</span>
+          <div>
+            <span class="mttl">I practiced questions</span>
+            <span class="mhint">Log what you tried and what went wrong</span>
+          </div>
+        </button>
+        <button class="mode-btn" onclick="startMode('notes')">
+          <span class="ico">📖</span>
+          <div>
+            <span class="mttl">I read / studied something</span>
+            <span class="mhint">Add a note or save what you learned</span>
+          </div>
+        </button>
       </div>
     </div>
-    <div class="g3">
-      <div><label>Attempted</label><input type="number" id="t-att" min="1" placeholder="20" oninput="calcWrong()" /></div>
-      <div><label>Correct</label><input type="number" id="t-cor" min="0" placeholder="15" oninput="calcWrong()" /></div>
-      <div><label>Wrong (auto)</label><input type="number" id="t-wrg" readonly style="background:var(--bg2)" placeholder="5" /></div>
-    </div>
-    <button class="btn btn-primary" onclick="startErrors()">Analyze wrong questions →</button>
-  </div>
-  <div id="t-err-queue"></div>
-  <div id="t-save-wrap" style="display:none;margin-top:10px">
-    <button class="btn btn-primary" onclick="saveSession()">Save session ✓</button>
-  </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════
-     MOCKS
-═══════════════════════════════════════════════════ -->
-<div id="mocks" class="panel">
-  <div class="subtab-row">
-    <button class="subtab on" onclick="mockSubtab('add',this)">Add mock</button>
-    <button class="subtab" onclick="mockSubtab('list',this)">All mocks</button>
-  </div>
-  <div id="mock-add-panel">
-    <div class="card">
-      <div class="g3">
-        <div><label>Mock name</label><input id="m-name" placeholder="Mock 1 / Official Practice 1" /></div>
-        <div><label>Total score</label><input id="m-score" type="number" placeholder="640" /></div>
-        <div><label>Date</label><input id="m-date" type="date" /></div>
+    <!-- Step 1: Subject -->
+    <div id="ls1" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">Pick a subject</div>
+          <div class="step-sub" id="ls1-sub"></div>
+        </div>
       </div>
-      <div class="divider"></div>
-      <div class="sec">Quant — by topic</div>
-      <div id="mock-quant-inputs" class="g3"></div>
-      <div class="divider"></div>
-      <div class="sec">VARC — by section</div>
-      <div id="mock-varc-inputs" class="g3"></div>
-      <div class="divider"></div>
-      <div class="sec">DI / LR — by type</div>
-      <div id="mock-di-inputs" class="g3"></div>
-      <button class="btn btn-primary" onclick="saveMock()">Save mock</button>
+      <div class="prog-bar" id="prog1"></div>
+      <div class="pick-list" id="subj-list"></div>
     </div>
-  </div>
-  <div id="mock-list-panel" style="display:none"><div id="mock-list-inner"></div></div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════
-     ANALYSIS
-═══════════════════════════════════════════════════ -->
-<div id="analysis" class="panel">
-  <div class="subtab-row">
-    <button class="subtab on" onclick="anSubtab('training',this)">Training analysis</button>
-    <button class="subtab" onclick="anSubtab('mock',this)">Mock analysis</button>
-  </div>
-  <div id="an-training-panel"><div id="an-train-content"></div></div>
-  <div id="an-mock-panel" style="display:none"><div id="an-mock-content"></div></div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     TOPICS & PATTERNS MANAGER
-═══════════════════════════════════════════════════ -->
-<div id="topics" class="panel">
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="subj-tabs-mgr"></div>
-  <div id="topic-mgr-content"></div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     SETUP
-═══════════════════════════════════════════════════ -->
-<div id="setup" class="panel">
-  <div class="card">
-    <div class="sec">Exam settings</div>
-    <div class="g2">
-      <div><label>Exam date</label><input type="date" id="cfg-exam" /></div>
-      <div><label>Available hours / week</label><input type="number" id="cfg-hrs" placeholder="18" /></div>
+    <!-- Step 2: Topic -->
+    <div id="ls2" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">Pick a topic</div>
+          <div class="step-sub" id="ls2-sub"></div>
+        </div>
+      </div>
+      <div class="prog-bar" id="prog2"></div>
+      <div class="pick-list" id="topic-list"></div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save settings</button>
-  </div>
-  <div class="card">
-    <div class="sec">Supabase connection</div>
-    <div class="g2">
-      <div><label>Project URL</label><input id="cfg-url" placeholder="https://xxxx.supabase.co" /></div>
-      <div><label>Anon key</label><input id="cfg-key" placeholder="eyJ..." /></div>
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="saveSupabaseConfig()">Save & reconnect</button>
-    <p style="font-size:12px;color:var(--text2);margin-top:8px">Find these in Supabase → Project Settings → API. Stored in localStorage only.</p>
-  </div>
-  <div class="card">
-    <div class="sec">Database setup — run this SQL once in Supabase SQL editor</div>
-    <pre id="sql-block" style="background:var(--bg2);border-radius:var(--radius);padding:14px;font-size:11px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;color:var(--text)"></pre>
-    <button class="btn btn-sm" style="margin-top:8px" onclick="copySql()">Copy SQL</button>
-  </div>
-</div>
 
-</div><!-- /main -->
-</div><!-- /app -->
-<div class="toast" id="toast"></div>
+    <!-- Step 3: Sub-topic -->
+    <div id="ls3" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">Pick a sub-topic</div>
+          <div class="step-sub" id="ls3-sub"></div>
+        </div>
+      </div>
+      <div class="prog-bar" id="prog3"></div>
+      <div class="pick-list" id="subtopic-list"></div>
+    </div>
+
+    <!-- Step 4P: Questions (Practice) -->
+    <div id="ls4p" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">How many questions?</div>
+          <div class="step-sub" id="ls4p-sub"></div>
+        </div>
+      </div>
+      <div class="prog-bar" id="prog4p"></div>
+
+      <div class="card">
+        <div class="stepper-row">
+          <div class="stepper-info">
+            <div class="lbl">Attempted</div>
+            <div class="sub">Total questions tried</div>
+          </div>
+          <div class="stepper">
+            <button class="step-btn" onclick="step('att',-1)">−</button>
+            <div class="step-val" id="v-att">0</div>
+            <button class="step-btn" onclick="step('att',1)">+</button>
+          </div>
+        </div>
+        <div class="stepper-row">
+          <div class="stepper-info">
+            <div class="lbl">Got right</div>
+            <div class="sub">Correct answers</div>
+          </div>
+          <div class="stepper">
+            <button class="step-btn" onclick="step('cor',-1)">−</button>
+            <div class="step-val" id="v-cor">0</div>
+            <button class="step-btn" onclick="step('cor',1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrong-box" id="wrong-box">
+        <div style="font-size:36px" id="wrong-ico">⬜</div>
+        <div>
+          <div class="lbl" style="font-size:13px;color:var(--t2)">Got wrong</div>
+          <div class="num" id="v-wrong">0</div>
+        </div>
+      </div>
+
+      <button class="btn btn-dark btn-full mt12" onclick="goToErrors()">Next →</button>
+    </div>
+
+    <!-- Step 4N: Notes -->
+    <div id="ls4n" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">Add a note</div>
+          <div class="step-sub" id="ls4n-sub"></div>
+        </div>
+      </div>
+      <div class="prog-bar" id="prog4n"></div>
+
+      <div class="card mb8">
+        <div class="card-title">What did you learn? (key insight)</div>
+        <textarea class="note-textarea" id="n-insight" placeholder="Write the main thing you understood or learned..."></textarea>
+      </div>
+
+      <div class="card mb8">
+        <div class="card-title">Questions I still have</div>
+        <div class="q-list" id="q-list"></div>
+        <div class="add-row">
+          <input class="add-inp" id="q-inp" placeholder="Type a question and tap Add..." />
+          <button class="add-go" onclick="addQ()">Add</button>
+        </div>
+      </div>
+
+      <div class="card mb12">
+        <div class="card-title">How well do you get this?</div>
+        <div class="status-row">
+          <button class="status-opt s0" onclick="pickStatus(0)">✅ Got it</button>
+          <button class="status-opt s1" onclick="pickStatus(1)">🔁 Need to review</button>
+          <button class="status-opt s2" onclick="pickStatus(2)">❓ Still confused</button>
+        </div>
+      </div>
+
+      <button class="btn btn-dark btn-full" onclick="saveNote()">Save note ✓</button>
+    </div>
+
+    <!-- Step 5P: What went wrong -->
+    <div id="ls5p" class="log-step">
+      <div class="step-head">
+        <div class="back-btn" onclick="logBack()">←</div>
+        <div>
+          <div class="step-ttl">What went wrong?</div>
+          <div class="step-sub" id="ls5p-sub">Tap a card, then pick the reason</div>
+        </div>
+      </div>
+      <div class="prog-bar" id="prog5p"></div>
+
+      <div class="err-cards" id="err-cards"></div>
+
+      <div class="card mb12">
+        <div class="card-title">Quick note (optional)</div>
+        <textarea class="note-textarea" id="s-note" placeholder="Anything to remember about this session..."></textarea>
+      </div>
+
+      <button class="btn btn-dark btn-full" onclick="saveSession()">Save session ✓</button>
+    </div>
+
+  </div>
+
+  <!-- ══ INSIGHTS ══ -->
+  <div id="screen-insights" class="screen">
+    <div class="kpi-2" id="ins-kpis"></div>
+    <div class="filter-bar" id="ins-filters">
+      <button class="filter-btn on" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('Quant',this)">Quant</button>
+      <button class="filter-btn" onclick="setFilter('VARC',this)">VARC</button>
+      <button class="filter-btn" onclick="setFilter('DI/LR',this)">DI/LR</button>
+    </div>
+
+    <div class="sec-title">Where you haven't practiced yet</div>
+    <div id="ins-voids" class="mb12"></div>
+
+    <div class="sec-title">Why you're getting things wrong</div>
+    <div id="ins-errors" class="mb12"></div>
+
+    <div class="sec-title">Your weakest sub-topics</div>
+    <div id="ins-acc"></div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div id="screen-settings" class="screen">
+
+    <div class="mb12">
+      <div class="sset-title mb8">Study plan</div>
+      <div class="card">
+        <div class="field">
+          <label>Exam date</label>
+          <input type="date" id="s-date" />
+        </div>
+        <div class="field">
+          <label>Hours per week</label>
+          <input type="number" id="s-hrs" min="1" max="80" placeholder="18" />
+        </div>
+        <button class="btn btn-dark btn-sm" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+
+    <div class="mb12">
+      <div class="sset-title mb8">Connect Supabase (optional — for cloud sync)</div>
+      <div class="card">
+        <div class="field">
+          <label>Project URL</label>
+          <input type="text" id="s-url" placeholder="https://xyz.supabase.co" />
+        </div>
+        <div class="field">
+          <label>Anon Key</label>
+          <input type="text" id="s-key" placeholder="eyJ..." />
+        </div>
+        <button class="btn btn-dark btn-sm" onclick="connectDb()">Connect</button>
+        <p class="hint mt8">Without this, your data is saved only in this browser.</p>
+      </div>
+    </div>
+
+    <div class="mb12">
+      <div class="sset-title mb8">Database setup — run this once in Supabase SQL editor</div>
+      <div class="card">
+        <div class="sql-box" id="sql-out"></div>
+        <button class="btn btn-ghost btn-sm" onclick="copySQL()">Copy SQL</button>
+      </div>
+    </div>
+
+    <div class="mb12">
+      <div class="sset-title mb8">Topics &amp; Sub-topics</div>
+      <div class="subj-tabs" id="mgr-tabs"></div>
+      <div id="mgr-body"></div>
+    </div>
+
+  </div>
+
+</div><!-- end #app -->
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <button class="nav-btn on" id="nb-map" onclick="nav('map')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+    Map
+  </button>
+  <button class="nav-btn" id="nb-log" onclick="nav('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Add
+  </button>
+  <button class="nav-btn" id="nb-insights" onclick="nav('insights')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Insights
+  </button>
+  <button class="nav-btn" id="nb-settings" onclick="nav('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Settings
+  </button>
+</nav>
+
+<div id="toast"></div>
 
 <script>
-/* ════════════════════════════════════════════════════
-   CONFIG  — paste your Supabase values here OR use the Setup tab
-════════════════════════════════════════════════════ */
-const FALLBACK_URL = 'YOUR_SUPABASE_URL';
-const FALLBACK_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ─────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────
 
-/* ════════════════════════════════════════════════════
-   SQL to run once in Supabase SQL Editor
-════════════════════════════════════════════════════ */
-const SETUP_SQL = `
--- GMAT Study OS — run once in Supabase SQL Editor
+const ERR = [
+  {
+    id: 'comp',
+    label: "Didn't understand it",
+    desc: 'Read the question but got confused by it',
+    ico: '🤔',
+    col: '#E8684A',
+    bg:  '#FEF0EB',
+    reasons: [
+      "Couldn't turn words into math / equations",
+      'Question language was confusing',
+      "Couldn't simplify the scenario",
+      'Missing a concept needed to solve this'
+    ]
+  },
+  {
+    id: 'pattern',
+    label: "Didn't know how to solve",
+    desc: 'Understood the question — just no idea what method to use',
+    ico: '🔍',
+    col: '#7B68EE',
+    bg:  '#F0EFFF',
+    reasons: [
+      "Couldn't find the right method",
+      'Applied the wrong method',
+      "Unsure how much of the question to read first",
+      'Multiple methods looked right — picked wrong one'
+    ]
+  },
+  {
+    id: 'misread',
+    label: 'Read it wrong',
+    desc: 'The method was right — but you missed something in the question',
+    ico: '👁️',
+    col: '#2196F3',
+    bg:  '#EBF5FE',
+    reasons: [
+      'Was rushing — skipped something',
+      'Skipped a line or condition',
+      'Misunderstood a word or symbol',
+      'Missed a hidden constraint in the question'
+    ]
+  },
+  {
+    id: 'calc',
+    label: 'Math went wrong',
+    desc: 'Right method — but made a calculation mistake',
+    ico: '🔢',
+    col: '#D4A017',
+    bg:  '#FEF9E7',
+    reasons: [
+      'Division or fraction error',
+      'Multiplication error',
+      'Sign error (+ vs −)',
+      'Small arithmetic slip',
+      'Unit or conversion error'
+    ]
+  },
+  {
+    id: 'slow',
+    label: 'Took too long',
+    desc: 'Got it right eventually — but used a slow approach',
+    ico: '⚡',
+    col: '#1D9E75',
+    bg:  '#E8F8F3',
+    reasons: [
+      'Missed a shortcut or trick',
+      'Used brute force instead',
+      'Over-complicated it',
+      'Right method but execution too slow'
+    ]
+  }
+];
 
+const N_STATUS = ['✅ Got it', '🔁 Need to review', '❓ Still confused'];
+const N_STATUS_CLS = ['got', 'review', 'confused'];
+const N_STATUS_COLORS = ['var(--green)', 'var(--amber)', 'var(--red)'];
+
+const DEFAULT_SUBJECTS = [
+  {
+    name: 'Quant',
+    topics: [
+      { name: 'Number Properties', subtopics: ['Divisibility', 'HCF / LCM', 'Remainders', 'Factors', 'Even & Odd', 'Prime numbers'] },
+      { name: 'Algebra',           subtopics: ['Linear equations', 'Quadratic equations', 'Inequalities', 'Absolute value', 'Functions'] },
+      { name: 'Geometry',          subtopics: ['Triangles', 'Circles', 'Coordinate geometry', 'Lines & angles', '3D shapes'] },
+      { name: 'Word Problems',     subtopics: ['Speed, Distance & Time', 'Work & Time', 'Mixtures', 'Profit & Loss', 'Age problems'] },
+      { name: 'Statistics',        subtopics: ['Mean, Median, Mode', 'Standard deviation', 'Range'] },
+      { name: 'Data Sufficiency',  subtopics: ['Yes / No type DS', 'Value type DS', 'Common traps'] },
+      { name: 'P & C',             subtopics: ['Permutations', 'Combinations', 'Circular arrangement'] },
+      { name: 'Probability',       subtopics: ['Basic probability', 'Conditional probability', 'Independent events'] }
+    ]
+  },
+  {
+    name: 'VARC',
+    topics: [
+      { name: 'Reading Comprehension', subtopics: ['Main idea', 'Inference', 'Tone & attitude', 'Vocabulary in context', "Author's purpose"] },
+      { name: 'Critical Reasoning',    subtopics: ['Strengthen', 'Weaken', 'Assumption', 'Bold face', 'Evaluate'] },
+      { name: 'Sentence Correction',   subtopics: ['Modifiers', 'Parallelism', 'Verb tense', 'Idioms', 'Subject-verb agreement'] }
+    ]
+  },
+  {
+    name: 'DI/LR',
+    topics: [
+      { name: 'Data Interpretation', subtopics: ['Table reading', 'Graphs & charts', 'Multi-source reasoning', 'Two-part analysis'] },
+      { name: 'Logical Reasoning',   subtopics: ['Inference chain', 'Syllogism', 'Assumption identification'] }
+    ]
+  }
+];
+
+const SQL = `-- Run once in Supabase SQL Editor
 create table if not exists gmat_config (
-  id text primary key default 'main',
+  id text primary key,
   exam_date date,
-  hrs_per_week numeric default 18,
-  subjects jsonb default '[]'::jsonb,
-  mock_sections jsonb default '{}'::jsonb,
+  hrs_per_week int default 18,
+  subjects jsonb,
   updated_at timestamptz default now()
 );
 
 create table if not exists gmat_sessions (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(),
-  date date default current_date,
+  date date,
   subject text,
   topic text,
-  pattern text,
-  attempted int default 0,
-  correct int default 0,
-  wrong int default 0,
-  errors jsonb default '[]'::jsonb
+  subtopic text,
+  attempted int,
+  correct int,
+  wrong int,
+  errors jsonb,
+  note text
+);
+
+create table if not exists gmat_notes (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  date date,
+  subject text,
+  topic text,
+  subtopic text,
+  insight text,
+  questions jsonb,
+  status int default 0
 );
 
 create table if not exists gmat_mocks (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(),
-  date date default current_date,
+  date date,
   name text,
   score int,
-  quant jsonb default '{}'::jsonb,
-  varc jsonb default '{}'::jsonb,
-  di jsonb default '{}'::jsonb
-);
+  sections jsonb
+);`;
 
--- Insert default config row
-insert into gmat_config (id) values ('main') on conflict do nothing;
-`.trim();
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
 
-/* ════════════════════════════════════════════════════
-   DEFAULT TOPICS/PATTERNS
-════════════════════════════════════════════════════ */
-const DEFAULT_SUBJECTS = [
-  { name: 'Quant', topics: [
-    { name: 'Number Properties', patterns: ['Divisibility','HCF/LCM','Remainders','Factors','Even/Odd','Prime numbers'] },
-    { name: 'Algebra', patterns: ['Linear equations','Quadratic','Inequalities','Absolute value','Functions'] },
-    { name: 'Geometry', patterns: ['Triangles','Circles','Coordinate geometry','Lines & angles','3D shapes'] },
-    { name: 'Word Problems', patterns: ['Time-speed-distance','Work & time','Mixtures','Profit & loss','Age problems'] },
-    { name: 'Statistics', patterns: ['Mean/Median/Mode','Standard deviation','Range'] },
-    { name: 'Data Sufficiency', patterns: ['Yes/No DS','Value DS','Trap assumptions'] },
-    { name: 'P&C', patterns: ['Permutations','Combinations','Circular arrangement'] },
-    { name: 'Probability', patterns: ['Basic probability','Conditional','Independent events'] }
-  ]},
-  { name: 'VARC', topics: [
-    { name: 'Reading Comprehension', patterns: ['Main idea','Inference','Tone','Vocabulary in context','Author purpose'] },
-    { name: 'Critical Reasoning', patterns: ['Strengthen','Weaken','Assumption','Bold face','Evaluate'] },
-    { name: 'Sentence Correction', patterns: ['Modifier','Parallelism','Verb tense','Idiom','Subject-verb agreement'] }
-  ]},
-  { name: 'DI/LR', topics: [
-    { name: 'Data Interpretation', patterns: ['Table reading','Graph / chart','Multi-source reasoning','Two-part analysis'] },
-    { name: 'Logical Reasoning', patterns: ['Inference chain','Syllogism','Assumption identification'] }
-  ]}
-];
-const DEFAULT_MOCK_SECTIONS = {
-  quant: ['Number Properties','Algebra','Geometry','Word Problems','Statistics','Data Sufficiency','P&C','Probability'],
-  varc: ['RC — Main idea','RC — Inference','RC — Tone','CR — Strengthen','CR — Weaken','CR — Assumption','SC — Modifier','SC — Parallelism','SC — Verb tense'],
-  di: ['Table interpretation','Graph / chart','Multi-source reasoning','Two-part analysis','Logical reasoning']
-};
-
-/* ════════════════════════════════════════════════════
-   STATE
-════════════════════════════════════════════════════ */
 let sb = null;
-let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS, mockSections: DEFAULT_MOCK_SECTIONS };
-let SESSIONS = [], MOCKS = [];
-let pending = null, pendingErrs = [];
-let activeSubjMgr = 0, editingMgr = null;
-let anFilter = 'all';
+let CFG = { examDate: null, hrsPerWeek: 18, subjects: DEFAULT_SUBJECTS };
+let SESSIONS = [];
+let NOTES    = [];
 
-/* ════════════════════════════════════════════════════
-   SUPABASE INIT
-════════════════════════════════════════════════════ */
-function getSupabaseCreds() {
-  const url = localStorage.getItem('sb_url') || FALLBACK_URL;
-  const key = localStorage.getItem('sb_key') || FALLBACK_KEY;
-  return { url, key };
-}
+// wizard
+let wMode    = null;   // 'practice' | 'notes'
+let wSubj    = -1;
+let wTopic   = -1;
+let wSub     = -1;
+let wMapJump = false;  // came from map tap
 
-async function initSupabase() {
-  const { url, key } = getSupabaseCreds();
-  const status = document.getElementById('db-status');
-  if (url === 'YOUR_SUPABASE_URL' || !url || !key || key === 'YOUR_SUPABASE_ANON_KEY') {
-    status.textContent = '⬤ offline (localStorage)';
-    status.style.color = '#BA7517';
-    document.getElementById('config-notice').style.display = 'block';
-    loadFromLocalStorage();
-    return;
+let pAtt = 0, pCor = 0;
+let selErr = {};       // { errId: { reasons: [idx,...] } }
+
+let nStatus = 0;
+let nQs     = [];      // questions array
+
+let insFilter = 'all';
+let mgrSubj   = 0;
+let mapSubj   = 0;
+
+// ─────────────────────────────────────────────
+//  DB / STORAGE
+// ─────────────────────────────────────────────
+
+function initSb() {
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  if (url && key) {
+    try { sb = supabase.createClient(url, key); return true; }
+    catch(e) { sb = null; }
   }
-  try {
-    sb = window.supabase.createClient(url, key);
-    status.textContent = '⬤ connected';
-    status.style.color = '#1D9E75';
-    document.getElementById('config-notice').style.display = 'none';
-    await loadAll();
-  } catch(e) {
-    status.textContent = '⬤ error — check keys';
-    status.style.color = '#D85A30';
-    loadFromLocalStorage();
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   DATA LOAD / SAVE
-════════════════════════════════════════════════════ */
-function loadFromLocalStorage() {
-  const raw = localStorage.getItem('gmat_data_v3');
-  if (raw) { const d = JSON.parse(raw); CFG = d.cfg || CFG; SESSIONS = d.sessions || []; MOCKS = d.mocks || []; }
-  renderAll();
-}
-function saveToLocalStorage() {
-  localStorage.setItem('gmat_data_v3', JSON.stringify({ cfg: CFG, sessions: SESSIONS, mocks: MOCKS }));
+  return false;
 }
 
 async function loadAll() {
-  const [cfgRes, sessRes, mockRes] = await Promise.all([
-    sb.from('gmat_config').select('*').eq('id','main').single(),
-    sb.from('gmat_sessions').select('*').order('created_at', { ascending: false }),
-    sb.from('gmat_mocks').select('*').order('date', { ascending: true })
-  ]);
-  if (cfgRes.data) {
-    CFG.examDate = cfgRes.data.exam_date;
-    CFG.hrsPerWeek = cfgRes.data.hrs_per_week || 18;
-    if (cfgRes.data.subjects?.length) CFG.subjects = cfgRes.data.subjects;
-    if (cfgRes.data.mock_sections && Object.keys(cfgRes.data.mock_sections).length) CFG.mockSections = cfgRes.data.mock_sections;
-  }
-  SESSIONS = sessRes.data || [];
-  MOCKS = mockRes.data || [];
-  renderAll();
-}
-
-async function saveConfig() {
-  CFG.examDate = document.getElementById('cfg-exam').value || null;
-  CFG.hrsPerWeek = parseFloat(document.getElementById('cfg-hrs').value) || 18;
   if (sb) {
-    await sb.from('gmat_config').upsert({ id:'main', exam_date: CFG.examDate, hrs_per_week: CFG.hrsPerWeek, subjects: CFG.subjects, mock_sections: CFG.mockSections });
-  } else { saveToLocalStorage(); }
-  toast('Settings saved');
-  renderDash();
+    try {
+      const [cr, sr, nr] = await Promise.all([
+        sb.from('gmat_config').select('*').eq('id','main').single(),
+        sb.from('gmat_sessions').select('*').order('date',{ascending:false}),
+        sb.from('gmat_notes').select('*').order('date',{ascending:false})
+      ]);
+      if (cr.data) {
+        CFG.examDate   = cr.data.exam_date;
+        CFG.hrsPerWeek = cr.data.hrs_per_week || 18;
+        if (cr.data.subjects) CFG.subjects = cr.data.subjects;
+      }
+      SESSIONS = sr.data || [];
+      NOTES    = nr.data || [];
+      setDb('green','Synced');
+    } catch(e) { setDb('red','Error'); loadLocal(); }
+  } else { loadLocal(); }
 }
 
-async function saveCFGFull() {
-  if (sb) {
-    await sb.from('gmat_config').upsert({ id:'main', exam_date: CFG.examDate, hrs_per_week: CFG.hrsPerWeek, subjects: CFG.subjects, mock_sections: CFG.mockSections });
-  } else { saveToLocalStorage(); }
-}
-
-function saveSupabaseConfig() {
-  localStorage.setItem('sb_url', document.getElementById('cfg-url').value.trim());
-  localStorage.setItem('sb_key', document.getElementById('cfg-key').value.trim());
-  toast('Reconnecting…');
-  setTimeout(() => location.reload(), 800);
-}
-
-/* ════════════════════════════════════════════════════
-   NAVIGATION
-════════════════════════════════════════════════════ */
-function showPanel(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-  const idx = ['dash','training','mocks','analysis','topics','setup'].indexOf(id);
-  document.querySelectorAll('.nav-tab')[idx]?.classList.add('on');
-  if (id === 'dash') renderDash();
-  if (id === 'analysis') { renderTrainAnalysis(); renderMockAnalysis(); }
-  if (id === 'topics') renderTopicMgr();
-  if (id === 'mocks') { buildMockInputs(); renderMockList(); }
-  if (id === 'setup') renderSetup();
-  if (id === 'training') { refreshTopics(); refreshPatterns(); }
-}
-
-/* ════════════════════════════════════════════════════
-   RENDER ALL
-════════════════════════════════════════════════════ */
-function renderAll() {
-  renderDash();
-  refreshTopics();
-  refreshPatterns();
-  buildMockInputs();
-  renderMockList();
-  renderSetup();
-}
-
-/* ════════════════════════════════════════════════════
-   DASHBOARD
-════════════════════════════════════════════════════ */
-function renderDash() {
-  if (CFG.examDate) {
-    const exam = new Date(CFG.examDate);
-    const now = new Date();
-    const daysLeft = Math.max(0, Math.round((exam - now) / 86400000));
-    const weeksLeft = daysLeft / 7;
-    const hrsLeft = Math.round(weeksLeft * CFG.hrsPerWeek);
-    const totalWeeks = Math.round((exam - new Date(exam.getFullYear(), exam.getMonth() - 3, exam.getDate())) / 604800000) || 12;
-    const pctLeft = Math.min(100, Math.round(weeksLeft / totalWeeks * 100));
-    document.getElementById('d-pool').textContent = hrsLeft + 'h';
-    document.getElementById('d-days').textContent = daysLeft + 'd';
-    document.getElementById('d-pool-text').textContent = `${daysLeft} days to exam · ~${hrsLeft}h remaining at ${CFG.hrsPerWeek}h/week`;
-    const bar = document.getElementById('d-pool-bar');
-    bar.style.width = pctLeft + '%';
-    bar.className = 'pool-bar-fill' + (pctLeft < 30 ? ' low' : '');
-  }
-  document.getElementById('d-mocks').textContent = MOCKS.length;
-  const qs = SESSIONS.filter(s => s.subject === 'Quant');
-  const qt = qs.reduce((a,s) => a + (s.attempted||0), 0);
-  const qc = qs.reduce((a,s) => a + (s.correct||0), 0);
-  document.getElementById('d-qacc').textContent = qt ? Math.round(qc/qt*100)+'%' : '—';
-  const errs = SESSIONS.flatMap(s => s.errors || []);
-  document.getElementById('ec-comp').textContent = errs.filter(e => e.errType === 'comprehension').length;
-  document.getElementById('ec-patt').textContent = errs.filter(e => e.errType === 'pattern').length;
-  document.getElementById('ec-opt').textContent = errs.filter(e => e.errType === 'optimal').length;
-  document.getElementById('ec-silly').textContent = errs.filter(e => e.errType === 'silly').length;
-  renderTopicBars();
-  renderStreak();
-}
-
-function renderTopicBars() {
-  const byTopic = {};
-  SESSIONS.forEach(s => {
-    if (!byTopic[s.topic]) byTopic[s.topic] = { att:0, cor:0 };
-    byTopic[s.topic].att += (s.attempted||0);
-    byTopic[s.topic].cor += (s.correct||0);
-  });
-  const el = document.getElementById('d-topic-bars');
-  const keys = Object.keys(byTopic);
-  if (!keys.length) { el.innerHTML = '<div class="empty" style="padding:.5rem">No sessions yet</div>'; return; }
-  const COLORS = ['#CECBF6','#5DCAA5','#F0997B','#FAC775','#85B7EB','#ED93B1','#97C459','#F5C4B3'];
-  el.innerHTML = keys.map((t,i) => {
-    const p = byTopic[t].att ? Math.round(byTopic[t].cor / byTopic[t].att * 100) : 0;
-    return `<div class="bar-row"><span class="bname">${t}</span><div class="bar-bg"><div class="bar-f" style="width:${p}%;background:${COLORS[i%8]}"></div></div><span class="bpct">${p}%</span></div>`;
-  }).join('');
-}
-
-function renderStreak() {
-  const today = new Date();
-  const days = Array.from({length:14}, (_,i) => { const d = new Date(today); d.setDate(d.getDate()-(13-i)); return d.toISOString().split('T')[0]; });
-  const active = new Set(SESSIONS.map(s => s.date));
-  const todayStr = today.toISOString().split('T')[0];
-  document.getElementById('d-streak').innerHTML = days.map(d => {
-    const l = new Date(d).toLocaleDateString('en',{weekday:'narrow'});
-    const cls = 'streak-dot' + (active.has(d) ? ' done' : '') + (d === todayStr ? ' today' : '');
-    return `<div class="${cls}" title="${d}">${l}</div>`;
-  }).join('');
-}
-
-/* ════════════════════════════════════════════════════
-   TRAINING — dropdowns
-════════════════════════════════════════════════════ */
-function refreshTopics() {
-  const subj = document.getElementById('t-subj');
-  if (!subj) return;
-  subj.innerHTML = CFG.subjects.map(s => `<option>${s.subject_name || s.name}</option>`).join('');
-  refreshPatterns();
-}
-function getSubjName(el) { return el?.options[el.selectedIndex]?.text || ''; }
-function refreshPatterns() {
-  const subjName = getSubjName(document.getElementById('t-subj'));
-  const s = CFG.subjects.find(x => (x.name||x.subject_name) === subjName);
-  const topicSel = document.getElementById('t-topic');
-  if (!topicSel || !s) return;
-  topicSel.innerHTML = (s.topics||[]).map(t => `<option>${t.name}</option>`).join('');
-  updatePatternDropdown();
-}
-function updatePatternDropdown() {
-  const subjName = getSubjName(document.getElementById('t-subj'));
-  const topicName = getSubjName(document.getElementById('t-topic'));
-  const s = CFG.subjects.find(x => (x.name||x.subject_name) === subjName);
-  const t = s?.topics?.find(x => x.name === topicName);
-  const pattSel = document.getElementById('t-patt');
-  if (!pattSel) return;
-  pattSel.innerHTML = (t?.patterns||['General']).map(p => `<option>${p}</option>`).join('');
-}
-function calcWrong() {
-  const a = parseInt(document.getElementById('t-att').value)||0;
-  const c = parseInt(document.getElementById('t-cor').value)||0;
-  document.getElementById('t-wrg').value = Math.max(0, a - c);
-}
-
-/* ════════════════════════════════════════════════════
-   TRAINING — error tree
-════════════════════════════════════════════════════ */
-const TREE = [
-  { q: 'Comprehension issue?', opts: ['Yes — missed word/phrasing','No — understood question'] },
-  { q: 'Pattern identified correctly?', opts: ['Yes — right pattern','No — wrong pattern applied'] },
-  { q: 'Optimal solution known?', opts: ['Yes — knew approach','No — did not know approach'] },
-  { q: 'Final error type?', opts: ['Silly mistake','Calculation error','Wrong comprehension','Wrong pattern','Wrong approach'] }
-];
-const RESOLVES = new Set(['Yes — missed word/phrasing','No — wrong pattern applied','No — did not know approach','Silly mistake','Calculation error','Wrong comprehension','Wrong pattern','Wrong approach']);
-const ERR_MAP = { 'Yes — missed word/phrasing':'comprehension','No — wrong pattern applied':'pattern','No — did not know approach':'optimal','Silly mistake':'silly','Calculation error':'silly','Wrong comprehension':'comprehension','Wrong pattern':'pattern','Wrong approach':'optimal' };
-const ERR_COLOR = { comprehension:'coral', pattern:'purple', optimal:'amber', silly:'gray', other:'gray' };
-
-function startErrors() {
-  const att = parseInt(document.getElementById('t-att').value)||0;
-  const cor = parseInt(document.getElementById('t-cor').value)||0;
-  if (!att) { toast('Enter attempted count'); return; }
-  const wrg = Math.max(0, att - cor);
-  pending = {
-    subject: getSubjName(document.getElementById('t-subj')),
-    topic: getSubjName(document.getElementById('t-topic')),
-    pattern: getSubjName(document.getElementById('t-patt')),
-    attempted: att, correct: cor, wrong: wrg,
-    date: new Date().toISOString().split('T')[0]
-  };
-  pendingErrs = [];
-  const q = document.getElementById('t-err-queue');
-  if (wrg === 0) {
-    q.innerHTML = `<div class="card" style="border-color:var(--teal-border)"><div style="font-size:13px;color:var(--teal-text)">✓ All correct — clean session!</div></div>`;
-    document.getElementById('t-save-wrap').style.display = 'block'; return;
-  }
-  let html = `<div class="sec" style="margin-top:4px">${wrg} wrong question${wrg>1?'s':''} — analyze each</div>`;
-  for (let i = 0; i < wrg; i++) {
-    html += `<div class="card" id="ec${i}" style="margin-bottom:8px">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text2)">Wrong ${i+1} / ${wrg} · <span style="color:var(--text)">${pending.topic} → ${pending.pattern}</span></div>
-      <div id="etree${i}">${renderTreeStep(i, 0)}</div>
-    </div>`;
-  }
-  q.innerHTML = html;
-  document.getElementById('t-save-wrap').style.display = 'none';
-}
-
-function renderTreeStep(qi, step) {
-  if (step >= TREE.length) return '';
-  const node = TREE[step];
-  return `<div id="tstep${qi}_${step}" style="margin-bottom:8px">
-    <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px">${node.q}</div>
-    <div>${node.opts.map(o => `<button class="topt" onclick="pickTree(${qi},${step},'${o.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}</div>
-  </div>`;
-}
-
-function pickTree(qi, step, opt, btn) {
-  btn.closest('div').querySelectorAll('.topt').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
-  if (!pendingErrs[qi]) pendingErrs[qi] = { path:[], errType:'', fix:'', done:false };
-  pendingErrs[qi].path[step] = opt;
-  if (RESOLVES.has(opt)) {
-    pendingErrs[qi].errType = ERR_MAP[opt] || 'other';
-    const col = ERR_COLOR[pendingErrs[qi].errType] || 'gray';
-    const fixId = `fix${qi}`;
-    let fixDiv = document.getElementById(`efix${qi}`);
-    if (!fixDiv) {
-      fixDiv = document.createElement('div');
-      fixDiv.id = `efix${qi}`;
-      document.getElementById(`etree${qi}`).appendChild(fixDiv);
+function loadLocal() {
+  const raw = localStorage.getItem('studyos_v2');
+  if (!raw) { setDb('','Local'); return; }
+  try {
+    const d = JSON.parse(raw);
+    if (d.cfg) {
+      CFG.examDate   = d.cfg.examDate;
+      CFG.hrsPerWeek = d.cfg.hrsPerWeek || 18;
+      if (d.cfg.subjects) CFG.subjects = d.cfg.subjects;
     }
-    fixDiv.innerHTML = `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
-      <div style="margin-bottom:8px"><span class="chip chip-${col}">${pendingErrs[qi].errType}</span></div>
-      <label>Fix / pattern to remember</label>
-      <textarea id="${fixId}" style="margin-top:4px" placeholder="e.g. For DS Yes/No — always test each statement independently…"></textarea>
-      <button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="doneErr(${qi})">Done ✓</button>
-    </div>`;
-  } else {
-    const nextId = `tstep${qi}_${step+1}`;
-    let existing = document.getElementById(nextId);
-    if (existing) existing.remove();
-    const div = document.createElement('div');
-    div.innerHTML = renderTreeStep(qi, step + 1);
-    document.getElementById(`etree${qi}`).appendChild(div.firstElementChild);
-  }
+    SESSIONS = d.sessions || [];
+    NOTES    = d.notes    || [];
+  } catch(e) {}
+  setDb('','Local');
 }
 
-function doneErr(qi) {
-  pendingErrs[qi].fix = document.getElementById(`fix${qi}`)?.value || '';
-  pendingErrs[qi].done = true;
-  document.getElementById(`ec${qi}`).style.borderColor = 'var(--teal-border)';
-  const allDone = Array.from({length: pending.wrong}, (_,i) => pendingErrs[i]?.done).every(Boolean);
-  if (allDone) document.getElementById('t-save-wrap').style.display = 'block';
-}
-
-async function saveSession() {
-  if (!pending) return;
-  const errs = Array.from({length: pending.wrong}, (_,i) => ({
-    errType: pendingErrs[i]?.errType || 'other',
-    fix: pendingErrs[i]?.fix || ''
+function saveLocal() {
+  localStorage.setItem('studyos_v2', JSON.stringify({
+    cfg: { examDate: CFG.examDate, hrsPerWeek: CFG.hrsPerWeek, subjects: CFG.subjects },
+    sessions: SESSIONS,
+    notes: NOTES
   }));
-  const row = { ...pending, errors: errs };
-  if (sb) {
-    const { data, error } = await sb.from('gmat_sessions').insert([{
-      date: row.date, subject: row.subject, topic: row.topic, pattern: row.pattern,
-      attempted: row.attempted, correct: row.correct, wrong: row.wrong, errors: row.errors
-    }]).select().single();
-    if (!error && data) SESSIONS.unshift(data);
-  } else {
-    row.id = Date.now().toString(); SESSIONS.unshift(row); saveToLocalStorage();
-  }
-  toast('Session saved!');
-  document.getElementById('t-err-queue').innerHTML = '';
-  document.getElementById('t-save-wrap').style.display = 'none';
-  document.getElementById('t-att').value = '';
-  document.getElementById('t-cor').value = '';
-  document.getElementById('t-wrg').value = '';
-  pending = null; pendingErrs = [];
-  renderDash();
 }
 
-/* ════════════════════════════════════════════════════
-   MOCKS
-════════════════════════════════════════════════════ */
-function buildMockInputs() {
-  const ms = CFG.mockSections || DEFAULT_MOCK_SECTIONS;
-  ['quant','varc','di'].forEach(key => {
-    const secs = ms[key] || [];
-    document.getElementById(`mock-${key}-inputs`).innerHTML = secs.map(s => {
-      const k = s.replace(/\W/g,'_');
-      return `<div><label>${s}</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-        <input placeholder="Correct" id="mc_${key}_${k}_c" type="number" />
-        <input placeholder="Total" id="mc_${key}_${k}_t" type="number" />
-      </div></div>`;
+async function saveCfg() {
+  if (sb) {
+    await sb.from('gmat_config').upsert({
+      id: 'main',
+      exam_date: CFG.examDate,
+      hrs_per_week: CFG.hrsPerWeek,
+      subjects: CFG.subjects,
+      updated_at: new Date().toISOString()
+    });
+  }
+  saveLocal();
+}
+
+function setDb(color, label) {
+  const dot = document.getElementById('db-dot');
+  dot.className = color;
+  document.getElementById('db-label').textContent = label;
+}
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+
+const NAVS = ['map','log','insights','settings'];
+const NAV_TITLES = { map:'Study Map', log:'Add Entry', insights:'Insights', settings:'Settings' };
+
+function nav(name) {
+  NAVS.forEach(n => {
+    document.getElementById('screen-'+n).classList.toggle('on', n===name);
+    document.getElementById('nb-'+n).classList.toggle('on', n===name);
+  });
+  document.getElementById('topbar-title').textContent = NAV_TITLES[name];
+
+  if (name==='map')      renderMap();
+  if (name==='log')      resetWizard();
+  if (name==='insights') renderInsights();
+  if (name==='settings') renderSettings();
+}
+
+// ─────────────────────────────────────────────
+//  MAP
+// ─────────────────────────────────────────────
+
+function renderMap() {
+  const subjs = CFG.subjects || DEFAULT_SUBJECTS;
+
+  document.getElementById('map-tabs').innerHTML = subjs.map((s,i) =>
+    `<button class="subj-tab ${i===mapSubj?'on':''}" onclick="setMapSubj(${i})">${h(s.name)}</button>`
+  ).join('');
+
+  const subj = subjs[mapSubj];
+  document.getElementById('map-body').innerHTML = subj.topics.map(topic => {
+    const rows = (topic.subtopics||[]).map(sub => {
+      const sess  = SESSIONS.filter(s=>s.subject===subj.name && s.topic===topic.name && s.subtopic===sub);
+      const notes = NOTES.filter(n=>n.subject===subj.name && n.topic===topic.name && n.subtopic===sub);
+      const att   = sess.reduce((a,s)=>a+(s.attempted||0),0);
+      const cor   = sess.reduce((a,s)=>a+(s.correct||0),0);
+      const hasNote = notes.length>0;
+      const isVoid  = att===0;
+
+      let bub;
+      if (isVoid) {
+        bub = `<span class="acc-bub acc-void">Not done</span>`;
+      } else {
+        const acc = Math.round(cor/att*100);
+        const cls = acc>=75?'acc-good':acc>=55?'acc-warn':'acc-bad';
+        bub = `<span class="acc-bub ${cls}">${acc}%</span>`;
+      }
+      const noteDot = `<div class="note-dot ${hasNote?'has':''}" title="${hasNote?'Has notes':'No notes yet'}"></div>`;
+
+      return `<div class="sub-row ${isVoid?'void-row':''}"
+        onclick="mapTap(${mapSubj},${subj.topics.indexOf(topic)},${JSON.stringify(topic.subtopics||[]).indexOf(JSON.stringify(sub))>-1?(topic.subtopics||[]).indexOf(sub):-1})">
+        <div class="sub-name ${isVoid?'dim':''}">${h(sub)}</div>
+        ${bub}
+        ${noteDot}
+      </div>`;
     }).join('');
-  });
-}
 
-function readMockSecs(key) {
-  const secs = (CFG.mockSections || DEFAULT_MOCK_SECTIONS)[key] || [];
-  const obj = {};
-  secs.forEach(s => {
-    const k = s.replace(/\W/g,'_');
-    const c = parseInt(document.getElementById(`mc_${key}_${k}_c`)?.value)||0;
-    const t = parseInt(document.getElementById(`mc_${key}_${k}_t`)?.value)||0;
-    if (t > 0) obj[s] = { c, t, w: Math.max(0, t-c) };
-  });
-  return obj;
-}
-
-async function saveMock() {
-  const name = document.getElementById('m-name').value.trim();
-  const score = parseInt(document.getElementById('m-score').value)||0;
-  const date = document.getElementById('m-date').value || new Date().toISOString().split('T')[0];
-  if (!name || !score) { toast('Enter mock name and score'); return; }
-  const row = { name, score, date, quant: readMockSecs('quant'), varc: readMockSecs('varc'), di: readMockSecs('di') };
-  if (sb) {
-    const { data, error } = await sb.from('gmat_mocks').insert([row]).select().single();
-    if (!error && data) MOCKS.push(data);
-  } else {
-    row.id = Date.now().toString(); MOCKS.push(row); saveToLocalStorage();
-  }
-  toast('Mock saved!');
-  document.getElementById('m-name').value = '';
-  document.getElementById('m-score').value = '';
-  mockSubtab('list', document.querySelectorAll('#mocks .subtab')[1]);
-  renderDash();
-}
-
-function mockSubtab(id, btn) {
-  document.getElementById('mock-add-panel').style.display = id === 'add' ? 'block' : 'none';
-  document.getElementById('mock-list-panel').style.display = id === 'list' ? 'block' : 'none';
-  document.querySelectorAll('#mocks .subtab').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  if (id === 'list') renderMockList();
-}
-
-function pct(c, t) { return t ? Math.round(c/t*100) : null; }
-function accColor(p) { return p == null ? 'var(--text2)' : p >= 75 ? '#1D9E75' : p >= 55 ? '#BA7517' : '#D85A30'; }
-
-function renderMockList() {
-  const el = document.getElementById('mock-list-inner');
-  if (!MOCKS.length) { el.innerHTML = '<div class="empty">No mocks yet</div>'; return; }
-  el.innerHTML = [...MOCKS].reverse().map((m, ri) => {
-    const i = MOCKS.length - 1 - ri;
-    const allSecs = { ...(m.quant||{}), ...(m.varc||{}), ...(m.di||{}) };
-    const totC = Object.values(allSecs).reduce((a,s) => a + (s.c||0), 0);
-    const totT = Object.values(allSecs).reduce((a,s) => a + (s.t||0), 0);
-    const op = pct(totC, totT);
-    return `<div class="mock-item" onclick="showMockDetail(${i})">
-      <div class="flex">
-        <div class="flex1">
-          <div style="font-size:14px;font-weight:500">${m.name}</div>
-          <div style="font-size:12px;color:var(--text2)">${m.date} · ${totT} qs · ${op !== null ? op+'% overall' : '—'}</div>
-        </div>
-        <div style="font-size:24px;font-weight:500;color:${accColor(op)}">${m.score}</div>
-      </div>
+    return `<div class="topic-group">
+      <div class="topic-lbl">${h(topic.name)}</div>
+      ${rows}
     </div>`;
   }).join('');
 }
 
-function showMockDetail(idx) {
-  anSubtab('mock', document.querySelectorAll('#analysis .subtab')[1]);
-  showPanel('analysis');
-  const m = MOCKS[idx];
-  const renderSecs = (secs, title) => {
-    const entries = Object.entries(secs || {}).filter(([,v]) => v.t > 0);
-    if (!entries.length) return '';
-    return `<div class="card" style="margin-bottom:10px">
-      <div class="sec">${title}</div>
-      ${entries.map(([topic, v]) => {
-        const p = pct(v.c, v.t);
-        return `<div class="bar-row"><span class="bname" style="font-size:12px">${topic}</span><div class="bar-bg"><div class="bar-f" style="width:${p||0}%;background:${accColor(p)}"></div></div><span class="bpct" style="color:${accColor(p)}">${p !== null ? p+'%' : '—'}</span></div>`;
-      }).join('')}
+function setMapSubj(i) { mapSubj = i; renderMap(); }
+
+function mapTap(si, ti, subi) {
+  if (subi < 0) return;
+  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true;
+  nav('log');
+}
+
+// ─────────────────────────────────────────────
+//  LOG WIZARD
+// ─────────────────────────────────────────────
+
+function showStep(id) {
+  document.querySelectorAll('.log-step').forEach(el=>el.classList.remove('on'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('on');
+}
+
+function resetWizard() {
+  wMode = null;
+  pAtt = 0; pCor = 0;
+  selErr = {};
+  nStatus = 0; nQs = [];
+
+  if (!wMapJump) {
+    wSubj = -1; wTopic = -1; wSub = -1;
+  }
+  wMapJump = false;
+
+  showStep('ls0');
+
+  // if pre-filled from map, show mode step (don't auto-pick mode)
+}
+
+function startMode(mode) {
+  wMode = mode;
+  document.getElementById('ls1-sub').textContent = mode==='practice'?'Practicing questions':'Reading / studying';
+
+  if (wSubj >= 0) {
+    // jumped from map — skip subject/topic/subtopic steps
+    afterSubtopicPicked();
+    return;
+  }
+
+  renderSubjList();
+  showStep('ls1');
+  setProg('prog1', 1, totalSteps());
+}
+
+function totalSteps() { return wMode==='practice' ? 5 : 4; }
+
+function setProg(id, done, total) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = Array.from({length:total},(_,i)=>
+    `<div class="prog-seg ${i<done?'done':i===done?'active':''}"></div>`
+  ).join('');
+}
+
+function renderSubjList() {
+  const subjs = CFG.subjects || DEFAULT_SUBJECTS;
+  document.getElementById('subj-list').innerHTML = subjs.map((s,i)=>
+    `<div class="pick-item" onclick="pickSubj(${i})">
+      <div><div class="pick-ttl">${h(s.name)}</div><div class="pick-sub">${s.topics.length} topics</div></div>
+      <span class="pick-arrow">›</span>
+    </div>`
+  ).join('');
+}
+
+function pickSubj(i) {
+  wSubj = i;
+  const subj = subjs()[i];
+  document.getElementById('ls2-sub').textContent = subj.name;
+  setProg('prog2', 2, totalSteps());
+
+  document.getElementById('topic-list').innerHTML = subj.topics.map((t,ti)=>
+    `<div class="pick-item" onclick="pickTopic(${ti})">
+      <div><div class="pick-ttl">${h(t.name)}</div><div class="pick-sub">${(t.subtopics||[]).length} sub-topics</div></div>
+      <span class="pick-arrow">›</span>
+    </div>`
+  ).join('');
+  showStep('ls2');
+}
+
+function pickTopic(ti) {
+  wTopic = ti;
+  const topic = subjs()[wSubj].topics[ti];
+  document.getElementById('ls3-sub').textContent = `${subjs()[wSubj].name} → ${topic.name}`;
+  setProg('prog3', 3, totalSteps());
+
+  document.getElementById('subtopic-list').innerHTML = (topic.subtopics||[]).map((sub,si)=>
+    `<div class="pick-item" onclick="pickSub(${si})">
+      <div class="pick-ttl">${h(sub)}</div>
+    </div>`
+  ).join('');
+  showStep('ls3');
+}
+
+function pickSub(si) {
+  wSub = si;
+  afterSubtopicPicked();
+}
+
+function afterSubtopicPicked() {
+  const topic = subjs()[wSubj].topics[wTopic];
+  const sub   = (topic.subtopics||[])[wSub];
+  const breadcrumb = `${topic.name} → ${h(sub)}`;
+
+  if (wMode === 'practice') {
+    document.getElementById('ls4p-sub').textContent = breadcrumb;
+    pAtt = 0; pCor = 0;
+    document.getElementById('v-att').textContent   = 0;
+    document.getElementById('v-cor').textContent   = 0;
+    document.getElementById('v-wrong').textContent = 0;
+    updateWrongBox();
+    setProg('prog4p', 4, totalSteps());
+    showStep('ls4p');
+  } else {
+    document.getElementById('ls4n-sub').textContent = breadcrumb;
+    document.getElementById('n-insight').value = '';
+    nQs = []; nStatus = 0;
+    renderQs();
+    document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===0));
+    setProg('prog4n', 4, totalSteps());
+    showStep('ls4n');
+  }
+}
+
+function logBack() {
+  const cur = document.querySelector('.log-step.on');
+  if (!cur) return;
+  const id = cur.id;
+  if (id==='ls1' || id==='ls4p' || id==='ls4n') {
+    wSubj=-1; wTopic=-1; wSub=-1; wMode=null;
+    showStep('ls0');
+  } else if (id==='ls2') showStep('ls1');
+  else if (id==='ls3') showStep('ls2');
+  else if (id==='ls5p') showStep('ls4p');
+  else showStep('ls0');
+}
+
+// ── Steppers ──
+function step(f, d) {
+  if (f==='att') { pAtt = Math.max(0, pAtt+d); if (pCor>pAtt) pCor=pAtt; }
+  else           { pCor = Math.max(0, Math.min(pAtt, pCor+d)); }
+  document.getElementById('v-att').textContent   = pAtt;
+  document.getElementById('v-cor').textContent   = pCor;
+  document.getElementById('v-wrong').textContent = pAtt-pCor;
+  updateWrongBox();
+}
+
+function updateWrongBox() {
+  const w = pAtt - pCor;
+  const box = document.getElementById('wrong-box');
+  const ico = document.getElementById('wrong-ico');
+  ico.textContent = w===0 ? '✅' : w<=2 ? '🔴' : w<=5 ? '🟠' : '⚠️';
+  box.style.background = w===0 ? '#E8F8F3' : w<=2 ? '#FEF0EB' : w<=5 ? '#FEF9E7' : '#FCE8E0';
+  box.style.borderRadius = 'var(--r-sm)';
+}
+
+// ── Go to errors step ──
+function goToErrors() {
+  if (pAtt===0) { toast('Enter at least 1 question'); return; }
+  const wrong = pAtt - pCor;
+  if (wrong===0) { saveSession(); return; }
+
+  document.getElementById('ls5p-sub').textContent = `You got ${wrong} wrong — what happened?`;
+  selErr = {};
+  renderErrCards();
+  setProg('prog5p', 5, totalSteps());
+  showStep('ls5p');
+}
+
+function renderErrCards() {
+  document.getElementById('err-cards').innerHTML = ERR.map(et => {
+    const sel = selErr[et.id];
+    const isPicked = !!sel;
+    const reasons = et.reasons.map((r,ri) => {
+      const rSel = isPicked && sel.reasons.includes(ri);
+      return `<span class="reason-chip ${rSel?'sel':''}"
+        onclick="toggleReason('${et.id}',${ri},event)">${h(r)}</span>`;
+    }).join('');
+    return `<div class="err-card ${isPicked?'picked':''}"
+      style="background:${et.bg};border-color:${isPicked?et.col:'transparent'}"
+      id="ec-${et.id}">
+      <div class="err-card-top" onclick="toggleErr('${et.id}')">
+        <span class="err-ico">${et.ico}</span>
+        <div>
+          <div class="err-name" style="color:${et.col}">${h(et.label)}</div>
+          <div class="err-desc">${h(et.desc)}</div>
+        </div>
+        ${isPicked?`<span class="err-badge" style="color:${et.col}">✓</span>`:''}
+      </div>
+      <div class="err-reasons">${reasons}</div>
     </div>`;
+  }).join('');
+}
+
+function toggleErr(id) {
+  if (selErr[id]) delete selErr[id];
+  else selErr[id] = { reasons: [] };
+  renderErrCards();
+}
+
+function toggleReason(errId, ri, e) {
+  e.stopPropagation();
+  if (!selErr[errId]) selErr[errId] = { reasons: [] };
+  const arr = selErr[errId].reasons;
+  const idx = arr.indexOf(ri);
+  if (idx>=0) arr.splice(idx,1); else arr.push(ri);
+  renderErrCards();
+}
+
+// ── Save session ──
+async function saveSession() {
+  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject/topic/sub-topic'); return; }
+  if (pAtt===0) { toast('Enter questions attempted'); return; }
+
+  const s = subjs()[wSubj];
+  const t = s.topics[wTopic];
+  const sub = (t.subtopics||[])[wSub];
+
+  const errors = Object.entries(selErr).map(([id,data])=>({
+    t: id,
+    r: data.reasons
+  }));
+
+  const noteEl = document.getElementById('s-note');
+  const row = {
+    date: today(),
+    subject: s.name,
+    topic: t.name,
+    subtopic: sub,
+    attempted: pAtt,
+    correct: pCor,
+    wrong: pAtt - pCor,
+    errors,
+    note: noteEl ? noteEl.value.trim() : ''
   };
-  document.getElementById('an-mock-content').innerHTML = `
-    <div class="flex" style="margin-bottom:14px">
-      <button class="btn btn-sm" onclick="renderMockAnalysis()">← All mocks</button>
-      <span style="font-size:15px;font-weight:500;margin-left:8px">${m.name}</span>
-      <span style="font-size:24px;font-weight:500;margin-left:auto;color:${accColor(pct(Object.values({...(m.quant||{}),...(m.varc||{}),...(m.di||{})}).reduce((a,s)=>a+(s.c||0),0), Object.values({...(m.quant||{}),...(m.varc||{}),...(m.di||{})}).reduce((a,s)=>a+(s.t||0),0)))}">${m.score}</span>
-    </div>
-    ${renderSecs(m.quant, 'Quant — by topic')}
-    ${renderSecs(m.varc, 'VARC — by section')}
-    ${renderSecs(m.di, 'DI / LR — by type')}
-  `;
+
+  if (sb) {
+    const { data, error } = await sb.from('gmat_sessions').insert(row).select();
+    if (error) { toast('Save failed — check connection'); return; }
+    SESSIONS.unshift(data[0]);
+  } else {
+    row.id = uid(); row.created_at = new Date().toISOString();
+    SESSIONS.unshift(row);
+    saveLocal();
+  }
+
+  toast('Session saved ✓');
+  wSubj=-1; wTopic=-1; wSub=-1;
+  nav('map');
 }
 
-/* ════════════════════════════════════════════════════
-   ANALYSIS
-════════════════════════════════════════════════════ */
-function anSubtab(id, btn) {
-  document.getElementById('an-training-panel').style.display = id === 'training' ? 'block' : 'none';
-  document.getElementById('an-mock-panel').style.display = id === 'mock' ? 'block' : 'none';
-  document.querySelectorAll('#analysis .subtab').forEach(b => b.classList.remove('on'));
+// ── Notes ──
+function renderQs() {
+  document.getElementById('q-list').innerHTML = nQs.map((q,i)=>
+    `<div class="q-row">
+      <span class="q-text">❓ ${h(q)}</span>
+      <button class="q-del" onclick="removeQ(${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+function addQ() {
+  const inp = document.getElementById('q-inp');
+  const val = inp.value.trim();
+  if (!val) return;
+  nQs.push(val);
+  inp.value = '';
+  renderQs();
+}
+
+function removeQ(i) { nQs.splice(i,1); renderQs(); }
+
+function pickStatus(s) {
+  nStatus = s;
+  document.querySelectorAll('.status-opt').forEach((el,i)=>el.classList.toggle('on',i===s));
+}
+
+async function saveNote() {
+  if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject/topic/sub-topic'); return; }
+  const insight = document.getElementById('n-insight').value.trim();
+  if (!insight) { toast('Write at least a short insight'); return; }
+
+  const s   = subjs()[wSubj];
+  const t   = s.topics[wTopic];
+  const sub = (t.subtopics||[])[wSub];
+
+  const row = {
+    date: today(),
+    subject: s.name,
+    topic: t.name,
+    subtopic: sub,
+    insight,
+    questions: nQs,
+    status: nStatus
+  };
+
+  if (sb) {
+    const { data, error } = await sb.from('gmat_notes').insert(row).select();
+    if (error) { toast('Save failed — check connection'); return; }
+    NOTES.unshift(data[0]);
+  } else {
+    row.id = uid(); row.created_at = new Date().toISOString();
+    NOTES.unshift(row);
+    saveLocal();
+  }
+
+  toast('Note saved ✓');
+  wSubj=-1; wTopic=-1; wSub=-1;
+  nav('map');
+}
+
+// ─────────────────────────────────────────────
+//  INSIGHTS
+// ─────────────────────────────────────────────
+
+function setFilter(f, btn) {
+  insFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  if (id === 'training') renderTrainAnalysis();
-  if (id === 'mock') renderMockAnalysis();
+  renderInsights();
 }
 
-function renderTrainAnalysis() {
-  const el = document.getElementById('an-train-content');
-  // filter buttons
-  let filterHtml = `<div class="card"><div class="flex" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">
-    ${['All','Quant','VARC','DI/LR'].map(f => `<button class="subtab${anFilter===f?' on':''}" onclick="setAnFilter('${f}',this)">${f}</button>`).join('')}
-  </div>`;
-  let sessions = anFilter === 'All' ? SESSIONS : SESSIONS.filter(s => s.subject === anFilter);
-  if (!sessions.length) { el.innerHTML = filterHtml + '<div class="empty">No sessions yet</div></div>'; return; }
-  const byPatt = {};
-  sessions.forEach(s => {
-    const key = `${s.subject}|${s.topic}|${s.pattern}`;
-    if (!byPatt[key]) byPatt[key] = { subject:s.subject, topic:s.topic, pattern:s.pattern, att:0, cor:0, wrg:0, errors:[] };
-    byPatt[key].att += (s.attempted||0);
-    byPatt[key].cor += (s.correct||0);
-    byPatt[key].wrg += (s.wrong||0);
-    byPatt[key].errors.push(...(s.errors||[]));
-  });
-  const rows = Object.values(byPatt).sort((a,b) => b.wrg - a.wrg);
-  let html = filterHtml + `<div class="patt-table-row patt-table-head" style="border-bottom:0.5px solid var(--border2);padding-bottom:6px">
-    <span>Pattern</span><span class="patt-num">Att</span><span class="patt-num">Cor</span><span class="patt-num">Wrg</span><span class="patt-top-err">Top error</span>
-  </div>`;
-  rows.forEach(r => {
-    const errCounts = {};
-    (r.errors||[]).forEach(e => { errCounts[e.errType] = (errCounts[e.errType]||0)+1; });
-    const topErr = Object.entries(errCounts).sort((a,b) => b[1]-a[1])[0];
-    const ap = pct(r.cor, r.att);
-    html += `<div class="patt-table-row">
-      <div><div style="font-size:13px;font-weight:500">${r.pattern}</div><div style="font-size:11px;color:var(--text2)">${r.topic}</div></div>
-      <span class="patt-num" style="color:var(--text2)">${r.att}</span>
-      <span class="patt-num" style="color:var(--green)">${r.cor}</span>
-      <span class="patt-num" style="color:var(--red)">${r.wrg}</span>
-      <span class="patt-top-err">${topErr ? `<span class="chip chip-${ERR_COLOR[topErr[0]]||'gray'}">${topErr[0]} ×${topErr[1]}</span>` : '—'}</span>
-    </div>`;
-    const fixes = (r.errors||[]).filter(e => e.fix);
-    if (fixes.length) {
-      html += `<div style="padding:6px 0 10px 4px;border-bottom:0.5px solid var(--border)">${fixes.map(e => `<div style="font-size:12px;color:var(--teal-text);padding:2px 0">→ ${e.fix}</div>`).join('')}</div>`;
-    }
-  });
-  el.innerHTML = html + '</div>';
+function renderInsights() {
+  const sess  = insFilter==='all' ? SESSIONS : SESSIONS.filter(s=>s.subject===insFilter);
+  const notes = insFilter==='all' ? NOTES    : NOTES.filter(n=>n.subject===insFilter);
+
+  const att   = sess.reduce((a,s)=>a+(s.attempted||0),0);
+  const cor   = sess.reduce((a,s)=>a+(s.correct||0),0);
+  const acc   = att>0 ? Math.round(cor/att*100) : null;
+
+  const daysLeft = CFG.examDate
+    ? Math.max(0, Math.round((new Date(CFG.examDate)-new Date())/86400000))
+    : null;
+
+  // KPIs
+  const accColor = acc===null?'var(--t2)':acc>=75?'var(--green)':acc>=55?'var(--amber)':'var(--red)';
+  document.getElementById('ins-kpis').innerHTML = [
+    { label:'Accuracy',      val: acc!==null ? acc+'%' : '—', color: accColor },
+    { label:'Days to exam',  val: daysLeft!==null ? daysLeft : '—', color:'var(--text)' },
+    { label:'Sessions done', val: sess.length,  color:'var(--text)' },
+    { label:'Notes added',   val: notes.length, color:'var(--purple)' }
+  ].map(k=>`<div class="kpi-box">
+    <div class="kpi-val" style="color:${k.color}">${k.val}</div>
+    <div class="kpi-lbl">${k.label}</div>
+  </div>`).join('');
+
+  renderVoids(insFilter);
+  renderErrBreakdown(sess);
+  renderAccList(sess);
 }
 
-function setAnFilter(f, btn) {
-  anFilter = f;
-  renderTrainAnalysis();
-}
-
-function renderMockAnalysis() {
-  const el = document.getElementById('an-mock-content');
-  if (!MOCKS.length) { el.innerHTML = '<div class="empty">No mocks yet</div>'; return; }
-  const sorted = [...MOCKS].sort((a,b) => new Date(a.date)-new Date(b.date));
-  const maxScore = Math.max(...sorted.map(m => m.score));
-  let html = `<div class="card"><div class="sec">Score trend — click to view detail</div>`;
-  sorted.forEach((m, i) => {
-    const idx = MOCKS.indexOf(m);
-    const pctBar = Math.min(100, Math.round((m.score - 400) / 450 * 100));
-    const col = m.score >= 700 ? '#1D9E75' : m.score >= 650 ? '#BA7517' : '#D85A30';
-    html += `<div class="flex" style="padding:8px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="showMockDetail(${idx})">
-      <span style="font-size:12px;color:var(--text2);min-width:90px">${m.date}</span>
-      <div style="flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:0 12px;align-self:center">
-        <div style="height:100%;width:${pctBar}%;background:${col};border-radius:3px"></div>
-      </div>
-      <span style="font-size:14px;font-weight:500;color:${col};min-width:40px;text-align:right">${m.score}</span>
-      <span style="font-size:12px;color:var(--text2);margin-left:10px;min-width:90px">${m.name}</span>
-    </div>`;
-  });
-  el.innerHTML = html + '</div>';
-}
-
-/* ════════════════════════════════════════════════════
-   TOPICS & PATTERNS MANAGER
-════════════════════════════════════════════════════ */
-function renderTopicMgr() {
-  const tabsEl = document.getElementById('subj-tabs-mgr');
-  tabsEl.innerHTML = CFG.subjects.map((s,i) => {
-    const name = s.name || s.subject_name;
-    return `<button class="subtab${i===activeSubjMgr?' on':''}" onclick="setMgrSubj(${i})">${name}</button>`;
-  }).join('') + `<button class="btn btn-sm" onclick="addSubject()" style="border-radius:20px;font-size:12px">+ Subject</button>`;
-  renderTopicMgrContent();
-}
-
-function setMgrSubj(i) { activeSubjMgr = i; renderTopicMgr(); }
-
-function renderTopicMgrContent() {
-  const el = document.getElementById('topic-mgr-content');
-  const subj = CFG.subjects[activeSubjMgr];
-  if (!subj) { el.innerHTML = ''; return; }
-  const subjName = subj.name || subj.subject_name;
-  let html = `<div class="card">
-    <div class="flex" style="margin-bottom:14px">
-      <span style="font-size:14px;font-weight:500">${subjName}</span>
-      <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn-icon" onclick="renameSubject(${activeSubjMgr})" title="Rename">✎</button>
-        <button class="btn-icon del" onclick="deleteSubject(${activeSubjMgr})" title="Delete">✕</button>
-      </div>
-    </div>`;
-  (subj.topics||[]).forEach((t, ti) => {
-    const editing = editingMgr?.type === 'topic' && editingMgr.si === activeSubjMgr && editingMgr.ti === ti;
-    html += `<div style="margin-bottom:14px">
-      <div class="flex" style="margin-bottom:6px;padding-bottom:6px;border-bottom:0.5px solid var(--border)">
-        ${editing
-          ? `<input class="inline-edit" id="edit-inp" value="${esc(t.name)}" onkeydown="if(event.key==='Enter')saveTopic(${activeSubjMgr},${ti})" />
-             <button class="btn btn-sm btn-primary" onclick="saveTopic(${activeSubjMgr},${ti})">Save</button>
-             <button class="btn btn-sm" onclick="cancelMgrEdit()">Cancel</button>`
-          : `<span style="font-size:13px;font-weight:500">${esc(t.name)}</span>
-             <div style="margin-left:auto;display:flex;gap:4px">
-               <button class="btn-icon" onclick="startEditTopic(${activeSubjMgr},${ti})" title="Rename">✎</button>
-               <button class="btn-icon del" onclick="deleteTopic(${activeSubjMgr},${ti})" title="Delete">✕</button>
-             </div>`}
-      </div>
-      <div style="margin-left:12px">`;
-    (t.patterns||[]).forEach((p, pi) => {
-      const editingP = editingMgr?.type === 'patt' && editingMgr.si === activeSubjMgr && editingMgr.ti === ti && editingMgr.pi === pi;
-      html += `<div class="item-row">
-        ${editingP
-          ? `<input class="inline-edit" id="edit-inp" value="${esc(p)}" onkeydown="if(event.key==='Enter')savePattern(${activeSubjMgr},${ti},${pi})" />
-             <button class="btn btn-sm btn-primary" onclick="savePattern(${activeSubjMgr},${ti},${pi})">Save</button>
-             <button class="btn btn-sm" onclick="cancelMgrEdit()">Cancel</button>`
-          : `<span class="item-name">${esc(p)}</span>
-             <button class="btn-icon btn-sm" onclick="startEditPatt(${activeSubjMgr},${ti},${pi})" title="Rename">✎</button>
-             <button class="btn-icon btn-sm del" onclick="deletePattern(${activeSubjMgr},${ti},${pi})" title="Delete">✕</button>`}
-      </div>`;
+function renderVoids(filter) {
+  const subs = CFG.subjects || DEFAULT_SUBJECTS;
+  const voids = [];
+  subs.forEach(subj => {
+    if (filter!=='all' && subj.name!==filter) return;
+    subj.topics.forEach(topic => {
+      (topic.subtopics||[]).forEach(sub => {
+        if (!SESSIONS.some(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sub)) {
+          voids.push({ subj:subj.name, topic:topic.name, sub });
+        }
+      });
     });
-    html += `<div class="flex" style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
-        <input id="addp-${ti}" placeholder="Add pattern…" style="flex:1;font-size:12px;padding:5px 8px" onkeydown="if(event.key==='Enter')addPattern(${activeSubjMgr},${ti})" />
-        <button class="btn btn-sm btn-primary" onclick="addPattern(${activeSubjMgr},${ti})">+</button>
-      </div></div></div>`;
   });
-  html += `<div class="flex" style="margin-top:6px;padding-top:10px;border-top:0.5px solid var(--border)">
-    <input id="add-topic-inp" placeholder="Add topic to ${subjName}…" style="flex:1" onkeydown="if(event.key==='Enter')addTopic(${activeSubjMgr})" />
-    <button class="btn btn-primary btn-sm" onclick="addTopic(${activeSubjMgr})">+ Topic</button>
-  </div></div>`;
-  el.innerHTML = html;
-  if (editingMgr) document.getElementById('edit-inp')?.focus();
+
+  if (voids.length===0) {
+    document.getElementById('ins-voids').innerHTML =
+      `<div class="card"><div class="empty-state">🎉 All sub-topics practiced!<br><span style="font-size:11px">No gaps found for this filter</span></div></div>`;
+    return;
+  }
+
+  const show = voids.slice(0,6);
+  document.getElementById('ins-voids').innerHTML =
+    show.map(v=>`<div class="void-item">
+      <div class="void-dot"></div>
+      <div>
+        <div class="void-name">${h(v.sub)}</div>
+        <div class="void-sub">${h(v.subj)} · ${h(v.topic)}</div>
+      </div>
+    </div>`).join('') +
+    (voids.length>6 ? `<p class="hint tc mt8">+${voids.length-6} more gaps</p>` : '');
 }
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderErrBreakdown(sess) {
+  const counts = {};
+  ERR.forEach(et => counts[et.id] = { total:0, reasons:{} });
 
-function addSubject() {
-  const name = prompt('New subject name:');
-  if (!name?.trim()) return;
+  sess.forEach(s => {
+    (s.errors||[]).forEach(e => {
+      // support old format (errType string) and new format (t)
+      const id = e.t || mapOldErrType(e.errType);
+      if (!id || !counts[id]) return;
+      counts[id].total++;
+      (e.r||[]).forEach(ri => { counts[id].reasons[ri] = (counts[id].reasons[ri]||0)+1; });
+    });
+  });
+
+  const maxC = Math.max(...Object.values(counts).map(c=>c.total), 1);
+  const rows = ERR.map(et => {
+    const c = counts[et.id];
+    if (c.total===0) return '';
+    const pct = Math.round(c.total/maxC*100);
+    const topR = Object.entries(c.reasons).sort((a,b)=>b[1]-a[1])[0];
+    const topLabel = topR ? et.reasons[parseInt(topR[0])] : null;
+    return `<div class="ebar-row">
+      <div class="ebar-top">
+        <span class="ebar-label" style="color:${et.col}">${et.ico} ${h(et.label)}</span>
+        <span class="ebar-count">${c.total}×</span>
+      </div>
+      ${topLabel ? `<div class="ebar-hint">Most common: ${h(topLabel)}</div>` : ''}
+      <div class="ebar-track"><div class="ebar-fill" style="width:${pct}%;background:${et.col}"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ins-errors').innerHTML = rows
+    ? `<div class="card">${rows}</div>`
+    : `<div class="card"><div class="empty-state">No errors recorded yet</div></div>`;
+}
+
+function mapOldErrType(t) {
+  const m = { comprehension:'comp', pattern:'pattern', optimal:'slow', silly:'calc' };
+  return m[t] || null;
+}
+
+function renderAccList(sess) {
+  const byKey = {};
+  sess.forEach(s => {
+    const k = `${s.subject}::${s.topic}::${s.subtopic}`;
+    if (!byKey[k]) byKey[k] = { subj:s.subject, topic:s.topic, sub:s.subtopic, att:0, cor:0, wrg:0, errs:[] };
+    byKey[k].att += s.attempted||0;
+    byKey[k].cor += s.correct||0;
+    byKey[k].wrg += s.wrong||0;
+    (s.errors||[]).forEach(e=>byKey[k].errs.push(e));
+  });
+
+  const sorted = Object.values(byKey).sort((a,b) => {
+    const aA = a.att>0 ? a.cor/a.att : 1;
+    const bA = b.att>0 ? b.cor/b.att : 1;
+    return aA - bA;
+  });
+
+  if (sorted.length===0) {
+    document.getElementById('ins-acc').innerHTML = `<div class="card"><div class="empty-state">No sessions yet</div></div>`;
+    return;
+  }
+
+  document.getElementById('ins-acc').innerHTML = sorted.slice(0,10).map(item => {
+    const acc = item.att>0 ? Math.round(item.cor/item.att*100) : 0;
+    const cls = acc>=75?'ms-g':acc>=55?'ms-a':'ms-r';
+    const errTypes = [...new Set((item.errs||[]).map(e=>e.t||mapOldErrType(e.errType)).filter(Boolean))];
+    const tags = errTypes.map(id => {
+      const et = ERR.find(e=>e.id===id);
+      return et ? `<span class="err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${et.label}</span>` : '';
+    }).join('');
+    return `<div class="acc-item">
+      <div class="acc-item-top">
+        <div>
+          <div class="acc-item-name">${h(item.sub)}</div>
+          <div class="acc-item-sub">${h(item.subj)} · ${h(item.topic)}</div>
+        </div>
+        <div class="acc-stats">
+          <span class="mini-stat ms-g">${item.cor}✓</span>
+          <span class="mini-stat ms-r">${item.wrg}✗</span>
+          <span class="mini-stat ${cls}">${acc}%</span>
+        </div>
+      </div>
+      ${tags ? `<div style="margin-top:8px">${tags}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+//  SETTINGS
+// ─────────────────────────────────────────────
+
+function renderSettings() {
+  document.getElementById('s-date').value = CFG.examDate || '';
+  document.getElementById('s-hrs').value  = CFG.hrsPerWeek || 18;
+  document.getElementById('s-url').value  = localStorage.getItem('sb_url') || '';
+  document.getElementById('s-key').value  = localStorage.getItem('sb_key') || '';
+  document.getElementById('sql-out').textContent = SQL;
+  renderMgrTabs();
+  renderMgr();
+}
+
+async function saveSettings() {
+  CFG.examDate   = document.getElementById('s-date').value || null;
+  CFG.hrsPerWeek = parseInt(document.getElementById('s-hrs').value)||18;
+  await saveCfg();
+  toast('Settings saved ✓');
+}
+
+async function connectDb() {
+  const url = document.getElementById('s-url').value.trim();
+  const key = document.getElementById('s-key').value.trim();
+  if (!url||!key) { toast('Enter URL and key'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  initSb();
+  await loadAll();
+  renderMap();
+  renderInsights();
+  toast('Connected ✓');
+}
+
+function copySQL() {
+  navigator.clipboard.writeText(SQL).then(()=>toast('SQL copied ✓'));
+}
+
+// Topic manager
+function renderMgrTabs() {
+  const subs = CFG.subjects || DEFAULT_SUBJECTS;
+  document.getElementById('mgr-tabs').innerHTML =
+    subs.map((s,i)=>`<button class="subj-tab ${i===mgrSubj?'on':''}" onclick="setMgrSubj(${i})">${h(s.name)}</button>`).join('') +
+    `<button class="subj-tab" onclick="addSubj()">+ Add</button>`;
+}
+
+function setMgrSubj(i) { mgrSubj=i; renderMgrTabs(); renderMgr(); }
+
+function renderMgr() {
+  const subj = (CFG.subjects||DEFAULT_SUBJECTS)[mgrSubj];
+  if (!subj) { document.getElementById('mgr-body').innerHTML=''; return; }
+
+  document.getElementById('mgr-body').innerHTML = subj.topics.map((t,ti)=>{
+    const tags = (t.subtopics||[]).map((sub,si)=>
+      `<span class="sub-tag">${h(sub)}<button class="sub-tag-x" onclick="delSub(${ti},${si})">×</button></span>`
+    ).join('');
+    return `<div class="mgr-item" id="mi-${ti}">
+      <div class="mgr-header" onclick="toggleMgr(${ti})">
+        <span class="mgr-name">${h(t.name)}</span>
+        <span class="mgr-ct">${(t.subtopics||[]).length} sub-topics</span>
+        <span class="mgr-arr">▾</span>
+      </div>
+      <div class="mgr-body">
+        <div style="margin:8px 0 10px">${tags||'<span style="font-size:12px;color:var(--t3)">No sub-topics yet</span>'}</div>
+        <div class="add-row">
+          <input class="add-inp" id="si-${ti}" placeholder="New sub-topic name..." />
+          <button class="add-go" onclick="addSub(${ti})">Add</button>
+        </div>
+        <div style="margin-top:10px">
+          <button style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer" onclick="delTopic(${ti})">Delete topic</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') +
+  `<div class="add-row" style="margin-top:10px">
+    <input class="add-inp" id="ti-new" placeholder="New topic in ${h(subj.name)}..." />
+    <button class="add-go" onclick="addTopic()">Add</button>
+  </div>`;
+}
+
+function toggleMgr(ti) { document.getElementById('mi-'+ti).classList.toggle('open'); }
+
+async function addTopic() {
+  const val = document.getElementById('ti-new').value.trim();
+  if (!val) return;
+  CFG.subjects[mgrSubj].topics.push({ name: val, subtopics: [] });
+  document.getElementById('ti-new').value = '';
+  await saveCfg(); renderMgr();
+}
+
+async function addSub(ti) {
+  const val = document.getElementById('si-'+ti).value.trim();
+  if (!val) return;
+  if (!CFG.subjects[mgrSubj].topics[ti].subtopics) CFG.subjects[mgrSubj].topics[ti].subtopics=[];
+  CFG.subjects[mgrSubj].topics[ti].subtopics.push(val);
+  document.getElementById('si-'+ti).value = '';
+  await saveCfg(); renderMgr();
+}
+
+async function delSub(ti,si) {
+  if (!confirm('Remove this sub-topic?')) return;
+  CFG.subjects[mgrSubj].topics[ti].subtopics.splice(si,1);
+  await saveCfg(); renderMgr();
+}
+
+async function delTopic(ti) {
+  if (!confirm('Delete this topic and all its sub-topics?')) return;
+  CFG.subjects[mgrSubj].topics.splice(ti,1);
+  await saveCfg(); renderMgrTabs(); renderMgr();
+}
+
+async function addSubj() {
+  const name = prompt('Subject name?');
+  if (!name) return;
+  if (!CFG.subjects) CFG.subjects=[];
   CFG.subjects.push({ name: name.trim(), topics: [] });
-  activeSubjMgr = CFG.subjects.length - 1;
-  saveCFGFull(); renderTopicMgr();
-}
-function renameSubject(si) {
-  const name = prompt('Rename subject:', CFG.subjects[si].name);
-  if (!name?.trim()) return;
-  CFG.subjects[si].name = name.trim();
-  saveCFGFull(); renderTopicMgr();
-}
-function deleteSubject(si) {
-  if (!confirm(`Delete subject "${CFG.subjects[si].name}" and all its data?`)) return;
-  CFG.subjects.splice(si, 1);
-  activeSubjMgr = Math.max(0, activeSubjMgr - 1);
-  saveCFGFull(); renderTopicMgr();
-}
-function addTopic(si) {
-  const val = document.getElementById('add-topic-inp')?.value?.trim();
-  if (!val) return;
-  CFG.subjects[si].topics.push({ name: val, patterns: [] });
-  saveCFGFull(); renderTopicMgr(); refreshTopics();
-}
-function startEditTopic(si, ti) { editingMgr = {type:'topic',si,ti,pi:null}; renderTopicMgrContent(); }
-function saveTopic(si, ti) {
-  const val = document.getElementById('edit-inp')?.value?.trim();
-  if (val) CFG.subjects[si].topics[ti].name = val;
-  cancelMgrEdit();
-}
-function deleteTopic(si, ti) {
-  if (!confirm(`Delete topic "${CFG.subjects[si].topics[ti].name}"?`)) return;
-  CFG.subjects[si].topics.splice(ti, 1);
-  saveCFGFull(); renderTopicMgr(); refreshTopics();
-}
-function addPattern(si, ti) {
-  const val = document.getElementById(`addp-${ti}`)?.value?.trim();
-  if (!val) return;
-  CFG.subjects[si].topics[ti].patterns.push(val);
-  saveCFGFull(); renderTopicMgr(); refreshPatterns();
-}
-function startEditPatt(si, ti, pi) { editingMgr = {type:'patt',si,ti,pi}; renderTopicMgrContent(); }
-function savePattern(si, ti, pi) {
-  const val = document.getElementById('edit-inp')?.value?.trim();
-  if (val) CFG.subjects[si].topics[ti].patterns[pi] = val;
-  cancelMgrEdit();
-}
-function deletePattern(si, ti, pi) {
-  CFG.subjects[si].topics[ti].patterns.splice(pi, 1);
-  saveCFGFull(); renderTopicMgr(); refreshPatterns();
-}
-function cancelMgrEdit() { editingMgr = null; saveCFGFull(); renderTopicMgr(); }
-
-/* ════════════════════════════════════════════════════
-   SETUP
-════════════════════════════════════════════════════ */
-function renderSetup() {
-  document.getElementById('cfg-exam').value = CFG.examDate || '';
-  document.getElementById('cfg-hrs').value = CFG.hrsPerWeek || 18;
-  const { url, key } = getSupabaseCreds();
-  document.getElementById('cfg-url').value = url !== 'YOUR_SUPABASE_URL' ? url : '';
-  document.getElementById('cfg-key').value = key !== 'YOUR_SUPABASE_ANON_KEY' ? key : '';
-  document.getElementById('sql-block').textContent = SETUP_SQL;
-}
-function copySql() {
-  navigator.clipboard.writeText(SETUP_SQL).then(() => toast('SQL copied!')).catch(() => toast('Copy failed — select manually'));
+  mgrSubj = CFG.subjects.length-1;
+  await saveCfg(); renderMgrTabs(); renderMgr();
 }
 
-/* ════════════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════════════ */
-let toastTimer;
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+
+function subjs() { return CFG.subjects || DEFAULT_SUBJECTS; }
+
+function h(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function uid() { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+
+let toastT;
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.style.display = 'block';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>el.classList.remove('show'), 2400);
 }
 
-/* ════════════════════════════════════════════════════
-   BOOT
-════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', initSupabase);
+// ─────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────
+
+async function boot() {
+  initSb();
+  await loadAll();
+  renderMap();
+}
+
+boot();
 </script>
 </body>
 </html>
