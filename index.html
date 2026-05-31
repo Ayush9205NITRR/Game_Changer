@@ -208,7 +208,7 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  margin-bottom: 4px;
+  margin-bottom: 0;
   cursor: pointer;
   transition: border-color 0.1s, background 0.1s;
 }
@@ -216,6 +216,34 @@ body {
 .sub-row.void-row { background: transparent; border-style: dashed; }
 .sub-name { flex: 1; font-size: 13px; font-weight: 500; }
 .sub-name.dim { color: var(--t3); font-weight: 400; }
+
+/* sub-topic expansion */
+.sub-row-wrap { margin-bottom: 4px; }
+.sub-expand-ico { font-size: 10px; color: var(--t3); transition: transform 0.15s; flex-shrink: 0; }
+.sub-row-wrap.open .sub-expand-ico { transform: rotate(90deg); }
+.sub-row-wrap.open .sub-row { border-radius: var(--r-sm) var(--r-sm) 0 0; border-bottom-color: var(--bg); }
+.sub-detail {
+  display: none;
+  padding: 10px 12px 12px;
+  background: var(--card);
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+}
+.sub-row-wrap.open .sub-detail { display: block; }
+.sub-detail-errs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+
+/* sub-sub rows inside map detail */
+.ssub-block { border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; margin-bottom: 8px; }
+.ssub-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.ssub-row:last-child { border-bottom: none; }
+.ssub-name { font-size: 12px; color: var(--t2); }
+
+/* mini bar chart */
+.mini-chart { margin-top: 8px; }
+.mini-chart-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--t3); margin-top: 2px; }
 
 .acc-bub {
   font-size: 11px;
@@ -540,13 +568,22 @@ body {
 .chapter-name { font-size: 13px; font-weight: 600; }
 .chapter-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
 .chapter-errs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-.chapter-err-tag {
-  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px;
-}
-.chapter-subtops { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
-.csub-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 12px; }
-.csub-name { color: var(--t2); }
-.csub-acc  { font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 3px; }
+.chapter-toggle { font-size: 10px; color: var(--t3); transition: transform 0.15s; display: inline-block; margin-left: 3px; }
+.chapter-item.open .chapter-toggle { transform: rotate(180deg); }
+
+/* expandable tree inside chapter card */
+.chapter-expand { display: none; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+.chapter-item.open .chapter-expand { display: block; }
+.chapter-chart { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+/* topic → sub-topic tree */
+.tree-sub-row { padding: 7px 0; border-bottom: 1px solid var(--border); }
+.tree-sub-row:last-child { border-bottom: none; }
+.tree-sub-top { display: flex; justify-content: space-between; align-items: center; }
+.tree-sub-name { font-size: 12px; font-weight: 600; }
+.tree-ss-block { margin: 4px 0 2px 14px; }
+.tree-ss-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+.tree-ss-name { font-size: 11px; color: var(--t3); }
 
 .acc-item {
   background: var(--card); border: 1px solid var(--border);
@@ -1096,22 +1133,46 @@ function renderMap() {
   document.getElementById('map-body').innerHTML = subj.topics.map((topic, ti) => {
     const rows = getSubs(topic).map((sub, si) => {
       const subName = getSubName(sub);
-      const sess  = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName);
-      const notes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName);
+      const ss     = getSubSubs(sub);
+      const sess   = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName);
+      const notes  = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName);
       const att = sess.reduce((a,s)=>a+(s.attempted||0),0);
       const cor = sess.reduce((a,s)=>a+(s.correct||0),0);
       const isVoid = att===0;
-      let bub;
-      if (isVoid) {
-        bub = `<span class="acc-bub acc-void">—</span>`;
-      } else {
-        const acc = Math.round(cor/att*100);
-        bub = `<span class="acc-bub ${acc>=75?'acc-good':acc>=55?'acc-warn':'acc-bad'}">${acc}%</span>`;
-      }
-      return `<div class="sub-row ${isVoid?'void-row':''}" onclick="mapTap(${mapSubj},${ti},${si})">
-        <div class="sub-name ${isVoid?'dim':''}">${h(subName)}</div>
-        ${bub}
-        <div class="note-dot ${notes.length?'has':''}" title="${notes.length?'Has notes':'No notes'}"></div>
+      const bub = isVoid
+        ? `<span class="acc-bub acc-void">—</span>`
+        : `<span class="acc-bub ${Math.round(cor/att*100)>=75?'acc-good':Math.round(cor/att*100)>=55?'acc-warn':'acc-bad'}">${Math.round(cor/att*100)}%</span>`;
+      // sub-sub-topic rows in the detail panel
+      const ssRows = ss.map(s2 => {
+        const s2s = sess.filter(s=>s.subsubtopic===s2);
+        const s2a = s2s.reduce((a,s)=>a+(s.attempted||0),0);
+        const s2c = s2s.reduce((a,s)=>a+(s.correct||0),0);
+        const s2pct = s2a>0 ? Math.round(s2c/s2a*100) : null;
+        const s2cls = s2pct===null?'acc-void':s2pct>=75?'acc-good':s2pct>=55?'acc-warn':'acc-bad';
+        const s2err = getErrTagsHtml(s2s.flatMap(s=>s.errors||[]), 1);
+        return `<div class="ssub-row">
+          <span class="ssub-name">${h(s2)}</span>
+          <div style="display:flex;gap:5px;align-items:center">
+            <span class="acc-bub ${s2cls}" style="font-size:10px;padding:1px 7px;min-width:0">${s2pct!==null?s2pct+'%':'—'}</span>
+            ${s2err}
+          </div>
+        </div>`;
+      }).join('');
+      const errHtml = getErrTagsHtml(sess.flatMap(s=>s.errors||[]), 3);
+      const chart   = !isVoid ? miniChart(sess) : '';
+      return `<div class="sub-row-wrap">
+        <div class="sub-row ${isVoid?'void-row':''}" onclick="this.parentElement.classList.toggle('open')">
+          <div class="sub-name ${isVoid?'dim':''}">${h(subName)}</div>
+          ${bub}
+          <div class="note-dot ${notes.length?'has':''}" title="${notes.length?'Has notes':'No notes'}"></div>
+          <span class="sub-expand-ico">›</span>
+        </div>
+        <div class="sub-detail">
+          ${errHtml ? `<div class="sub-detail-errs">${errHtml}</div>` : (isVoid?`<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Not practiced yet</div>`:'')}
+          ${ss.length>0 ? `<div class="ssub-block">${ssRows}</div>` : ''}
+          ${chart}
+          <button class="btn" style="font-size:12px;padding:5px 14px;margin-top:10px" onclick="mapTapLog(${mapSubj},${ti},${si});event.stopPropagation()">+ Log session</button>
+        </div>
       </div>`;
     }).join('');
     return `<div class="topic-group"><div class="topic-lbl">${h(topic.name)}</div>${rows}</div>`;
@@ -1121,6 +1182,9 @@ function renderMap() {
 function setMapSubj(i) { mapSubj = i; renderMap(); }
 
 function mapTap(si, ti, subi) {
+  wSubj = si; wTopic = ti; wSub = subi; wMapJump = true; nav('log');
+}
+function mapTapLog(si, ti, subi) {
   wSubj = si; wTopic = ti; wSub = subi; wMapJump = true; nav('log');
 }
 
@@ -1435,74 +1499,94 @@ function filterToSubject(subj) {
 }
 
 function renderChapterBreakdown(sess) {
-  // Group by subject + topic, then break into subtopics
-  const byTopic = {};
-  sess.forEach(s => {
-    if (!s.subject || !s.topic) return; // skip malformed sessions
-    const k = `${s.subject}::${s.topic}`;
-    if (!byTopic[k]) byTopic[k] = { subj:s.subject, topic:s.topic, att:0, cor:0, errs:[], subs:{} };
-    byTopic[k].att += s.attempted||0;
-    byTopic[k].cor += s.correct||0;
-    (s.errors||[]).forEach(e => byTopic[k].errs.push(e));
-    const sk = s.subtopic||'—';
-    if (!byTopic[k].subs[sk]) byTopic[k].subs[sk] = { att:0, cor:0 };
-    byTopic[k].subs[sk].att += s.attempted||0;
-    byTopic[k].subs[sk].cor += s.correct||0;
-  });
-
-  const sorted = Object.values(byTopic).sort((a,b) => {
-    const aA = a.att>0 ? a.cor/a.att : 1;
-    const bA = b.att>0 ? b.cor/b.att : 1;
-    return aA - bA;
-  });
-
-  if (sorted.length===0) {
+  if (!sess.length) {
     document.getElementById('ins-chapters').innerHTML = `<div class="card"><div class="empty-state">No sessions yet</div></div>`;
     return;
   }
+  // Group: topic → sub-topic → sub-sub-topic
+  const byTopic = {};
+  sess.forEach(s => {
+    if (!s.subject || !s.topic) return;
+    const k = `${s.subject}::${s.topic}`;
+    if (!byTopic[k]) byTopic[k] = { subj:s.subject, topic:s.topic, att:0, cor:0, errs:[], sessions:[], bySub:{} };
+    byTopic[k].att += s.attempted||0;
+    byTopic[k].cor += s.correct||0;
+    byTopic[k].sessions.push(s);
+    (s.errors||[]).forEach(e=>byTopic[k].errs.push(e));
+    const sn = s.subtopic||'—';
+    if (!byTopic[k].bySub[sn]) byTopic[k].bySub[sn] = { att:0, cor:0, errs:[], bySS:{} };
+    byTopic[k].bySub[sn].att += s.attempted||0;
+    byTopic[k].bySub[sn].cor += s.correct||0;
+    (s.errors||[]).forEach(e=>byTopic[k].bySub[sn].errs.push(e));
+    if (s.subsubtopic) {
+      const ssn = s.subsubtopic;
+      if (!byTopic[k].bySub[sn].bySS[ssn]) byTopic[k].bySub[sn].bySS[ssn] = { att:0, cor:0, errs:[] };
+      byTopic[k].bySub[sn].bySS[ssn].att += s.attempted||0;
+      byTopic[k].bySub[sn].bySS[ssn].cor += s.correct||0;
+      (s.errors||[]).forEach(e=>byTopic[k].bySub[sn].bySS[ssn].errs.push(e));
+    }
+  });
 
-  document.getElementById('ins-chapters').innerHTML = sorted.map(item => {
+  const sorted = Object.values(byTopic).sort((a,b)=>
+    (a.att>0?a.cor/a.att:1)-(b.att>0?b.cor/b.att:1)
+  );
+
+  document.getElementById('ins-chapters').innerHTML = sorted.map((item,idx) => {
     const acc = item.att>0 ? Math.round(item.cor/item.att*100) : null;
     const cls = acc===null?'':acc>=75?'ms-g':acc>=55?'ms-a':'ms-r';
+    const topErrHtml = getErrTagsHtml(item.errs, 2);
+    const chart = miniChart(item.sessions);
 
-    // Top 2 error types for this topic
-    const errCount = {};
-    item.errs.forEach(e => {
-      const id = e.t||mapOld(e.errType); if (!id) return;
-      errCount[id] = (errCount[id]||0) + 1;
-    });
-    const topErrs = Object.entries(errCount).sort((a,b)=>b[1]-a[1]).slice(0,2);
-    const errTags = topErrs.map(([id,cnt]) => {
-      const et = ERR.find(e=>e.id===id);
-      return et ? `<span class="chapter-err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${h(et.label)} ×${cnt}</span>` : '';
-    }).join('');
+    // Sub-topic rows sorted worst first
+    const subRows = Object.entries(item.bySub)
+      .sort((a,b)=>(a[1].att>0?a[1].cor/a[1].att:1)-(b[1].att>0?b[1].cor/b[1].att:1))
+      .map(([sn, sd]) => {
+        const sa = sd.att>0 ? Math.round(sd.cor/sd.att*100) : null;
+        const sc = sa===null?'':sa>=75?'ms-g':sa>=55?'ms-a':'ms-r';
+        const serrHtml = getErrTagsHtml(sd.errs, 2);
+        // Sub-sub-topic rows sorted worst first
+        const ssRows = Object.entries(sd.bySS)
+          .sort((a,b)=>(a[1].att>0?a[1].cor/a[1].att:1)-(b[1].att>0?b[1].cor/b[1].att:1))
+          .map(([ssn, ssd]) => {
+            const ssa = ssd.att>0 ? Math.round(ssd.cor/ssd.att*100) : null;
+            const ssc = ssa===null?'':ssa>=75?'ms-g':ssa>=55?'ms-a':'ms-r';
+            const sserrHtml = getErrTagsHtml(ssd.errs, 1);
+            return `<div class="tree-ss-row">
+              <span class="tree-ss-name">↳ ${h(ssn)}</span>
+              <div style="display:flex;gap:4px;align-items:center">
+                ${ssa!==null?`<span class="mini-stat ${ssc}">${ssa}%</span>`:''}
+                ${sserrHtml}
+              </div>
+            </div>`;
+          }).join('');
+        return `<div class="tree-sub-row">
+          <div class="tree-sub-top">
+            <span class="tree-sub-name">${h(sn)}</span>
+            <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+              ${sa!==null?`<span class="mini-stat ${sc}">${sa}%</span>`:'<span style="font-size:11px;color:var(--t3)">—</span>'}
+              ${serrHtml}
+            </div>
+          </div>
+          ${ssRows?`<div class="tree-ss-block">${ssRows}</div>`:''}
+        </div>`;
+      }).join('');
 
-    // Sub-topic rows for this topic
-    const subRows = Object.entries(item.subs).map(([name, st]) => {
-      const sa = st.att>0 ? Math.round(st.cor/st.att*100) : null;
-      const sc = sa===null?'':sa>=75?'ms-g':sa>=55?'ms-a':'ms-r';
-      return `<div class="csub-row">
-        <span class="csub-name">${h(name)}</span>
-        <div style="display:flex;gap:4px;align-items:center">
-          <span class="csub-acc ${sc}">${sa!==null?sa+'%':'—'}</span>
-          <span style="font-size:11px;color:var(--t3)">${st.att}Q</span>
-        </div>
-      </div>`;
-    }).join('');
-
-    return `<div class="chapter-item" onclick="filterToSubject('${h(item.subj)}')">
-      <div class="chapter-top">
+    return `<div class="chapter-item" id="ci-${idx}">
+      <div class="chapter-top" onclick="document.getElementById('ci-${idx}').classList.toggle('open')">
         <div>
           <div class="chapter-name">${h(item.topic)}</div>
-          <div class="chapter-sub">${h(item.subj)}</div>
+          <div class="chapter-sub">${h(item.subj)} · ${item.att}Q</div>
         </div>
-        <div class="acc-stats">
+        <div style="display:flex;gap:4px;align-items:center">
           ${acc!==null?`<span class="mini-stat ${cls}">${acc}%</span>`:'<span class="mini-stat" style="color:var(--t3)">—</span>'}
-          <span class="mini-stat" style="background:var(--bg);color:var(--t2)">${item.att}Q</span>
+          <span class="chapter-toggle">▾</span>
         </div>
       </div>
-      ${errTags ? `<div class="chapter-errs">${errTags}</div>` : ''}
-      ${subRows ? `<div class="chapter-subtops">${subRows}</div>` : ''}
+      ${topErrHtml?`<div class="chapter-errs">${topErrHtml}</div>`:''}
+      <div class="chapter-expand">
+        ${subRows?`<div class="chapter-subtops">${subRows}</div>`:''}
+        ${chart?`<div class="chapter-chart">${chart}</div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -1669,6 +1753,35 @@ function getSubs(topic) { return topic.subtopics || topic.patterns || []; }
 function getSubName(sub) { return typeof sub === 'string' ? sub : (sub.name || ''); }
 function getSubSubs(sub) { return typeof sub === 'string' ? [] : (sub.subs || []); }
 function mapOld(t) { return {comprehension:'comp',pattern:'pattern',optimal:'slow',silly:'calc'}[t]||null; }
+
+function getErrTagsHtml(errs, max) {
+  const counts = {};
+  errs.forEach(e => { const id=e.t||mapOld(e.errType); if(id) counts[id]=(counts[id]||0)+1; });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,max||2).map(([id,cnt]) => {
+    const et=ERR.find(e=>e.id===id);
+    return et?`<span class="err-tag" style="background:${et.bg};color:${et.col}">${et.ico} ${h(et.label)} ×${cnt}</span>`:'';
+  }).join('');
+}
+
+function miniChart(sessions) {
+  if (!sessions || !sessions.length) return '';
+  const recent = [...sessions].sort((a,b)=>(a.date||'')<(b.date||'')?-1:1).slice(-15);
+  const W=280, H=40, gap=2;
+  const bw = Math.max(5, Math.floor((W - gap*(recent.length-1)) / recent.length));
+  const bars = recent.map((s,i) => {
+    const acc = s.attempted>0 ? s.correct/s.attempted : 0;
+    const bh = Math.max(3, Math.round(acc*(H-2)));
+    const x = i*(bw+gap);
+    const col = acc>=0.75?'#15803D':acc>=0.55?'#B45309':'#B91C1C';
+    return `<rect x="${x}" y="${H-2-bh}" width="${bw}" height="${bh}" rx="1" fill="${col}" opacity="0.85"/>`;
+  }).join('');
+  const l75=`<line x1="0" y1="${(H-2)*0.25}" x2="${W}" y2="${(H-2)*0.25}" stroke="#E2E1DC" stroke-width="0.8" stroke-dasharray="3,2"/>`;
+  const l50=`<line x1="0" y1="${(H-2)*0.5}" x2="${W}" y2="${(H-2)*0.5}" stroke="#E2E1DC" stroke-width="0.8" stroke-dasharray="3,2"/>`;
+  return `<div class="mini-chart">
+    <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block">${l75}${l50}${bars}</svg>
+    <div class="mini-chart-labels"><span>oldest</span><span>latest →</span></div>
+  </div>`;
+}
 function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today() { return new Date().toISOString().split('T')[0]; }
 function uid()   { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
