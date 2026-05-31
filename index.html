@@ -209,15 +209,15 @@ body {
 
 /* sidebar subject tabs */
 #map-subj-tabs { display: flex; gap: 4px; padding: 12px 12px 10px; border-bottom: 1px solid var(--border); }
-.ms-tab {
+button.ms-tab {
   flex: 1; padding: 7px 6px; font-size: 12px; font-weight: 600;
   text-align: center; cursor: pointer; color: var(--t2);
-  border: none; border-radius: 8px;
+  border: none !important; border-radius: 8px;
   background: transparent; font-family: inherit;
-  transition: all 0.15s;
+  transition: all 0.15s; -webkit-appearance: none; appearance: none;
 }
-.ms-tab:hover { background: var(--bg); color: var(--text); }
-.ms-tab.on { background: var(--text); color: #fff; }
+button.ms-tab:hover { background: var(--bg); color: var(--text); }
+button.ms-tab.on { background: var(--text); color: #fff !important; }
 
 /* sidebar search */
 #map-search-wrap {
@@ -1421,9 +1421,10 @@ function nav(name) {
 function renderMap() { renderMapTabs(); renderMapSidebar(); }
 
 function renderMapTabs() {
-  document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) =>
-    `<button class=”ms-tab ${i===selNav.subj?'on':''}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`
-  ).join('');
+  document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) => {
+    const on = i===selNav.subj;
+    return `<button class=”ms-tab ${on?'on':''}” style=”flex:1;padding:7px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:none;border-radius:8px;font-family:inherit;-webkit-appearance:none;appearance:none;${on?'background:#111110;color:#fff':'background:transparent;color:#65655F'}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`;
+  }).join('');
 }
 
 function renderMapSidebar() {
@@ -1445,15 +1446,16 @@ function renderMapSidebar() {
     if (q && !nameMatch && !subMatch) return '';
     const isSel = selNav.topic === ti;
     const accChip = tAcc!==null
-      ? `<span class=”mt-chip mt-chip-acc” style=”background:${tAcc>=75?'#15803D':tAcc>=55?'#B45309':'#B91C1C'}”>${tAcc}%</span>`
+      ? `<span style=”font-size:10px;padding:2px 7px;border-radius:4px;color:#fff;font-weight:700;background:${tAcc>=75?'#15803D':tAcc>=55?'#B45309':'#B91C1C'}”>${tAcc}%</span>`
       : '';
-    const newChip = tAtt===0 ? `<span class=”mt-chip mt-chip-new”>new</span>` : '';
-    return `<div class=”mt-card ${isSel?'sel':''}” onclick=”selectTopic(${ti})”>
-      <div class=”mt-name”>${h(topic.name)} ${accChip}</div>
-      <div class=”mt-meta”>
-        <span class=”mt-chip”>${subCount} sub-topics</span>
-        <span class=”mt-chip”>${tsess.length} sessions</span>
-        <span class=”mt-chip”>${tnotes.length} notes</span>
+    const newChip = tAtt===0 ? `<span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#EDE9FE;color:#6D28D9;font-weight:600”>new</span>` : '';
+    const selStyle = isSel ? 'border:2px solid #111110;background:#FAFAF8;' : 'border:1px solid #E2E1DC;';
+    return `<div class=”mt-card ${isSel?'sel':''}” style=”${selStyle}border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;background:${isSel?'#FAFAF8':'#fff'}” onclick=”selectTopic(${ti})”>
+      <div style=”font-size:13px;font-weight:700;color:#111110;display:flex;align-items:center;gap:6px”>${h(topic.name)} ${accChip}</div>
+      <div style=”display:flex;gap:5px;flex-wrap:wrap;margin-top:5px”>
+        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${subCount} sub-topics</span>
+        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${tsess.length} sessions</span>
+        <span style=”font-size:10px;padding:2px 7px;border-radius:4px;background:#F5F4F0;color:#65655F;font-weight:600”>${tnotes.length} notes</span>
         ${newChip}
       </div>
     </div>`;
@@ -1521,12 +1523,12 @@ function renderMapMain() {
   const acc = att>0 ? Math.round(cor/att*100) : null;
 
   let header = `
-    <div class=”mp-breadcrumb”>${h(ctx.breadcrumb)}</div>
-    <div class=”mp-header”>
-      <div class=”mp-title”>${h(ctx.title)}</div>
-      <button class=”mp-edit-btn” onclick=”mgrSubj=selNav.subj;nav('settings')”>Edit</button>
+    <div style=”font-size:11px;color:#A5A59E;text-transform:uppercase;letter-spacing:0.4px”>${h(ctx.breadcrumb)}</div>
+    <div style=”display:flex;align-items:center;gap:12px;margin:6px 0 4px”>
+      <div style=”font-size:22px;font-weight:800;color:#111110”>${h(ctx.title)}</div>
+      <button style=”font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid #E2E1DC;background:#fff;color:#65655F;cursor:pointer;font-family:inherit;font-weight:600;margin-left:auto” onclick=”mgrSubj=selNav.subj;nav('settings')”>Edit</button>
     </div>
-    <div class=”mp-subtitle”>${getSubs(topic).length} trackable areas in this view</div>
+    <div style=”font-size:12px;color:#A5A59E;margin-bottom:20px”>${getSubs(topic).length} trackable areas in this view</div>
   `;
 
   // Sub-topic card grid (only at topic level)
@@ -1541,24 +1543,24 @@ function renderMapMain() {
       const sAcc = sAtt>0 ? Math.round(sCor/sAtt*100) : null;
       const isVoid = sAtt === 0;
       const isSel = selNav.sub === si && selNav.subsub < 0;
-      const accChip = sAcc!==null
-        ? `<span class=”st-card-chip” style=”background:${sAcc>=75?'#DCFCE7':sAcc>=55?'#FEF3C7':'#FEE2E2'};color:${sAcc>=75?'#15803D':sAcc>=55?'#B45309':'#B91C1C'}”>${sAcc}%</span>`
-        : '';
-      return `<div class=”st-card ${isVoid?'st-card-void':''} ${isSel?'sel':''}” onclick=”selectSubCard(${si})”>
-        <div class=”st-card-head”>
-          <span class=”st-card-name”>${h(sn)}</span>
-          <span class=”st-card-type”>${sNotes.length} notes</span>
+      const chip = (txt, bg, col) => `<span style=”font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;background:${bg};color:${col}”>${txt}</span>`;
+      const accChip = sAcc!==null ? chip(sAcc+'%', sAcc>=75?'#DCFCE7':sAcc>=55?'#FEF3C7':'#FEE2E2', sAcc>=75?'#15803D':sAcc>=55?'#B45309':'#B91C1C') : '';
+      const cardBorder = isSel ? 'border:2px solid #4F46E5;background:#F5F3FF' : isVoid ? 'border:1px dashed #E2E1DC;background:#fff' : 'border:1px solid #E2E1DC;background:#fff';
+      return `<div style=”${cardBorder};border-radius:10px;padding:12px 14px;cursor:pointer” onclick=”selectSubCard(${si})”>
+        <div style=”display:flex;justify-content:space-between;align-items:center;margin-bottom:4px”>
+          <span style=”font-size:13px;font-weight:700;color:#111110”>${h(sn)}</span>
+          <span style=”font-size:10px;color:#A5A59E”>${sNotes.length} notes</span>
         </div>
-        <div class=”st-card-chips”>
-          ${sSess.length?`<span class=”st-card-chip”>${sSess.length} sessions</span>`:''}
-          ${sAtt?`<span class=”st-card-chip”>${sAtt}Q</span>`:''}
+        <div style=”display:flex;gap:4px;flex-wrap:wrap;margin-top:5px”>
+          ${sSess.length ? chip(sSess.length+' sessions','#F5F4F0','#65655F') : ''}
+          ${sAtt ? chip(sAtt+'Q','#F5F4F0','#65655F') : ''}
           ${accChip}
-          ${isVoid?`<span class=”st-card-chip mt-chip-new”>new</span>`:''}
-          ${ss.length?`<span class=”st-card-chip”>${ss.length} sub-sub</span>`:''}
+          ${isVoid ? chip('new','#EDE9FE','#6D28D9') : ''}
+          ${ss.length ? chip(ss.length+' sub-sub','#F5F4F0','#65655F') : ''}
         </div>
       </div>`;
     }).join('');
-    stGrid = `<div class=”mp-sec”>Sub-topics</div><div class=”st-grid”>${cards}</div>`;
+    stGrid = `<div style=”font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A5A59E;margin:0 0 8px”>Sub-topics</div><div style=”display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px”>${cards}</div>`;
   }
 
   // Sub-sub cards (at sub-topic level)
@@ -1574,30 +1576,30 @@ function renderMapMain() {
         const ssAcc = ssAtt>0 ? Math.round(ssCor/ssAtt*100) : null;
         const isVoid = ssAtt === 0;
         const isSel = selNav.subsub === ssi;
-        const accChip = ssAcc!==null
-          ? `<span class=”st-card-chip” style=”background:${ssAcc>=75?'#DCFCE7':ssAcc>=55?'#FEF3C7':'#FEE2E2'};color:${ssAcc>=75?'#15803D':ssAcc>=55?'#B45309':'#B91C1C'}”>${ssAcc}%</span>`
-          : '';
-        return `<div class=”st-card ${isVoid?'st-card-void':''} ${isSel?'sel':''}” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
-          <div class=”st-card-head”>
-            <span class=”st-card-name”>${h(ssName)}</span>
-            <span class=”st-card-type”>Sub-sub-topic</span>
+        const chip = (txt, bg, col) => `<span style=”font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;background:${bg};color:${col}”>${txt}</span>`;
+        const accChip = ssAcc!==null ? chip(ssAcc+'%', ssAcc>=75?'#DCFCE7':ssAcc>=55?'#FEF3C7':'#FEE2E2', ssAcc>=75?'#15803D':ssAcc>=55?'#B45309':'#B91C1C') : '';
+        const cardBorder = isSel ? 'border:2px solid #4F46E5;background:#F5F3FF' : isVoid ? 'border:1px dashed #E2E1DC;background:#fff' : 'border:1px solid #E2E1DC;background:#fff';
+        return `<div style=”${cardBorder};border-radius:10px;padding:12px 14px;cursor:pointer” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
+          <div style=”display:flex;justify-content:space-between;align-items:center;margin-bottom:4px”>
+            <span style=”font-size:13px;font-weight:700;color:#111110”>${h(ssName)}</span>
+            <span style=”font-size:10px;color:#A5A59E”>Sub-sub-topic</span>
           </div>
-          <div class=”st-card-chips”>
-            ${ssSess.length?`<span class=”st-card-chip”>${ssSess.length} sessions</span>`:''}
-            ${ssAtt?`<span class=”st-card-chip”>${ssAtt}Q</span>`:''}
+          <div style=”display:flex;gap:4px;flex-wrap:wrap;margin-top:5px”>
+            ${ssSess.length ? chip(ssSess.length+' sessions','#F5F4F0','#65655F') : ''}
+            ${ssAtt ? chip(ssAtt+'Q','#F5F4F0','#65655F') : ''}
             ${accChip}
-            ${isVoid?`<span class=”st-card-chip mt-chip-new”>new</span>`:''}
+            ${isVoid ? chip('new','#EDE9FE','#6D28D9') : ''}
           </div>
         </div>`;
       }).join('');
-      ssGrid = `<div class=”mp-sec”>Sub-sub-topics</div><div class=”st-grid”>${cards}</div>`;
+      ssGrid = `<div style=”font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#A5A59E;margin:0 0 8px”>Sub-sub-topics</div><div style=”display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px”>${cards}</div>`;
     }
   }
 
-  // Tabs: Insights | Notes
-  const tabs = `<div class=”mp-tabs”>
-    <button class=”mp-tab ${mapView==='insights'?'on':''}” onclick=”setMapView('insights')”>Insights</button>
-    <button class=”mp-tab ${mapView==='notes'?'on':''}” onclick=”setMapView('notes')”>Notes</button>
+  const tabStyle = (on) => `padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2px solid ${on?'#111110':'transparent'};margin-bottom:-1px;color:${on?'#111110':'#65655F'}`;
+  const tabs = `<div style=”display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid #E2E1DC”>
+    <button style=”${tabStyle(mapView==='insights')}” onclick=”setMapView('insights')”>Insights</button>
+    <button style=”${tabStyle(mapView==='notes')}” onclick=”setMapView('notes')”>Notes</button>
   </div>`;
 
   let body = '';
@@ -1617,12 +1619,15 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
       <button class=”btn btn-dark” onclick=”logFromNav()”>+ Log first session</button>
     </div>`;
   }
-  const accCol = acc>=75?'var(--green)':acc>=55?'var(--amber)':'var(--red)';
-  const kpis = `<div class=”mp-kpi-row”>
-    <div class=”mp-kpi”><div class=”mp-kpi-val” style=”color:${accCol}”>${acc}%</div><div class=”mp-kpi-lbl”>Accuracy</div></div>
-    <div class=”mp-kpi”><div class=”mp-kpi-val”>${att}</div><div class=”mp-kpi-lbl”>Questions attempted</div></div>
-    <div class=”mp-kpi”><div class=”mp-kpi-val” style=”color:var(--red)”>${wrg}</div><div class=”mp-kpi-lbl”>Wrong</div></div>
-    <div class=”mp-kpi”><div class=”mp-kpi-val”>${ctx.sess.length}</div><div class=”mp-kpi-lbl”>Sessions logged</div></div>
+  const accCol = acc>=75?'#15803D':acc>=55?'#B45309':'#B91C1C';
+  const kpiBox = 'background:#fff;border:1px solid #E2E1DC;border-radius:10px;padding:14px 18px;flex:1;min-width:90px';
+  const kpiVal = 'font-size:24px;font-weight:800';
+  const kpiLbl = 'font-size:10px;color:#A5A59E;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px';
+  const kpis = `<div style=”display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap”>
+    <div style=”${kpiBox}”><div style=”${kpiVal};color:${accCol}”>${acc}%</div><div style=”${kpiLbl}”>Accuracy</div></div>
+    <div style=”${kpiBox}”><div style=”${kpiVal}”>${att}</div><div style=”${kpiLbl}”>Questions attempted</div></div>
+    <div style=”${kpiBox}”><div style=”${kpiVal};color:#B91C1C”>${wrg}</div><div style=”${kpiLbl}”>Wrong</div></div>
+    <div style=”${kpiBox}”><div style=”${kpiVal}”>${ctx.sess.length}</div><div style=”${kpiLbl}”>Sessions logged</div></div>
   </div>`;
 
   const allErrs = ctx.sess.flatMap(s=>s.errors||[]);
