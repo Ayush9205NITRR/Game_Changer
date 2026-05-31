@@ -823,7 +823,7 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
 .note-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 7px; }
 .note-path { font-size: 11px; color: var(--t2); margin-top: 2px; }
 .note-date { font-size: 11px; color: var(--t3); white-space: nowrap; }
-.note-insight { font-size: 13px; line-height: 1.5; color: var(--text); }
+.note-insight { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
 .note-qs { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .note-q { font-size: 12px; color: var(--t2); background: #fff; border-radius: var(--r-sm); padding: 6px 8px; }
 .err-tag {
@@ -1483,6 +1483,7 @@ let selNav = { subj: 0, topic: -1, sub: -1, subsub: -1 };
 let mapView = 'insights';
 let editingNoteId = null;
 let editingSessionId = null;
+let editingMemoId = null;
 
 // ─────────────────────────────────────────────
 //  DB / STORAGE
@@ -1848,7 +1849,7 @@ function renderMapNotes(ctx) {
       </div>`;
     }
     return `<div class="note-item" style="margin-bottom:8px">
-      <div class="ins-row"><span class="note-insight">${h(n.insight||'')}</span><span class="note-date">${n.date||''}</span></div>
+      <div class="ins-row"><span class="note-insight">${fmt(n.insight||'')}</span><span class="note-date">${n.date||''}</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px">
         <span class="ins-meta">${stText}</span>
         <div style="display:flex;gap:4px">
@@ -1946,6 +1947,24 @@ async function deleteSession(id) {
   toast('Session deleted');
   renderMapMain();
   renderMapSidebar();
+}
+
+function startEditMemo(id) { editingMemoId = id; renderNotes(); }
+function cancelEditMemo() { editingMemoId = null; renderNotes(); }
+
+async function saveEditMemo(id) {
+  const note = (document.getElementById('edit-memo-text-'+id)?.value || '').trim();
+  const idx = SESSIONS.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  SESSIONS[idx].note = note;
+  if (sb) {
+    const {error} = await sb.from('gmat_sessions').update({note}).eq('id', id);
+    if (error) { toast('Save failed: '+(error.message||error.code)); return; }
+  } else { saveLocal(); }
+  editingMemoId = null;
+  toast('Memo updated');
+  renderNotes();
+  renderMapMain();
 }
 
 async function saveQuickNote() {
@@ -2419,7 +2438,7 @@ function renderNotes() {
           <span class="note-date">${h(n.date || '')}</span>
         </div>
       </div>
-      <div class="note-insight">${h(n.insight || '')}</div>
+      <div class="note-insight">${fmt(n.insight || '')}</div>
       ${qs.length ? `<div class="note-qs">${qs.map(q => `<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>` : ''}
       <div style="display:flex;gap:4px;margin-top:8px">
         <button class="btn btn-sm" onclick="startEditNote('${n.id}')" style="padding:3px 10px;font-size:11px">Edit</button>
@@ -2432,6 +2451,26 @@ function renderNotes() {
     const a = s.attempted || 0, c = s.correct || 0;
     const pct = a > 0 ? Math.round(c / a * 100) : null;
     const statCls = pct === null ? 'ms-n' : pct >= 75 ? 'ms-g' : pct >= 55 ? 'ms-a' : 'ms-r';
+    if (editingMemoId === s.id) {
+      return `<div class="note-item" style="margin-bottom:8px">
+        <div class="note-top" style="margin-bottom:8px">
+          <div>
+            <div class="acc-item-name">${h(s.topic || 'Session')}</div>
+            <div class="note-path">${h(s.subject || '')}${s.subtopic ? ' &middot; '+h(s.subtopic) : ''}</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+            ${pct !== null ? `<span class="mini-stat ${statCls}">${pct}%</span>` : ''}
+            <span class="mini-stat ms-n">${a}Q</span>
+            <span class="note-date">${h(s.date || '')}</span>
+          </div>
+        </div>
+        <textarea id="edit-memo-text-${s.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(s.note || '')}</textarea>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-sm" onclick="cancelEditMemo()" style="margin-left:auto">Cancel</button>
+          <button class="btn btn-dark btn-sm" onclick="saveEditMemo('${s.id}')">Save</button>
+        </div>
+      </div>`;
+    }
     return `<div class="note-item" style="margin-bottom:8px">
       <div class="note-top">
         <div>
@@ -2444,7 +2483,10 @@ function renderNotes() {
           <span class="note-date">${h(s.date || '')}</span>
         </div>
       </div>
-      <div class="note-insight">${h(s.note)}</div>
+      <div class="note-insight">${fmt(s.note)}</div>
+      <div style="display:flex;gap:4px;margin-top:8px">
+        <button class="btn btn-sm" onclick="startEditMemo('${s.id}')" style="padding:3px 10px;font-size:11px">Edit</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -2756,7 +2798,7 @@ function renderNotesPanel(notes, ctx) {
           <span class="note-date">${h(n.date || '')}</span>
         </div>
       </div>
-      <div class="note-insight">${h(n.insight || '')}</div>
+      <div class="note-insight">${fmt(n.insight || '')}</div>
       ${qs.length ? `<div class="note-qs">${qs.map(q=>`<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>` : ''}
     </div>`;
   }).join('')}</div>
@@ -2952,6 +2994,7 @@ function miniChart(sessions) {
   </div>`;
 }
 function h(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(s) { if(!s)return''; return h(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); }
 function today() { return new Date().toISOString().split('T')[0]; }
 function uid()   { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
 
