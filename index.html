@@ -181,7 +181,7 @@ body {
 .subj-tab:hover { border-color: var(--border2); color: var(--text); }
 .subj-tab.on { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
 
-/* === 3-PANE MAP === */
+/* === MAP 2-PANE === */
 #screen-map {
   height: calc(100vh - 48px);
   overflow: hidden;
@@ -189,91 +189,167 @@ body {
   margin: 0 !important;
   max-width: none !important;
 }
-#pane-left {
-  width: 26%; min-width: 200px; max-width: 280px;
+#map-sidebar {
+  width: 320px; min-width: 260px; max-width: 360px;
   border-right: 1px solid var(--border);
   overflow-y: auto; flex-shrink: 0;
   background: var(--card);
+  display: flex; flex-direction: column;
 }
-#pane-center {
-  width: 36%; overflow-y: auto;
-  border-right: 1px solid var(--border);
-  padding: 20px 22px;
+#map-main {
+  flex: 1; overflow-y: auto;
+  padding: 28px 32px;
+  background: var(--bg);
 }
-#pane-right {
-  flex: 1; overflow-y: auto; padding: 20px 22px;
+@media (max-width: 768px) {
+  #screen-map.on { flex-direction: column; }
+  #map-sidebar { width: 100%; max-width: none; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+  #map-main { padding: 16px; }
 }
-.pane-empty { font-size: 13px; color: var(--t3); margin-top: 40px; text-align: center; }
 
-/* nav tree */
-#nav-subj-tabs { display: flex; gap: 4px; padding: 10px 10px 8px; background: var(--bg); border-bottom: 1px solid var(--border); }
-.nav-stab {
-  flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 600;
+/* sidebar subject tabs */
+#map-subj-tabs { display: flex; gap: 4px; padding: 12px 12px 10px; border-bottom: 1px solid var(--border); }
+.ms-tab {
+  flex: 1; padding: 7px 6px; font-size: 12px; font-weight: 600;
   text-align: center; cursor: pointer; color: var(--t2);
-  border: 1px solid var(--border); border-radius: 6px;
-  background: var(--card); font-family: inherit;
-  transition: all 0.12s;
+  border: none; border-radius: 8px;
+  background: transparent; font-family: inherit;
+  transition: all 0.15s;
 }
-.nav-stab:hover { color: var(--text); border-color: var(--text); }
-.nav-stab.on { background: var(--text); color: #fff; border-color: var(--text); }
-.nav-topic-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 12px 8px 14px; cursor: pointer;
-  font-size: 12px; font-weight: 700; color: var(--text);
-  border-bottom: 1px solid var(--border); user-select: none;
-}
-.nav-topic-row:hover { background: var(--bg); }
-.nav-topic-toggle { font-size: 9px; color: var(--t3); transition: transform 0.12s; }
-.nav-topic-open .nav-topic-toggle { transform: rotate(90deg); }
-.nav-sub-row {
-  display: flex; align-items: center;
-  padding: 6px 10px 6px 24px; cursor: pointer;
-  font-size: 12px; color: var(--t2);
-  border-bottom: 1px solid var(--bg); gap: 6px;
-}
-.nav-sub-row:hover { background: var(--bg); color: var(--text); }
-.nav-sub-row.sel, .nav-subsub-row.sel { background: var(--text); color: #fff; border-radius: 4px; margin: 0 4px; }
-.nav-sub-acc { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: auto; flex-shrink: 0; }
-.nav-sub-void { font-size: 10px; color: var(--t3); margin-left: auto; }
-.nav-subsub-row {
-  display: flex; align-items: center;
-  padding: 5px 10px 5px 36px; cursor: pointer;
-  font-size: 11px; color: var(--t2);
-  border-bottom: 1px solid var(--bg); gap: 6px;
-}
-.nav-subsub-row:hover { background: var(--bg); color: var(--text); }
+.ms-tab:hover { background: var(--bg); color: var(--text); }
+.ms-tab.on { background: var(--text); color: #fff; }
 
-/* center analytics pane */
-.pane-breadcrumb { font-size: 11px; color: var(--t3); margin-bottom: 14px; }
-.pane-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-.pane-kpi-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.pane-kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 14px; flex: 1; min-width: 70px; }
-.pane-kpi-val { font-size: 20px; font-weight: 800; }
-.pane-kpi-lbl { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
-.pane-sec { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t3); margin: 14px 0 7px; }
-.pane-void-state { background: var(--card); border: 1px dashed var(--border); border-radius: var(--r); padding: 20px; text-align: center; }
-.pane-void-lbl { font-size: 13px; color: var(--t2); margin-bottom: 10px; }
-.cerr-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+/* sidebar search */
+#map-search-wrap {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+}
+#map-search {
+  width: 100%; padding: 7px 10px 7px 30px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23A5A59E' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E") 8px center no-repeat;
+  font-family: inherit; outline: none; color: var(--text);
+}
+#map-search:focus { border-color: var(--text); }
+#map-search::placeholder { color: var(--t3); }
+
+/* sidebar topic cards */
+#map-topic-list { flex: 1; overflow-y: auto; padding: 6px 8px; }
+.mt-card {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+  cursor: pointer; background: var(--card);
+  transition: all 0.12s; position: relative;
+}
+.mt-card:hover { border-color: var(--border2); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.mt-card.sel { border-color: var(--text); border-width: 2px; background: #FAFAF8; }
+.mt-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.mt-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.mt-chip {
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--bg); color: var(--t2); font-weight: 600;
+}
+.mt-chip-acc { color: #fff; }
+.mt-chip-new { background: #EDE9FE; color: #6D28D9; }
+
+/* main panel */
+.mp-empty { text-align: center; padding: 80px 20px; }
+.mp-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+.mp-empty-text { font-size: 14px; color: var(--t3); }
+
+.mp-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.mp-breadcrumb { font-size: 11px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.4px; }
+.mp-title { font-size: 22px; font-weight: 800; color: var(--text); }
+.mp-subtitle { font-size: 12px; color: var(--t3); margin-bottom: 20px; }
+.mp-edit-btn {
+  font-size: 11px; padding: 4px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--t2); cursor: pointer; font-family: inherit; font-weight: 600;
+  margin-left: auto; transition: all 0.12s;
+}
+.mp-edit-btn:hover { border-color: var(--text); color: var(--text); }
+.mp-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.mp-tab {
+  padding: 8px 16px; font-size: 12px; font-weight: 600;
+  color: var(--t2); cursor: pointer; border: none; background: none;
+  font-family: inherit; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.12s;
+}
+.mp-tab:hover { color: var(--text); }
+.mp-tab.on { color: var(--text); border-bottom-color: var(--text); }
+
+/* sub-topic cards grid */
+.st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+@media (max-width: 900px) { .st-grid { grid-template-columns: 1fr; } }
+.st-card {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; background: var(--card);
+  cursor: pointer; transition: all 0.12s;
+}
+.st-card:hover { border-color: var(--border2); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.st-card.sel { border-color: var(--purple); border-width: 2px; background: #F5F3FF; }
+.st-card-void { border-style: dashed; }
+.st-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.st-card-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.st-card-type { font-size: 10px; color: var(--t3); }
+.st-card-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.st-card-chip {
+  font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  font-weight: 600; background: var(--bg); color: var(--t2);
+}
+
+/* KPI row */
+.mp-kpi-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.mp-kpi {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 18px; flex: 1; min-width: 90px;
+}
+.mp-kpi-val { font-size: 24px; font-weight: 800; }
+.mp-kpi-lbl { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+/* section label */
+.mp-sec { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t3); margin: 20px 0 8px; }
+
+/* error rows */
+.cerr-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .cerr-row:last-child { border-bottom: none; }
 .cerr-label { font-size: 12px; font-weight: 600; flex: 1; }
-.cerr-bar-wrap { width: 80px; height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-.cerr-bar { height: 100%; border-radius: 3px; }
-.cerr-count { font-size: 11px; color: var(--t2); min-width: 24px; text-align: right; }
-.rsess-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.cerr-bar-wrap { width: 100px; height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.cerr-bar { height: 100%; border-radius: 4px; }
+.cerr-count { font-size: 11px; color: var(--t2); min-width: 28px; text-align: right; }
+
+/* session rows */
+.rsess-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .rsess-row:last-child { border-bottom: none; }
-.rsess-date { color: var(--t3); flex-shrink: 0; }
+.rsess-date { color: var(--t3); flex-shrink: 0; min-width: 70px; }
 .rsess-sub { color: var(--t2); flex: 1; font-size: 11px; }
 
-/* right notes pane */
-.notes-header { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
-.quick-note-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; margin-bottom: 14px; }
-.quick-note-box textarea { width: 100%; border: none; outline: none; font-family: inherit; font-size: 13px; resize: none; background: transparent; color: var(--text); line-height: 1.6; }
-.past-note-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 11px 13px; margin-bottom: 8px; }
-.past-note-date { font-size: 10px; color: var(--t3); margin-bottom: 5px; }
-.past-note-insight { font-size: 12px; line-height: 1.5; }
-.past-note-q { font-size: 11px; color: var(--t2); margin-top: 5px; }
-.note-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
-.ns0 { background: var(--green); } .ns1 { background: var(--amber); } .ns2 { background: var(--red); }
+/* notes section */
+.mp-note-box {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; margin-bottom: 12px;
+}
+.mp-note-box textarea {
+  width: 100%; border: none; outline: none; font-family: inherit;
+  font-size: 13px; resize: none; background: transparent;
+  color: var(--text); line-height: 1.6;
+}
+.mp-note-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+}
+.mp-note-date { font-size: 10px; color: var(--t3); margin-bottom: 4px; }
+.mp-note-text { font-size: 12px; line-height: 1.5; }
+.mp-note-q { font-size: 11px; color: var(--t2); margin-top: 4px; }
+.note-dot-g { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; background: var(--green); }
+.note-dot-a { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; background: var(--amber); }
+.note-dot-r { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; background: var(--red); }
+
+/* void state */
+.mp-void {
+  background: var(--card); border: 2px dashed var(--border);
+  border-radius: 12px; padding: 30px; text-align: center; margin: 20px 0;
+}
+.mp-void-lbl { font-size: 14px; color: var(--t2); margin-bottom: 12px; }
 
 .topic-group { margin-bottom: 18px; }
 .topic-lbl {
@@ -891,15 +967,15 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
 
   <!-- ══ MAP ══ -->
   <div id="screen-map" class="screen on">
-    <div id="pane-left">
-      <div id="nav-subj-tabs"></div>
-      <div id="nav-tree"></div>
+    <div id="map-sidebar">
+      <div id="map-subj-tabs"></div>
+      <div id="map-search-wrap"><input id="map-search" type="text" placeholder="Search topics or sub-topics..." oninput="renderMapSidebar()"></div>
+      <div id="map-topic-list"></div>
     </div>
-    <div id="pane-center">
-      <div id="center-content"><div class="pane-empty">Select a topic from the left to see analytics</div></div>
-    </div>
-    <div id="pane-right">
-      <div id="right-content"><div class="pane-empty">Select a topic to see and write notes</div></div>
+    <div id="map-main">
+      <div id="map-main-content">
+        <div class="mp-empty"><div class="mp-empty-icon">📊</div><div class="mp-empty-text">Select a topic from the sidebar to see insights and notes</div></div>
+      </div>
     </div>
   </div>
 
@@ -1245,6 +1321,7 @@ let pAtt = 0, pCor = 0, selErr = {};
 let nStatus = 0, nQs = [];
 let insFilter = 'Quant', insSubQ = '', insTopicIdx = 0, insSubIdx = -1, insSubSubIdx = -1, insView = 'insights', mgrSubj = 0, mapSubj = 0;
 let selNav = { subj: 0, topic: -1, sub: -1, subsub: -1 };
+let mapView = 'insights';
 
 // ─────────────────────────────────────────────
 //  DB / STORAGE
@@ -1331,7 +1408,7 @@ function nav(name) {
     const el = document.getElementById('nt-'+n);
     if (el) el.classList.toggle('on', n===name);
   });
-  if (name==='map')      { renderMap(); renderCenterPanel(); renderRightPanel(); }
+  if (name==='map')      { renderMap(); renderMapMain(); }
   if (name==='log')      resetWizard();
   if (name==='insights') renderInsights();
   if (name==='settings') renderSettings();
@@ -1341,125 +1418,218 @@ function nav(name) {
 //  MAP
 // ─────────────────────────────────────────────
 
-function renderMap() {
-  const subs = subjs();
-  document.getElementById('nav-subj-tabs').innerHTML = subs.map((s,i) =>
-    `<button class=”nav-stab ${i===selNav.subj?'on':''}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`
+function renderMap() { renderMapTabs(); renderMapSidebar(); }
+
+function renderMapTabs() {
+  document.getElementById('map-subj-tabs').innerHTML = subjs().map((s,i) =>
+    `<button class=”ms-tab ${i===selNav.subj?'on':''}” onclick=”setNavSubj(${i})”>${h(s.name)}</button>`
   ).join('');
-  const subj = subs[selNav.subj];
-  document.getElementById('nav-tree').innerHTML = subj.topics.map((topic, ti) => {
-    const isOpen = selNav.topic === ti;
-    const topicSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name);
-    const tAtt = topicSess.reduce((a,s)=>a+(s.attempted||0),0);
-    const tCor = topicSess.reduce((a,s)=>a+(s.correct||0),0);
+}
+
+function renderMapSidebar() {
+  const subj = subjs()[selNav.subj];
+  const q = (document.getElementById('map-search')?.value || '').toLowerCase().trim();
+  const html = subj.topics.map((topic, ti) => {
+    const tsess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name);
+    const tnotes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name);
+    const tAtt = tsess.reduce((a,s)=>a+(s.attempted||0),0);
+    const tCor = tsess.reduce((a,s)=>a+(s.correct||0),0);
     const tAcc = tAtt>0 ? Math.round(tCor/tAtt*100) : null;
-    const tCls = tAcc===null?'':tAcc>=75?'acc-good':tAcc>=55?'acc-warn':'acc-bad';
-    let subRows = '';
-    if (isOpen) {
-      subRows = getSubs(topic).map((sub, si) => {
-        const subName = getSubName(sub), ss = getSubSubs(sub);
-        const subSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName);
-        const sAtt = subSess.reduce((a,s)=>a+(s.attempted||0),0);
-        const sCor = subSess.reduce((a,s)=>a+(s.correct||0),0);
-        const sAcc = sAtt>0 ? Math.round(sCor/sAtt*100) : null;
-        const sCls = sAcc===null?'':sAcc>=75?'acc-good':sAcc>=55?'acc-warn':'acc-bad';
-        const isSelSub = selNav.sub===si && selNav.topic===ti;
-        const accBadge = sAcc!==null
-          ? `<span class=”nav-sub-acc ${sCls}” style=”background:${sAcc>=75?'#DCFCE7':sAcc>=55?'#FEF3C7':'#FEE2E2'}”>${sAcc}%</span>`
-          : `<span class=”nav-sub-void”>—</span>`;
-        let ssRows = '';
-        if (ss.length > 0) {
-          ssRows = ss.map((s2,ssi) => {
-            const s2s = subSess.filter(s=>s.subsubtopic===s2);
-            const s2a = s2s.reduce((a,s)=>a+(s.attempted||0),0);
-            const s2c = s2s.reduce((a,s)=>a+(s.correct||0),0);
-            const s2acc = s2a>0 ? Math.round(s2c/s2a*100) : null;
-            const s2cls = s2acc===null?'':s2acc>=75?'acc-good':s2acc>=55?'acc-warn':'acc-bad';
-            const isSelSS = isSelSub && selNav.subsub===ssi;
-            return `<div class=”nav-subsub-row ${isSelSS?'sel':''}” onclick=”selectNav(${selNav.subj},${ti},${si},${ssi});event.stopPropagation()”>
-              <span>${h(s2)}</span>
-              ${s2acc!==null?`<span class=”nav-sub-acc ${s2cls}” style=”margin-left:auto;background:${s2acc>=75?'#DCFCE7':s2acc>=55?'#FEF3C7':'#FEE2E2'}”>${s2acc}%</span>`:'<span style=”margin-left:auto;font-size:10px;color:var(--t3)”>—</span>'}
-            </div>`;
-          }).join('');
-        }
-        return `<div class=”nav-sub-row ${isSelSub&&selNav.subsub<0?'sel':''}” onclick=”selectNav(${selNav.subj},${ti},${si},-1);event.stopPropagation()”>
-          <span>${h(subName)}</span>
-          ${accBadge}
-        </div>${ssRows}`;
-      }).join('');
-    }
-    return `<div class=”nav-topic-group”>
-      <div class=”nav-topic-row ${isOpen?'nav-topic-open':''}” onclick=”toggleNavTopic(${ti})”>
-        <span>${h(topic.name)}</span>
-        ${tAcc!==null?`<span class=”nav-sub-acc ${tCls}” style=”font-size:10px;margin-right:4px;background:${tAcc>=75?'#DCFCE7':tAcc>=55?'#FEF3C7':'#FEE2E2'}”>${tAcc}%</span>`:''}
-        <span class=”nav-topic-toggle”>›</span>
+    const subCount = getSubs(topic).length;
+    const nameMatch = topic.name.toLowerCase().includes(q);
+    const subMatch = getSubs(topic).some(sub => {
+      const sn = getSubName(sub).toLowerCase();
+      if (sn.includes(q)) return true;
+      return getSubSubs(sub).some(ss => ss.toLowerCase().includes(q));
+    });
+    if (q && !nameMatch && !subMatch) return '';
+    const isSel = selNav.topic === ti;
+    const accChip = tAcc!==null
+      ? `<span class=”mt-chip mt-chip-acc” style=”background:${tAcc>=75?'#15803D':tAcc>=55?'#B45309':'#B91C1C'}”>${tAcc}%</span>`
+      : '';
+    const newChip = tAtt===0 ? `<span class=”mt-chip mt-chip-new”>new</span>` : '';
+    return `<div class=”mt-card ${isSel?'sel':''}” onclick=”selectTopic(${ti})”>
+      <div class=”mt-name”>${h(topic.name)} ${accChip}</div>
+      <div class=”mt-meta”>
+        <span class=”mt-chip”>${subCount} sub-topics</span>
+        <span class=”mt-chip”>${tsess.length} sessions</span>
+        <span class=”mt-chip”>${tnotes.length} notes</span>
+        ${newChip}
       </div>
-      ${subRows}
     </div>`;
   }).join('');
+  document.getElementById('map-topic-list').innerHTML = html || `<div style=”text-align:center;padding:30px;color:var(--t3);font-size:12px”>No topics match your search</div>`;
 }
 
-function setNavSubj(i) { selNav = {subj:i, topic:-1, sub:-1, subsub:-1}; renderMap(); renderCenterPanel(); renderRightPanel(); }
-function toggleNavTopic(ti) {
-  selNav.topic = selNav.topic===ti ? -1 : ti;
-  selNav.sub = -1; selNav.subsub = -1;
-  renderMap(); renderCenterPanel(); renderRightPanel();
+function setNavSubj(i) { selNav = {subj:i, topic:-1, sub:-1, subsub:-1}; mapView='insights'; renderMap(); renderMapMain(); }
+function selectTopic(ti) {
+  selNav.topic = ti; selNav.sub = -1; selNav.subsub = -1; mapView='insights';
+  renderMapSidebar(); renderMapMain();
 }
-function selectNav(subj, topic, sub, subsub) {
-  selNav = {subj, topic, sub, subsub};
-  renderMap(); renderCenterPanel(); renderRightPanel();
+function selectSubCard(si) {
+  selNav.sub = si; selNav.subsub = -1; mapView='insights';
+  renderMapMain();
 }
+function selectSubSubCard(si, ssi) {
+  selNav.sub = si; selNav.subsub = ssi; mapView='insights';
+  renderMapMain();
+}
+function setMapView(v) { mapView = v; renderMapMain(); }
 
-function renderCenterPanel() {
-  const el = document.getElementById('center-content');
-  if (selNav.topic<0) { el.innerHTML=`<div class=”pane-empty”>Select a topic from the left</div>`; return; }
+function getMapContext() {
   const subj = subjs()[selNav.subj];
-  if (!subj) return;
   const topic = subj.topics[selNav.topic];
-  if (!topic) return;
-
-  let title, breadcrumb, filterSess;
-  if (selNav.sub < 0) {
-    title = topic.name;
-    breadcrumb = subj.name;
-    filterSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name);
-  } else {
+  if (selNav.sub >= 0) {
     const subRaw = getSubs(topic)[selNav.sub];
     const subName = getSubName(subRaw);
-    if (selNav.subsub < 0) {
-      title = subName;
-      breadcrumb = `${subj.name} › ${topic.name}`;
-      filterSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName);
-    } else {
-      const ss = getSubSubs(subRaw);
-      const ssName = ss[selNav.subsub] || '';
-      title = ssName;
-      breadcrumb = `${subj.name} › ${topic.name} › ${subName}`;
-      filterSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName&&s.subsubtopic===ssName);
+    if (selNav.subsub >= 0) {
+      const ssName = (getSubSubs(subRaw)||[])[selNav.subsub]||'';
+      return {
+        title: ssName, breadcrumb: `${subj.name} / ${topic.name} / ${subName}`,
+        sess: SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName&&s.subsubtopic===ssName),
+        notes: NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName&&(n.subsubtopic===ssName||!n.subsubtopic)),
+        level: 'subsub'
+      };
+    }
+    return {
+      title: subName, breadcrumb: `${subj.name} / ${topic.name}`,
+      sess: SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===subName),
+      notes: NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName),
+      level: 'sub'
+    };
+  }
+  return {
+    title: topic.name, breadcrumb: subj.name,
+    sess: SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name),
+    notes: NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name),
+    level: 'topic'
+  };
+}
+
+function renderMapMain() {
+  const el = document.getElementById('map-main-content');
+  if (selNav.topic < 0) {
+    el.innerHTML = `<div class=”mp-empty”><div class=”mp-empty-icon”>📊</div><div class=”mp-empty-text”>Select a topic from the sidebar to see insights and notes</div></div>`;
+    return;
+  }
+  const ctx = getMapContext();
+  const subj = subjs()[selNav.subj];
+  const topic = subj.topics[selNav.topic];
+  const att = ctx.sess.reduce((a,s)=>a+(s.attempted||0),0);
+  const cor = ctx.sess.reduce((a,s)=>a+(s.correct||0),0);
+  const wrg = att - cor;
+  const acc = att>0 ? Math.round(cor/att*100) : null;
+
+  let header = `
+    <div class=”mp-breadcrumb”>${h(ctx.breadcrumb)}</div>
+    <div class=”mp-header”>
+      <div class=”mp-title”>${h(ctx.title)}</div>
+      <button class=”mp-edit-btn” onclick=”mgrSubj=selNav.subj;nav('settings')”>Edit</button>
+    </div>
+    <div class=”mp-subtitle”>${getSubs(topic).length} trackable areas in this view</div>
+  `;
+
+  // Sub-topic card grid (only at topic level)
+  let stGrid = '';
+  if (ctx.level === 'topic') {
+    const cards = getSubs(topic).map((sub, si) => {
+      const sn = getSubName(sub), ss = getSubSubs(sub);
+      const sSess = SESSIONS.filter(s=>s.subject===subj.name&&s.topic===topic.name&&s.subtopic===sn);
+      const sNotes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===sn);
+      const sAtt = sSess.reduce((a,s)=>a+(s.attempted||0),0);
+      const sCor = sSess.reduce((a,s)=>a+(s.correct||0),0);
+      const sAcc = sAtt>0 ? Math.round(sCor/sAtt*100) : null;
+      const isVoid = sAtt === 0;
+      const isSel = selNav.sub === si && selNav.subsub < 0;
+      const accChip = sAcc!==null
+        ? `<span class=”st-card-chip” style=”background:${sAcc>=75?'#DCFCE7':sAcc>=55?'#FEF3C7':'#FEE2E2'};color:${sAcc>=75?'#15803D':sAcc>=55?'#B45309':'#B91C1C'}”>${sAcc}%</span>`
+        : '';
+      return `<div class=”st-card ${isVoid?'st-card-void':''} ${isSel?'sel':''}” onclick=”selectSubCard(${si})”>
+        <div class=”st-card-head”>
+          <span class=”st-card-name”>${h(sn)}</span>
+          <span class=”st-card-type”>${sNotes.length} notes</span>
+        </div>
+        <div class=”st-card-chips”>
+          ${sSess.length?`<span class=”st-card-chip”>${sSess.length} sessions</span>`:''}
+          ${sAtt?`<span class=”st-card-chip”>${sAtt}Q</span>`:''}
+          ${accChip}
+          ${isVoid?`<span class=”st-card-chip mt-chip-new”>new</span>`:''}
+          ${ss.length?`<span class=”st-card-chip”>${ss.length} sub-sub</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    stGrid = `<div class=”mp-sec”>Sub-topics</div><div class=”st-grid”>${cards}</div>`;
+  }
+
+  // Sub-sub cards (at sub-topic level)
+  let ssGrid = '';
+  if (ctx.level === 'sub') {
+    const subRaw = getSubs(topic)[selNav.sub];
+    const ssList = getSubSubs(subRaw);
+    if (ssList.length > 0) {
+      const cards = ssList.map((ssName, ssi) => {
+        const ssSess = ctx.sess.filter(s=>s.subsubtopic===ssName);
+        const ssAtt = ssSess.reduce((a,s)=>a+(s.attempted||0),0);
+        const ssCor = ssSess.reduce((a,s)=>a+(s.correct||0),0);
+        const ssAcc = ssAtt>0 ? Math.round(ssCor/ssAtt*100) : null;
+        const isVoid = ssAtt === 0;
+        const isSel = selNav.subsub === ssi;
+        const accChip = ssAcc!==null
+          ? `<span class=”st-card-chip” style=”background:${ssAcc>=75?'#DCFCE7':ssAcc>=55?'#FEF3C7':'#FEE2E2'};color:${ssAcc>=75?'#15803D':ssAcc>=55?'#B45309':'#B91C1C'}”>${ssAcc}%</span>`
+          : '';
+        return `<div class=”st-card ${isVoid?'st-card-void':''} ${isSel?'sel':''}” onclick=”selectSubSubCard(${selNav.sub},${ssi})”>
+          <div class=”st-card-head”>
+            <span class=”st-card-name”>${h(ssName)}</span>
+            <span class=”st-card-type”>Sub-sub-topic</span>
+          </div>
+          <div class=”st-card-chips”>
+            ${ssSess.length?`<span class=”st-card-chip”>${ssSess.length} sessions</span>`:''}
+            ${ssAtt?`<span class=”st-card-chip”>${ssAtt}Q</span>`:''}
+            ${accChip}
+            ${isVoid?`<span class=”st-card-chip mt-chip-new”>new</span>`:''}
+          </div>
+        </div>`;
+      }).join('');
+      ssGrid = `<div class=”mp-sec”>Sub-sub-topics</div><div class=”st-grid”>${cards}</div>`;
     }
   }
 
-  const att = filterSess.reduce((a,s)=>a+(s.attempted||0),0);
-  const cor = filterSess.reduce((a,s)=>a+(s.correct||0),0);
-  const wrg = att - cor;
-  const acc = att>0 ? Math.round(cor/att*100) : null;
-  const accColor = acc===null?'var(--t2)':acc>=75?'var(--green)':acc>=55?'var(--amber)':'var(--red)';
+  // Tabs: Insights | Notes
+  const tabs = `<div class=”mp-tabs”>
+    <button class=”mp-tab ${mapView==='insights'?'on':''}” onclick=”setMapView('insights')”>Insights</button>
+    <button class=”mp-tab ${mapView==='notes'?'on':''}” onclick=”setMapView('notes')”>Notes</button>
+  </div>`;
 
-  if (att === 0) {
-    el.innerHTML = `
-      <div class=”pane-breadcrumb”>${h(breadcrumb)}</div>
-      <div class=”pane-title”>${h(title)}</div>
-      <div class=”pane-void-state” style=”margin-top:16px”>
-        <div class=”pane-void-lbl”>Not practiced yet — this is a void!</div>
-        <button class=”btn btn-dark btn-sm” onclick=”logFromNav()”>+ Log first session</button>
-      </div>`;
-    return;
+  let body = '';
+  if (mapView === 'insights') {
+    body = renderMapInsights(ctx, att, cor, wrg, acc);
+  } else {
+    body = renderMapNotes(ctx);
   }
 
-  const allErrs = filterSess.flatMap(s=>s.errors||[]);
+  el.innerHTML = header + stGrid + ssGrid + tabs + body;
+}
+
+function renderMapInsights(ctx, att, cor, wrg, acc) {
+  if (att === 0) {
+    return `<div class=”mp-void”>
+      <div class=”mp-void-lbl”>Not practiced yet — this is a void!</div>
+      <button class=”btn btn-dark” onclick=”logFromNav()”>+ Log first session</button>
+    </div>`;
+  }
+  const accCol = acc>=75?'var(--green)':acc>=55?'var(--amber)':'var(--red)';
+  const kpis = `<div class=”mp-kpi-row”>
+    <div class=”mp-kpi”><div class=”mp-kpi-val” style=”color:${accCol}”>${acc}%</div><div class=”mp-kpi-lbl”>Accuracy</div></div>
+    <div class=”mp-kpi”><div class=”mp-kpi-val”>${att}</div><div class=”mp-kpi-lbl”>Questions attempted</div></div>
+    <div class=”mp-kpi”><div class=”mp-kpi-val” style=”color:var(--red)”>${wrg}</div><div class=”mp-kpi-lbl”>Wrong</div></div>
+    <div class=”mp-kpi”><div class=”mp-kpi-val”>${ctx.sess.length}</div><div class=”mp-kpi-lbl”>Sessions logged</div></div>
+  </div>`;
+
+  const allErrs = ctx.sess.flatMap(s=>s.errors||[]);
   const errCounts = {};
   allErrs.forEach(e => { const id=e.t||mapOld(e.errType); if(id) errCounts[id]=(errCounts[id]||0)+1; });
   const maxErr = Math.max(...Object.values(errCounts), 1);
+  let errHtml = '';
   const errRows = ERR.map(et => {
     const cnt = errCounts[et.id]||0; if(!cnt) return '';
     const pct = Math.round(cnt/maxErr*100);
@@ -1470,79 +1640,51 @@ function renderCenterPanel() {
       <span class=”cerr-count”>×${cnt}</span>
     </div>`;
   }).join('');
+  if (errRows) errHtml = `<div class=”mp-sec”>Where you're going wrong</div><div class=”card” style=”padding:8px 14px”>${errRows}</div>`;
 
-  const recent = [...filterSess].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1).slice(0,5);
-  const sessRows = recent.map(s => {
-    const sacc = s.attempted>0 ? Math.round(s.correct/s.attempted*100) : 0;
-    const scls = sacc>=75?'ms-g':sacc>=55?'ms-a':'ms-r';
-    const sub = s.subsubtopic || s.subtopic || '';
-    return `<div class=”rsess-row”>
-      <span class=”rsess-date”>${s.date||'—'}</span>
-      <span class=”rsess-sub”>${h(sub)}</span>
-      <span class=”mini-stat ${scls}”>${sacc}%</span>
-      <span style=”font-size:11px;color:var(--t2)”>${s.attempted}Q</span>
-    </div>`;
-  }).join('');
+  const chart = miniChart(ctx.sess);
+  const chartHtml = chart ? `<div class=”mp-sec”>Accuracy trend</div>${chart}` : '';
 
-  const chart = miniChart(filterSess);
-
-  el.innerHTML = `
-    <div class=”pane-breadcrumb”>${h(breadcrumb)}</div>
-    <div class=”pane-title”>${h(title)}</div>
-    <div class=”pane-kpi-row” style=”margin-top:12px”>
-      <div class=”pane-kpi”><div class=”pane-kpi-val” style=”color:${accColor}”>${acc!==null?acc+'%':'—'}</div><div class=”pane-kpi-lbl”>Accuracy</div></div>
-      <div class=”pane-kpi”><div class=”pane-kpi-val”>${att}</div><div class=”pane-kpi-lbl”>Attempted</div></div>
-      <div class=”pane-kpi”><div class=”pane-kpi-val” style=”color:var(--red)”>${wrg}</div><div class=”pane-kpi-lbl”>Wrong</div></div>
-      <div class=”pane-kpi”><div class=”pane-kpi-val”>${filterSess.length}</div><div class=”pane-kpi-lbl”>Sessions</div></div>
-    </div>
-    ${errRows ? `<div class=”pane-sec”>Why you're getting it wrong</div><div class=”card”>${errRows}</div>` : ''}
-    ${chart ? `<div class=”pane-sec”>Accuracy trend</div>${chart}` : ''}
-    ${sessRows ? `<div class=”pane-sec”>Recent sessions</div><div class=”card”>${sessRows}</div>` : ''}
-    <button class=”btn btn-dark btn-sm” style=”margin-top:16px;width:100%” onclick=”logFromNav()”>+ Log session</button>
-  `;
-}
-
-function renderRightPanel() {
-  const el = document.getElementById('right-content');
-  if (selNav.topic<0) { el.innerHTML=`<div class=”pane-empty”>Select a topic to see notes</div>`; return; }
-  const subj = subjs()[selNav.subj];
-  const topic = subj.topics[selNav.topic];
-  if (!topic) return;
-
-  let filterNotes;
-  if (selNav.sub < 0) {
-    filterNotes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name);
-  } else {
-    const subRaw = getSubs(topic)[selNav.sub];
-    const subName = getSubName(subRaw);
-    if (selNav.subsub < 0) {
-      filterNotes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName);
-    } else {
-      const ss = getSubSubs(subRaw);
-      const ssName = ss[selNav.subsub]||'';
-      filterNotes = NOTES.filter(n=>n.subject===subj.name&&n.topic===topic.name&&n.subtopic===subName&&(n.subsubtopic===ssName||!n.subsubtopic));
-    }
+  const recent = [...ctx.sess].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1).slice(0,8);
+  let sessHtml = '';
+  if (recent.length) {
+    const rows = recent.map(s => {
+      const sacc = s.attempted>0 ? Math.round(s.correct/s.attempted*100) : 0;
+      const scls = sacc>=75?'ms-g':sacc>=55?'ms-a':'ms-r';
+      const sub = s.subsubtopic || s.subtopic || '';
+      return `<div class=”rsess-row”>
+        <span class=”rsess-date”>${s.date||'—'}</span>
+        <span class=”rsess-sub”>${h(sub)}</span>
+        <span class=”mini-stat ${scls}”>${sacc}%</span>
+        <span style=”font-size:11px;color:var(--t2)”>${s.attempted}Q</span>
+      </div>`;
+    }).join('');
+    sessHtml = `<div class=”mp-sec”>Recent sessions</div><div class=”card” style=”padding:8px 14px”>${rows}</div>`;
   }
 
+  return kpis + errHtml + chartHtml + sessHtml +
+    `<button class=”btn btn-dark” style=”margin-top:20px;width:100%” onclick=”logFromNav()”>+ Log session</button>`;
+}
+
+function renderMapNotes(ctx) {
   const statusLabels = ['Got it','Need review','Still confused'];
-  const noteItems = filterNotes.map(n => {
-    const qs = (n.questions||[]).map(q=>`<div class=”past-note-q”>Q: ${h(q)}</div>`).join('');
-    const dotCls = ['ns0','ns1','ns2'][n.status||0];
-    return `<div class=”past-note-item”>
-      <div class=”past-note-date”>
-        <span class=”note-status-dot ${dotCls}”></span>${n.date||''} · ${statusLabels[n.status||0]}
+  const dotCls = ['note-dot-g','note-dot-a','note-dot-r'];
+  const noteItems = ctx.notes.map(n => {
+    const qs = (n.questions||[]).map(q=>`<div class=”mp-note-q”>Q: ${h(q)}</div>`).join('');
+    return `<div class=”mp-note-item”>
+      <div class=”mp-note-date”>
+        <span class=”${dotCls[n.status||0]}”></span>${n.date||''} · ${statusLabels[n.status||0]}
       </div>
-      <div class=”past-note-insight”>${h(n.insight||'')}</div>
+      <div class=”mp-note-text”>${h(n.insight||'')}</div>
       ${qs}
     </div>`;
   }).join('');
 
-  el.innerHTML = `
-    <div class=”notes-header”>Notes</div>
-    <div class=”quick-note-box”>
-      <textarea id=”quick-note-inp” rows=”4” placeholder=”Write a quick insight or summary for this topic...”></textarea>
+  return `
+    <div class=”mp-note-box”>
+      <textarea id=”quick-note-inp” rows=”3” placeholder=”Write a quick insight or summary...”></textarea>
       <div style=”display:flex;gap:6px;margin-top:8px;align-items:center”>
-        <select id=”quick-note-status” style=”font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:inherit;background:var(--bg)”>
+        <select id=”quick-note-status” style=”font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--bg)”>
           <option value=”0”>✓ Got it</option>
           <option value=”1”>↻ Need review</option>
           <option value=”2”>? Still confused</option>
@@ -1550,7 +1692,7 @@ function renderRightPanel() {
         <button class=”btn btn-dark btn-sm” onclick=”saveQuickNote()” style=”margin-left:auto”>Save note</button>
       </div>
     </div>
-    ${noteItems || `<div style=”font-size:12px;color:var(--t3);text-align:center;padding:20px 0”>No notes yet — write your first insight above</div>`}
+    ${noteItems || `<div style=”font-size:12px;color:var(--t3);text-align:center;padding:30px 0”>No notes yet for this area</div>`}
   `;
 }
 
@@ -1574,7 +1716,7 @@ async function saveQuickNote() {
     NOTES.unshift(data[0]);
   } else { row.id=uid(); row.created_at=new Date().toISOString(); NOTES.unshift(row); saveLocal(); }
   toast('Note saved');
-  renderRightPanel();
+  renderMapMain();
 }
 
 function logFromNav() {
@@ -2220,7 +2362,7 @@ async function connectDb() {
   const key = document.getElementById('s-key').value.trim();
   if (!url||!key) { toast('Enter URL and key'); return; }
   localStorage.setItem('sb_url',url); localStorage.setItem('sb_key',key);
-  initSb(); await loadAll(); renderMap(); renderCenterPanel(); renderRightPanel(); renderInsights(); toast('Connected');
+  initSb(); await loadAll(); renderMap(); renderMapMain(); renderInsights(); toast('Connected');
 }
 
 function copySQL() { navigator.clipboard.writeText(SQL).then(()=>toast('SQL copied')); }
@@ -2456,7 +2598,7 @@ function toast(msg, ms) {
   clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('show'), ms || 2200);
 }
 
-async function boot() { initSb(); await loadAll(); renderMap(); renderCenterPanel(); renderRightPanel(); }
+async function boot() { initSb(); await loadAll(); renderMap(); renderMapMain(); }
 boot();
 </script>
 </body>
