@@ -1084,21 +1084,27 @@ function migrateSubjects(subs) {
 }
 
 async function loadAll() {
-  if (sb) {
-    try {
-      const [cr, sr, nr] = await Promise.all([
-        sb.from('gmat_config').select('*').eq('id','main').single(),
-        sb.from('gmat_sessions').select('*').order('date',{ascending:false}),
-        sb.from('gmat_notes').select('*').order('date',{ascending:false})
-      ]);
-      if (cr.data) {
-        CFG.examDate = cr.data.exam_date; CFG.hrsPerWeek = cr.data.hrs_per_week || 18;
-        if (cr.data.subjects) { CFG.subjects = cr.data.subjects; migrateSubjects(CFG.subjects); }
-      }
-      SESSIONS = sr.data || []; NOTES = nr.data || [];
-      setDb('green', 'Synced');
-    } catch(e) { setDb('red', 'Error'); loadLocal(); }
-  } else { loadLocal(); }
+  loadLocal();                       // local-first: show this browser's data right away
+  if (!sb) { setDb('', 'Local'); return; }
+  try {
+    const [cr, sr, nr] = await Promise.all([
+      sb.from('gmat_config').select('*').eq('id','main').single(),
+      sb.from('gmat_sessions').select('*').order('date',{ascending:false}),
+      sb.from('gmat_notes').select('*').order('date',{ascending:false})
+    ]);
+    if (cr.data) {
+      CFG.examDate = cr.data.exam_date; CFG.hrsPerWeek = cr.data.hrs_per_week || 18;
+      if (cr.data.subjects) { CFG.subjects = cr.data.subjects; migrateSubjects(CFG.subjects); }
+    }
+    // Merge: cloud rows + any local rows not yet synced, so pending logs never vanish.
+    const pendS = SESSIONS.filter(x=>x&&x._pending);
+    const pendN = NOTES.filter(x=>x&&x._pending);
+    SESSIONS = pendS.concat(sr.data || []);
+    NOTES    = pendN.concat(nr.data || []);
+    saveLocal();
+    setDb('green', (pendS.length||pendN.length) ? 'Sync pending' : 'Synced');
+    flushPending();
+  } catch(e) { setDb('red', 'Offline'); console.error(e); }   // keep local data on failure
 }
 
 function loadLocal() {
@@ -1416,6 +1422,36 @@ function toggleReason(errId, ri, e) {
   renderErrCards();
 }
 
+// ── cloud sync plumbing (local-first) ────────────────────────────────
+// Strip browser-only fields before sending a row to Supabase: our local id is not
+// a UUID and created_at is DB-managed, so we let the database assign both.
+function cleanForCloud(row) { const c = {...row}; delete c.id; delete c.created_at; delete c._pending; return c; }
+
+// Push one local row to a cloud table. On success, swap the local row for the
+// returned cloud row (real UUID, pending flag cleared). Never throws.
+async function pushRow(table, localRow, arr) {
+  try {
+    const { data, error } = await sb.from(table).insert(cleanForCloud(localRow)).select();
+    if (error) return { ok:false, error };
+    const i = arr.indexOf(localRow);
+    if (i>=0 && data && data[0]) arr[i] = data[0];
+    saveLocal();
+    return { ok:true };
+  } catch(e) { return { ok:false, error:e }; }
+}
+
+// Retry any rows that haven't reached the cloud yet (logged offline, or while the
+// database was missing columns). Runs after a successful load / connect.
+async function flushPending() {
+  if (!sb) return;
+  let synced = false;
+  for (const r of SESSIONS.filter(x=>x&&x._pending)) if ((await pushRow('gmat_sessions', r, SESSIONS)).ok) synced = true;
+  for (const r of NOTES.filter(x=>x&&x._pending))    if ((await pushRow('gmat_notes', r, NOTES)).ok)    synced = true;
+  const pending = SESSIONS.some(x=>x&&x._pending) || NOTES.some(x=>x&&x._pending);
+  setDb(pending ? '' : 'green', pending ? 'Sync pending' : 'Synced');
+  if (synced && typeof renderMap === 'function') renderMap();
+}
+
 async function saveSession() {
   if (wSubj<0||wTopic<0||wSub<0) { toast('Select subject / topic / sub-topic'); return; }
   if (pAtt===0) { toast('Enter questions attempted'); return; }
@@ -1425,12 +1461,17 @@ async function saveSession() {
   const errors = Object.entries(selErr).map(([id,data])=>({ t:id, r:data.reasons, q:data.q||'' }));
   const noteEl = document.getElementById('s-note');
   const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName, subsubtopic:ssName, attempted:pAtt, correct:pCor, wrong:pAtt-pCor, errors, note:noteEl?noteEl.value.trim():'' };
+  // Local-first: the session is saved to this browser immediately so it can never be
+  // lost, then pushed to the cloud if connected. A cloud rejection (e.g. a missing
+  // column) no longer throws the session away — it stays pending and re-syncs later.
+  row.id = uid(); row.created_at = new Date().toISOString(); row._pending = true;
+  SESSIONS.unshift(row); saveLocal();
   if (sb) {
-    const { data, error } = await sb.from('gmat_sessions').insert(row).select();
-    if (error) { toast(saveErrMsg(error), 6500); console.error(error); return; }
-    SESSIONS.unshift(data[0]);
-  } else { row.id=uid(); row.created_at=new Date().toISOString(); SESSIONS.unshift(row); saveLocal(); }
-  toast('Session saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
+    const res = await pushRow('gmat_sessions', row, SESSIONS);
+    if (res.ok) toast('Session saved & synced');
+    else { toast(saveErrMsg(res.error), 6500); console.error(res.error); }
+  } else { toast('Session saved'); }
+  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
 }
 
 function renderQs() {
@@ -1455,12 +1496,15 @@ async function saveNote() {
   const subRaw2 = getSubs(t)[wSub], subName2 = getSubName(subRaw2);
   const ssArr2 = getSubSubs(subRaw2), ssName2 = (wSubSub >= 0 && ssArr2[wSubSub]) ? ssArr2[wSubSub] : '';
   const row = { date:today(), subject:s.name, topic:t.name, subtopic:subName2, subsubtopic:ssName2, insight, questions:nQs, status:nStatus };
+  // Local-first (see saveSession): never lose a note to a cloud error.
+  row.id = uid(); row.created_at = new Date().toISOString(); row._pending = true;
+  NOTES.unshift(row); saveLocal();
   if (sb) {
-    const { data, error } = await sb.from('gmat_notes').insert(row).select();
-    if (error) { toast(saveErrMsg(error), 6500); console.error(error); return; }
-    NOTES.unshift(data[0]);
-  } else { row.id=uid(); row.created_at=new Date().toISOString(); NOTES.unshift(row); saveLocal(); }
-  toast('Note saved'); wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
+    const res = await pushRow('gmat_notes', row, NOTES);
+    if (res.ok) toast('Note saved & synced');
+    else { toast(saveErrMsg(res.error), 6500); console.error(res.error); }
+  } else { toast('Note saved'); }
+  wSubj=-1; wTopic=-1; wSub=-1; wSubSub=-1; nav('map');
 }
 
 // ─────────────────────────────────────────────
