@@ -413,8 +413,9 @@ body {
 .err-qinp {
   width: 100%; box-sizing: border-box;
   border: 1px solid rgba(0,0,0,0.15); border-radius: var(--r-sm);
-  padding: 5px 9px; font-size: 12px; font-family: inherit;
+  padding: 8px 10px; font-size: 13px; font-family: inherit; line-height: 1.5;
   background: rgba(255,255,255,0.6); color: var(--text); outline: none;
+  resize: vertical; min-height: 56px;
 }
 .err-qinp::placeholder { color: rgba(0,0,0,0.3); }
 .err-qinp:focus { border-color: rgba(0,0,0,0.3); background: rgba(255,255,255,0.9); }
@@ -532,7 +533,9 @@ body {
 .chapter-item {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r); padding: 12px 14px; margin-bottom: 6px;
+  cursor: pointer; transition: border-color 0.12s;
 }
+.chapter-item:hover { border-color: var(--border2); }
 .chapter-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .chapter-name { font-size: 13px; font-weight: 600; }
 .chapter-sub  { font-size: 11px; color: var(--t2); margin-top: 2px; }
@@ -1238,9 +1241,9 @@ function renderErrCards() {
       </div>
       <div class="err-reasons">${reasons}</div>
       <div class="err-qnote">
-        <input class="err-qinp" placeholder="Which question was this? (optional)" value="${h(qVal)}"
+        <textarea class="err-qinp" rows="2" placeholder="Which question was this? Paste the question or write a short description..."
           onclick="event.stopPropagation()"
-          oninput="if(selErr['${et.id}'])selErr['${et.id}'].q=this.value">
+          oninput="if(selErr['${et.id}'])selErr['${et.id}'].q=this.value">${h(qVal)}</textarea>
       </div>
     </div>`;
   }).join('');
@@ -1354,10 +1357,16 @@ function renderVoids(filter) {
     (voids.length>8?`<p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">+${voids.length-8} more</p>`:'');
 }
 
+function filterToSubject(subj) {
+  const btn = [...document.querySelectorAll('.filter-btn')].find(b => b.textContent.trim() === subj);
+  if (btn) { setFilter(subj, btn); document.getElementById('screen-insights').scrollTo(0,0); }
+}
+
 function renderChapterBreakdown(sess) {
   // Group by subject + topic, then break into subtopics
   const byTopic = {};
   sess.forEach(s => {
+    if (!s.subject || !s.topic) return; // skip malformed sessions
     const k = `${s.subject}::${s.topic}`;
     if (!byTopic[k]) byTopic[k] = { subj:s.subject, topic:s.topic, att:0, cor:0, errs:[], subs:{} };
     byTopic[k].att += s.attempted||0;
@@ -1409,7 +1418,7 @@ function renderChapterBreakdown(sess) {
       </div>`;
     }).join('');
 
-    return `<div class="chapter-item">
+    return `<div class="chapter-item" onclick="filterToSubject('${h(item.subj)}')">
       <div class="chapter-top">
         <div>
           <div class="chapter-name">${h(item.topic)}</div>
