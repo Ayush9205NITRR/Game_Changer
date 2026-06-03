@@ -310,21 +310,37 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
 .mp-kpi-lbl { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
 /* section label */
-.mp-sec { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t3); margin: 20px 0 8px; }
+.mp-sec { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--t2); margin: 24px 0 10px; }
 
 /* error rows */
-.cerr-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cerr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 16px; }
+.cerr-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .cerr-row:last-child { border-bottom: none; }
 .cerr-label { font-size: 12px; font-weight: 600; flex: 1; }
-.cerr-bar-wrap { width: 100px; height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; }
-.cerr-bar { height: 100%; border-radius: 4px; }
-.cerr-count { font-size: 11px; color: var(--t2); min-width: 28px; text-align: right; }
+.cerr-bar-wrap { width: 120px; height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.cerr-bar { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.cerr-count { font-size: 11px; color: var(--t2); font-weight: 600; min-width: 32px; text-align: right; }
 
 /* session rows */
-.rsess-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-.rsess-row:last-child { border-bottom: none; }
-.rsess-date { color: var(--t3); flex-shrink: 0; min-width: 70px; }
-.rsess-sub { color: var(--t2); flex: 1; font-size: 11px; }
+.rsess-list { display: flex; flex-direction: column; gap: 6px; }
+.rsess-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 12px; transition: border-color 0.12s, box-shadow 0.12s;
+}
+.rsess-row:hover { border-color: var(--border2); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.rsess-date { color: var(--t3); flex-shrink: 0; min-width: 70px; font-weight: 500; }
+.rsess-sub { color: var(--t2); flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rsess-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+.rsess-row:hover .rsess-actions { opacity: 1; }
+.rsess-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--t2);
+  padding: 3px 8px; border-radius: var(--r-sm); font-size: 10px;
+  font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.12s;
+}
+.rsess-btn:hover { background: var(--bg); color: var(--text); border-color: var(--border2); }
+.rsess-btn.del:hover { color: var(--red); border-color: var(--red); background: #FEF2F2; }
 
 /* notes section */
 .mp-note-box {
@@ -686,15 +702,16 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
 }
 
 /* ── INSIGHTS ── */
-.ins-subject-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.ins-subject-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
 .ins-subject-tab {
-  padding: 6px 14px; border-radius: 4px;
-  font-size: 13px; font-weight: 700;
+  padding: 5px 12px; border-radius: 16px;
+  font-size: 12px; font-weight: 600;
   border: 1px solid var(--border); background: var(--card);
   cursor: pointer; font-family: inherit; color: var(--t2);
+  transition: all 0.13s;
 }
 .ins-subject-tab:hover { color: var(--text); border-color: var(--border2); }
-.ins-subject-tab.on { background: var(--text); border-color: var(--text); color: #fff; }
+.ins-subject-tab.on { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
 
 .ins-layout {
   display: grid;
@@ -723,14 +740,19 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
 .ins-topic-list, .ins-subtopic-list, .ins-stack { display: flex; flex-direction: column; gap: 7px; }
 
 .ins-topic-card, .ins-sub-card, .ins-finding, .note-item {
-  background: var(--bg);
+  background: var(--card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: var(--r-sm);
-  padding: 11px 12px;
+  padding: 11px 13px;
 }
-.ins-topic-card, .ins-sub-card { cursor: pointer; transition: border-color 0.12s, background 0.12s; }
-.ins-topic-card:hover, .ins-sub-card:hover { border-color: var(--border2); }
-.ins-topic-card.on, .ins-sub-card.on { background: #fff; border-color: var(--text); }
+.ins-topic-card.acc-g, .ins-sub-card.acc-g { border-left-color: #16A34A; }
+.ins-topic-card.acc-w, .ins-sub-card.acc-w { border-left-color: #D97706; }
+.ins-topic-card.acc-b, .ins-sub-card.acc-b { border-left-color: #DC2626; }
+.ins-topic-card.acc-n, .ins-sub-card.acc-n { border-left-color: var(--border); }
+.ins-topic-card, .ins-sub-card { cursor: pointer; transition: border-color 0.12s, background 0.12s, box-shadow 0.12s; }
+.ins-topic-card:hover, .ins-sub-card:hover { border-color: var(--border2); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.ins-topic-card.on, .ins-sub-card.on { background: #FAFAF8; border-color: var(--text); }
 .ins-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .ins-name { font-size: 13px; font-weight: 700; }
 .ins-meta { font-size: 11px; color: var(--t2); margin-top: 2px; line-height: 1.4; }
@@ -746,26 +768,31 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
   margin-bottom: 14px;
 }
 @media (max-width: 680px) { .ins-detail-head { flex-direction: column; } }
-.ins-eyebrow { font-size: 11px; color: var(--t3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-.ins-title { font-size: 20px; font-weight: 800; margin-top: 3px; }
-.ins-context { font-size: 12px; color: var(--t2); margin-top: 4px; }
+.ins-eyebrow { font-size: 11px; color: var(--t3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+.ins-title { font-size: 22px; font-weight: 800; margin-top: 4px; letter-spacing: -0.2px; }
+.ins-context { font-size: 12px; color: var(--t2); margin-top: 5px; }
 .ins-view-toggle {
   display: inline-flex;
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  overflow: hidden;
+  border-radius: 999px;
+  padding: 2px;
+  gap: 0;
   flex-shrink: 0;
 }
 .ins-view-toggle button {
-  padding: 7px 13px;
+  padding: 6px 16px;
   border: none;
-  background: var(--bg);
+  background: transparent;
   color: var(--t2);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  border-radius: 999px;
+  transition: all 0.15s;
 }
+.ins-view-toggle button:hover { color: var(--text); }
 .ins-view-toggle button.on { background: var(--text); color: #fff; }
 
 .ins-sub-head { margin-bottom: 10px; }
@@ -791,20 +818,20 @@ button.ms-tab.on { background: var(--text); color: #fff !important; }
 .ins-kpi-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 @media (max-width: 640px) { .ins-kpi-row { grid-template-columns: 1fr 1fr; } }
 .kpi-box {
-  background: var(--bg);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   padding: 14px 16px;
 }
-.kpi-val { font-size: 24px; font-weight: 800; letter-spacing: 0; }
-.kpi-lbl { font-size: 11px; color: var(--t2); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+.kpi-val { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.5px; }
+.kpi-lbl { font-size: 10px; color: var(--t2); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
 
-.sec-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t3); margin-bottom: 10px; }
+.sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--t2); margin-bottom: 10px; }
 .ins-section { margin-top: 18px; }
 .ins-section:first-child { margin-top: 0; }
 .acc-item {
@@ -1725,7 +1752,8 @@ function renderMapSidebar() {
     if (q && !nameMatch && !subMatch) return '';
     const isSel = selNav.topic === ti;
     const st = calcStats(tsess);
-    return `<div class="ins-topic-card ${isSel?'on':''}" onclick="selectTopic(${ti})">
+    const lcCls = st.acc===null?'acc-n':st.acc>=75?'acc-g':st.acc>=55?'acc-w':'acc-b';
+    return `<div class="ins-topic-card ${isSel?'on':''} ${lcCls}" onclick="selectTopic(${ti})">
       <div class="ins-row">
         <div>
           <div class="ins-name">${h(topic.name)}</div>
@@ -1822,7 +1850,8 @@ function renderMapMain() {
       const isVoid = sAtt === 0;
       const isSel = selNav.sub === si && selNav.subsub < 0;
       const st = calcStats(sSess);
-      return `<div class="ins-sub-card ${isSel?'on':''}" onclick="selectSubCard(${si})">
+      const lcCls = st.acc===null?'acc-n':st.acc>=75?'acc-g':st.acc>=55?'acc-w':'acc-b';
+      return `<div class="ins-sub-card ${isSel?'on':''} ${lcCls}" onclick="selectSubCard(${si})">
         <div class="ins-row">
           <div>
             <div class="ins-name">${h(sn)}</div>
@@ -1850,7 +1879,8 @@ function renderMapMain() {
         const isVoid = ssAtt === 0;
         const isSel = selNav.subsub === ssi;
         const st = calcStats(ssSess);
-        return `<div class="ins-sub-card ${isSel?'on':''}" onclick="selectSubSubCard(${selNav.sub},${ssi})">
+        const lcCls = st.acc===null?'acc-n':st.acc>=75?'acc-g':st.acc>=55?'acc-w':'acc-b';
+        return `<div class="ins-sub-card ${isSel?'on':''} ${lcCls}" onclick="selectSubSubCard(${selNav.sub},${ssi})">
           <div class="ins-row">
             <div>
               <div class="ins-name">${h(ssName)}</div>
@@ -1909,7 +1939,7 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
       <span class="cerr-count">×${cnt}</span>
     </div>`;
   }).join('');
-  if (errRows) errHtml = `<div class="mp-sec">Where you're going wrong</div><div class="card" style="padding:8px 14px">${errRows}</div>`;
+  if (errRows) errHtml = `<div class="mp-sec">Where you're going wrong</div><div class="cerr-card">${errRows}</div>`;
 
   const chart = miniChart(ctx.sess);
   const chartHtml = chart ? `<div class="mp-sec">Accuracy trend</div>${chart}` : '';
@@ -1919,14 +1949,14 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
   if (recent.length) {
     const rows = recent.map(s => {
       if (editingSessionId === s.id) {
-        return `<div class="rsess-row" style="flex-wrap:wrap;gap:6px;padding:10px 0">
+        return `<div class="rsess-row" style="flex-wrap:wrap;gap:6px">
           <span class="rsess-date">${s.date||'—'}</span>
-          <input id="edit-sess-att-${s.id}" type="number" value="${s.attempted}" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
+          <input id="edit-sess-att-${s.id}" type="number" value="${s.attempted}" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
           <span style="font-size:11px;color:var(--t3)">attempted</span>
-          <input id="edit-sess-cor-${s.id}" type="number" value="${s.correct}" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
+          <input id="edit-sess-cor-${s.id}" type="number" value="${s.correct}" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:12px">
           <span style="font-size:11px;color:var(--t3)">correct</span>
-          <button class="btn btn-sm" onclick="cancelEditSession()" style="padding:3px 10px;font-size:11px;margin-left:auto">Cancel</button>
-          <button class="btn btn-dark btn-sm" onclick="saveEditSession('${s.id}')" style="padding:3px 10px;font-size:11px">Save</button>
+          <button class="rsess-btn" onclick="cancelEditSession()" style="margin-left:auto">Cancel</button>
+          <button class="rsess-btn" onclick="saveEditSession('${s.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
         </div>`;
       }
       const sacc = s.attempted>0 ? Math.round(s.correct/s.attempted*100) : 0;
@@ -1936,62 +1966,73 @@ function renderMapInsights(ctx, att, cor, wrg, acc) {
         <span class="rsess-date">${s.date||'—'}</span>
         <span class="rsess-sub">${h(sub)}</span>
         <span class="mini-stat ${scls}">${sacc}%</span>
-        <span style="font-size:11px;color:var(--t2)">${s.attempted}Q</span>
-        <button class="btn btn-sm" onclick="startEditSession('${s.id}')" title="Edit" style="padding:2px 8px;font-size:10px">Edit</button>
-        <button class="btn btn-sm" onclick="deleteSession('${s.id}')" title="Delete" style="padding:2px 8px;font-size:10px;color:var(--red)">×</button>
+        <span style="font-size:11px;color:var(--t2);font-weight:600">${s.attempted}Q</span>
+        <div class="rsess-actions">
+          <button class="rsess-btn" onclick="startEditSession('${s.id}')">Edit</button>
+          <button class="rsess-btn del" onclick="deleteSession('${s.id}')">Delete</button>
+        </div>
       </div>`;
     }).join('');
-    sessHtml = `<div class="mp-sec">Recent sessions</div><div class="card" style="padding:8px 14px">${rows}</div>`;
+    sessHtml = `<div class="mp-sec">Recent sessions</div><div class="rsess-list">${rows}</div>`;
   }
 
   return kpis + errHtml + chartHtml + sessHtml +
-    `<button class="btn btn-dark" style="margin-top:20px;width:100%" onclick="logFromNav()">+ Log session</button>`;
+    `<button class="btn btn-dark" style="margin-top:24px;width:100%" onclick="logFromNav()">+ Log session</button>`;
 }
 
 function renderMapNotes(ctx) {
   const noteItems = ctx.notes.map(n => {
-    const qs = (n.questions||[]).map(q=>`<div class="ins-meta" style="margin-top:4px">Q: ${h(q)}</div>`).join('');
-    const stText = noteStatusText(n.status||0);
+    const st = n.status || 0;
+    const statCls = st===2?'ms-r':st===1?'ms-a':'ms-g';
+    const qs = (n.questions||[]).filter(Boolean);
     if (editingNoteId === n.id) {
-      return `<div class="note-item" style="margin-bottom:8px">
-        <textarea id="edit-note-text-${n.id}" rows="3" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.5">${h(n.insight||'')}</textarea>
-        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
-          <select id="edit-note-status-${n.id}" class="btn btn-sm" style="padding:4px 10px">
-            <option value="0" ${(n.status||0)==0?'selected':''}>✓ Got it</option>
-            <option value="1" ${(n.status||0)==1?'selected':''}>↻ Need review</option>
-            <option value="2" ${(n.status||0)==2?'selected':''}>? Still confused</option>
+      return `<div class="nc s${st}">
+        <textarea id="edit-note-text-${n.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(n.insight||'')}</textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <select class="nf-select" id="edit-note-status-${n.id}" style="max-width:160px">
+            <option value="0" ${st===0?'selected':''}>Got it</option>
+            <option value="1" ${st===1?'selected':''}>Need review</option>
+            <option value="2" ${st===2?'selected':''}>Still confused</option>
           </select>
-          <button class="btn btn-sm" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
-          <button class="btn btn-dark btn-sm" onclick="saveEditNote('${n.id}')">Save</button>
+          <button class="nca" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
+          <button class="nca" onclick="saveEditNote('${n.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
         </div>
       </div>`;
     }
-    return `<div class="note-item" style="margin-bottom:8px">
-      <div class="ins-row"><span class="note-insight">${fmt(n.insight||'')}</span><span class="note-date">${n.date||''}</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px">
-        <span class="ins-meta">${stText}</span>
-        <div style="display:flex;gap:4px">
-          <button class="btn btn-sm" onclick="startEditNote('${n.id}')" title="Edit" style="padding:3px 10px;font-size:11px">Edit</button>
-          <button class="btn btn-sm" onclick="deleteNote('${n.id}')" title="Delete" style="padding:3px 10px;font-size:11px;color:var(--red)">Delete</button>
+    return `<div class="nc s${st}">
+      <div class="nc-head">
+        <div class="nc-left">
+          <div class="nc-title">${h(n.topic || 'Note')}</div>
+          ${n.subsubtopic?`<div class="nc-path">${h(n.subsubtopic)}</div>`:''}
+        </div>
+        <div class="nc-right">
+          <span class="mini-stat ${statCls}">${noteStatusText(st)}</span>
+          <span class="nc-date">${h(n.date||'')}</span>
         </div>
       </div>
-      ${qs}
+      <div class="nc-body">${fmt(n.insight||'')}</div>
+      ${qs.length?`<div class="note-qs" style="margin-top:8px">${qs.map(q=>`<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>`:''}
+      <div class="nc-actions">
+        <button class="nca" onclick="startEditNote('${n.id}')">Edit</button>
+        <button class="nca del" onclick="deleteNote('${n.id}')">Delete</button>
+      </div>
     </div>`;
   }).join('');
 
   return `
-    <div class="card" style="padding:12px;margin-bottom:14px">
-      <textarea id="quick-note-inp" rows="3" placeholder="Write a quick insight or summary..." style="width:100%;border:none;outline:none;font-family:inherit;font-size:13px;resize:none;background:transparent;color:var(--text);line-height:1.6"></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
-        <select id="quick-note-status" class="btn btn-sm" style="padding:4px 10px">
-          <option value="0">✓ Got it</option>
-          <option value="1">↻ Need review</option>
-          <option value="2">? Still confused</option>
+    <div class="card" style="padding:14px;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--t2);margin-bottom:8px">Quick note</div>
+      <textarea id="quick-note-inp" rows="3" placeholder="Write a quick insight or summary..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:var(--card);color:var(--text);line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <select class="nf-select" id="quick-note-status" style="max-width:160px">
+          <option value="0">Got it</option>
+          <option value="1">Need review</option>
+          <option value="2">Still confused</option>
         </select>
         <button class="btn btn-dark btn-sm" onclick="saveQuickNote()" style="margin-left:auto">Save note</button>
       </div>
     </div>
-    ${noteItems || `<div class="empty-state">No notes yet for this area</div>`}
+    ${noteItems || `<div class="notes-empty">No notes yet for this area</div>`}
   `;
 }
 
