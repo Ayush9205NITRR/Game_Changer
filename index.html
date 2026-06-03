@@ -1106,131 +1106,110 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
   border-color: var(--text); font-weight: 600;
 }
 
-/* Notes screen */
-.notes-page { padding: 18px 18px 80px; max-width: 980px; margin: 0 auto; }
-.notes-subj-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-.notes-toolbar {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 12px; margin-bottom: 18px;
-  display: flex; flex-direction: column; gap: 10px;
-}
-.notes-filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.notes-search-wrap { position: relative; flex: 2; min-width: 200px; }
-.notes-search-wrap input {
-  width: 100%; padding: 9px 12px 9px 34px;
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--card); color: var(--text);
-  font-size: 13px; font-family: inherit;
-  transition: border-color 0.12s;
-}
-.notes-search-wrap input:focus { outline: none; border-color: var(--text); }
-.notes-search-icon {
-  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-  color: var(--t3); pointer-events: none;
-}
-.notes-select {
-  flex: 1; min-width: 140px;
-  padding: 9px 32px 9px 12px;
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background-color: var(--card); color: var(--text);
-  font-size: 13px; font-family: inherit; cursor: pointer;
-  -webkit-appearance: none; appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23999' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 12px center;
-  transition: border-color 0.12s;
-}
-.notes-select:hover { border-color: var(--border2); }
-.notes-select:focus { outline: none; border-color: var(--text); }
-.notes-clear-btn {
-  background: transparent; border: none; color: var(--purple);
-  font-size: 12px; font-weight: 600; font-family: inherit;
-  cursor: pointer; padding: 2px 0; align-self: flex-start;
-}
-.notes-clear-btn:hover { text-decoration: underline; }
+/* ── Notes screen ─────────────────────── */
+.notes-page { padding: 20px 20px 100px; max-width: 860px; margin: 0 auto; }
 
-/* Focus section */
-.focus-section { margin-bottom: 22px; }
-.focus-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-.focus-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--text);
+.notes-subj-strip {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px;
 }
-.focus-sub { font-size: 11px; color: var(--t2); }
-.focus-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.focus-card {
+.nsb {
+  padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card); font-size: 13px; font-weight: 500; color: var(--t2);
+  font-family: inherit; cursor: pointer; transition: all 0.13s;
+}
+.nsb:hover { border-color: var(--border2); color: var(--text); }
+.nsb.on  { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
+
+.notes-filters {
+  display: flex; gap: 8px; flex-wrap: wrap;
   background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 11px 13px;
-  cursor: pointer; transition: all 0.15s;
-  display: flex; align-items: center; gap: 10px;
+  border-radius: var(--r); padding: 10px 12px;
+  margin-bottom: 16px; align-items: center;
 }
-.focus-card:hover { border-color: var(--text); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-.focus-icon { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.focus-body { flex: 1; min-width: 0; overflow: hidden; }
-.focus-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.focus-reason { font-size: 11px; color: var(--t2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.focus-count { font-size: 11px; font-weight: 700; color: var(--t2); white-space: nowrap; }
+.nf-select {
+  flex: 1; min-width: 140px; max-width: 240px;
+  padding: 7px 30px 7px 10px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); background-color: var(--card);
+  font-size: 12px; font-family: inherit; color: var(--text); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23999' d='M5 6 0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: border-color 0.12s;
+}
+.nf-select:focus { outline: none; border-color: var(--border2); }
+.nf-divider { width: 1px; background: var(--border); align-self: stretch; margin: 0 2px; }
+.nf-search {
+  flex: 2; min-width: 150px;
+  padding: 7px 10px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 12px; font-family: inherit; color: var(--text);
+}
+.nf-search:focus { outline: none; border-color: var(--border2); }
+.nf-clear {
+  margin-left: auto; font-size: 11px; font-weight: 600; color: var(--t2);
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  padding: 4px 2px; white-space: nowrap;
+}
+.nf-clear:hover { color: var(--text); }
+
+/* Attention panel */
+.attn-wrap { margin-bottom: 20px; }
+.attn-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--t2); margin-bottom: 10px; }
+.attn-list { display: flex; flex-direction: column; gap: 6px; }
+.attn-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 10px 12px; cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.attn-row:hover { border-color: var(--border2); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.attn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.attn-body { flex: 1; min-width: 0; }
+.attn-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.attn-path { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.attn-badge { font-size: 11px; font-weight: 600; white-space: nowrap; color: var(--t2); }
 
 /* Note cards */
-.notes-section-head {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--t2);
-  margin: 22px 0 12px;
+.notes-group-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px;
+  color: var(--t2); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px;
 }
-.notes-section-head:first-child { margin-top: 0; }
-.notes-count-pill {
-  display: inline-block; margin-left: 8px;
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 10px; padding: 1px 7px;
-  font-size: 10px; color: var(--t2); font-weight: 600;
-  letter-spacing: 0;
-}
-.note-card {
+.notes-group-title:first-child { margin-top: 0; }
+.ngc { background: var(--bg); border-radius: 10px; padding: 2px 8px; font-size: 10px; letter-spacing: 0; font-weight: 600; color: var(--t3); }
+.nc {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px 16px;
-  margin-bottom: 10px; position: relative;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  border-left: 3px solid transparent;
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px;
+  transition: box-shadow 0.12s;
 }
-.note-card:hover { border-color: var(--border2); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-.note-card.status-0 { border-left: 3px solid var(--green); }
-.note-card.status-1 { border-left: 3px solid var(--amber); }
-.note-card.status-2 { border-left: 3px solid var(--red); }
-.note-card.memo { border-left: 3px solid var(--blue); }
-.note-card-head {
-  display: flex; justify-content: space-between;
-  align-items: flex-start; gap: 12px; margin-bottom: 8px;
+.nc:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.nc.s0 { border-left-color: #16A34A; }
+.nc.s1 { border-left-color: #D97706; }
+.nc.s2 { border-left-color: #DC2626; }
+.nc.memo { border-left-color: #2563EB; }
+.nc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.nc-left { flex: 1; min-width: 0; }
+.nc-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.nc-path { font-size: 11px; color: var(--t2); margin-top: 3px; line-height: 1.4; }
+.nc-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.nc-date { font-size: 11px; color: var(--t3); }
+.nc-body { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.nc-actions { display: flex; gap: 6px; margin-top: 10px; opacity: 0; transition: opacity 0.15s; }
+.nc:hover .nc-actions { opacity: 1; }
+.nca {
+  background: transparent; border: 1px solid var(--border); color: var(--t2);
+  padding: 3px 10px; border-radius: var(--r-sm); font-size: 11px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: all 0.1s;
 }
-.note-card-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
-.note-card-path { font-size: 11px; color: var(--t2); margin-top: 3px; line-height: 1.45; }
-.note-card-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-.note-card-date { font-size: 11px; color: var(--t3); }
-.note-card-body {
-  font-size: 13px; line-height: 1.65; color: var(--text);
-  white-space: pre-wrap; word-break: break-word;
-}
-.note-card-actions {
-  display: flex; gap: 6px; margin-top: 10px;
-  opacity: 0.35; transition: opacity 0.15s;
-}
-.note-card:hover .note-card-actions { opacity: 1; }
-.note-action-btn {
-  background: transparent; border: 1px solid var(--border);
-  color: var(--t2); padding: 4px 10px;
-  border-radius: var(--r-sm); font-size: 11px; font-weight: 500;
-  font-family: inherit; cursor: pointer;
-  transition: all 0.12s;
-}
-.note-action-btn:hover { background: var(--bg); color: var(--text); border-color: var(--border2); }
-.note-action-btn.danger:hover { background: #FEF2F2; color: var(--red); border-color: var(--red); }
-
+.nca:hover { background: var(--bg); color: var(--text); border-color: var(--border2); }
+.nca.del:hover { color: var(--red); border-color: var(--red); background: #FEF2F2; }
 .notes-empty {
-  background: var(--card); border: 1px dashed var(--border);
-  border-radius: var(--r); padding: 40px 20px;
-  text-align: center; color: var(--t2); font-size: 13px;
+  text-align: center; padding: 48px 20px; color: var(--t2); font-size: 13px;
+  background: var(--card); border: 1px dashed var(--border); border-radius: var(--r);
 }
-@media (max-width: 640px) {
-  .notes-page { padding: 14px 12px 80px; }
-  .notes-search-wrap, .notes-select { min-width: 100%; flex-basis: 100%; }
-  .focus-grid { grid-template-columns: 1fr; }
+@media (max-width: 600px) {
+  .notes-page { padding: 14px 12px 90px; }
+  .nf-select { max-width: 100%; }
 }
 </style>
 </head>
@@ -1419,24 +1398,28 @@ textarea.add-inp { resize: vertical; line-height: 1.5; min-height: 36px; }
   <!-- ══ INSIGHTS ══ -->
   <div id="screen-notes" class="screen">
     <div class="notes-page">
-      <div class="notes-subj-row" id="notes-subj-tabs"></div>
-      <div id="notes-focus"></div>
-      <div class="notes-toolbar">
-        <div class="notes-filter-row">
-          <div class="notes-search-wrap">
-            <svg class="notes-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-            <input type="search" id="notes-search" placeholder="Search notes..." oninput="renderNotes()" />
-          </div>
-          <select class="notes-select" id="notes-status-filter" onchange="renderNotes()">
-            <option value="-1">All status</option>
-            <option value="0">Got it</option>
-            <option value="1">Need review</option>
-            <option value="2">Still confused</option>
-          </select>
-        </div>
-        <div class="notes-filter-row" id="notes-cascade-row" style="display:none"></div>
-        <button class="notes-clear-btn" id="notes-clear-btn" style="display:none" onclick="clearNoteFilters()">Clear filters</button>
+      <div class="notes-subj-strip" id="notes-subj-tabs"></div>
+      <div class="notes-filters">
+        <select class="nf-select" id="nf-topic" onchange="setNotesTopic(this.value)">
+          <option value="">All topics</option>
+        </select>
+        <select class="nf-select" id="nf-sub" onchange="setNotesSub(this.value)">
+          <option value="">All sub-topics</option>
+        </select>
+        <select class="nf-select" id="nf-subsub" onchange="setNotesSubSub(this.value)" style="display:none">
+          <option value="">All sub-sub-topics</option>
+        </select>
+        <div class="nf-divider"></div>
+        <select class="nf-select" id="nf-status" onchange="renderNotes()" style="min-width:120px;max-width:140px">
+          <option value="-1">All status</option>
+          <option value="0">Got it</option>
+          <option value="1">Need review</option>
+          <option value="2">Confused</option>
+        </select>
+        <input class="nf-search" id="nf-search" type="search" placeholder="Search..." oninput="renderNotes()" />
+        <button class="nf-clear" id="nf-clear" onclick="clearNoteFilters()" style="display:none">Clear</button>
       </div>
+      <div id="notes-attn"></div>
       <div id="notes-list"></div>
     </div>
   </div>
@@ -2500,299 +2483,212 @@ async function saveSessionNew() {
 // ─────────────────────────────────────────────
 
 function setNotesSubj(name) {
-  notesSubjFilter = name;
-  notesTopicFilter = ''; notesSubFilter = ''; notesSubSubFilter = '';
+  notesSubjFilter = name; notesTopicFilter = ''; notesSubFilter = ''; notesSubSubFilter = '';
   renderNotes();
 }
-function setNotesTopic(name) {
-  notesTopicFilter = name;
-  notesSubFilter = ''; notesSubSubFilter = '';
-  renderNotes();
-}
-function setNotesSub(name) {
-  notesSubFilter = name;
-  notesSubSubFilter = '';
-  renderNotes();
-}
-function setNotesSubSub(name) { notesSubSubFilter = name; renderNotes(); }
+function setNotesTopic(name) { notesTopicFilter = name; notesSubFilter = ''; notesSubSubFilter = ''; renderNotes(); }
+function setNotesSub(name)   { notesSubFilter = name; notesSubSubFilter = ''; renderNotes(); }
+function setNotesSubSub(name){ notesSubSubFilter = name; renderNotes(); }
 
 function clearNoteFilters() {
   notesSubjFilter = ''; notesTopicFilter = ''; notesSubFilter = ''; notesSubSubFilter = '';
-  const search = document.getElementById('notes-search'); if (search) search.value = '';
-  const status = document.getElementById('notes-status-filter'); if (status) status.value = '-1';
+  const s = document.getElementById('nf-search'); if (s) s.value = '';
+  const st = document.getElementById('nf-status'); if (st) st.value = '-1';
   renderNotes();
 }
 
 function focusOnArea(subj, topic, sub) {
-  notesSubjFilter = subj || '';
-  notesTopicFilter = topic || '';
-  notesSubFilter = sub || '';
-  notesSubSubFilter = '';
-  const status = document.getElementById('notes-status-filter'); if (status) status.value = '-1';
-  const search = document.getElementById('notes-search'); if (search) search.value = '';
+  notesSubjFilter = subj || ''; notesTopicFilter = topic || ''; notesSubFilter = sub || ''; notesSubSubFilter = '';
+  const st = document.getElementById('nf-status'); if (st) st.value = '-1';
+  const s = document.getElementById('nf-search'); if (s) s.value = '';
   renderNotes();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function renderNotesSubjTabs() {
+// Build unique sorted list from actual notes data
+function noteUniq(arr) { return [...new Set(arr.filter(Boolean))].sort(); }
+
+function renderNotes() {
+  // ── Subject tabs ──
   const tabsEl = document.getElementById('notes-subj-tabs');
-  if (!tabsEl) return;
-  tabsEl.innerHTML =
-    `<button class="ins-subject-tab ${notesSubjFilter===''?'on':''}" onclick="setNotesSubj('')">All</button>` +
-    subjs().map(s =>
-      `<button class="ins-subject-tab ${notesSubjFilter===s.name?'on':''}" onclick="setNotesSubj('${h(s.name)}')">${h(s.name)}</button>`
-    ).join('');
-}
-
-function renderNotesCascade() {
-  const row = document.getElementById('notes-cascade-row');
-  if (!row) return;
-  const subj = subjs().find(s => s.name === notesSubjFilter);
-  if (!subj) { row.innerHTML = ''; row.style.display = 'none'; return; }
-
-  const parts = [];
-  const topics = subj.topics || [];
-  parts.push(`<select class="notes-select" onchange="setNotesTopic(this.value)">
-    <option value="">All topics</option>
-    ${topics.map(t => `<option value="${h(t.name)}" ${notesTopicFilter===t.name?'selected':''}>${h(t.name)}</option>`).join('')}
-  </select>`);
-
-  if (notesTopicFilter) {
-    const topic = topics.find(t => t.name === notesTopicFilter);
-    const subs = topic ? getSubs(topic) : [];
-    if (subs.length) {
-      parts.push(`<select class="notes-select" onchange="setNotesSub(this.value)">
-        <option value="">All sub-topics</option>
-        ${subs.map(sub => { const n = getSubName(sub); return `<option value="${h(n)}" ${notesSubFilter===n?'selected':''}>${h(n)}</option>`; }).join('')}
-      </select>`);
-
-      if (notesSubFilter) {
-        const sub = subs.find(s => getSubName(s) === notesSubFilter);
-        const sss = sub ? getSubSubs(sub) : [];
-        if (sss.length) {
-          parts.push(`<select class="notes-select" onchange="setNotesSubSub(this.value)">
-            <option value="">All sub-sub-topics</option>
-            ${sss.map(ss => `<option value="${h(ss)}" ${notesSubSubFilter===ss?'selected':''}>${h(ss)}</option>`).join('')}
-          </select>`);
-        }
-      }
-    }
+  if (tabsEl) {
+    tabsEl.innerHTML =
+      `<button class="nsb ${notesSubjFilter===''?'on':''}" onclick="setNotesSubj('')">All</button>` +
+      subjs().map(s => `<button class="nsb ${notesSubjFilter===s.name?'on':''}" onclick="setNotesSubj('${h(s.name)}')">${h(s.name)}</button>`).join('');
   }
 
-  row.innerHTML = parts.join('');
-  row.style.display = parts.length ? 'flex' : 'none';
+  // ── Build topic / sub-topic options from actual notes in scope ──
+  const allNotesSrc = NOTES.concat(SESSIONS.filter(s => s.note && s.note.trim()));
+  const inSubj = notesSubjFilter ? allNotesSrc.filter(x => x.subject === notesSubjFilter) : allNotesSrc;
+  const topics   = noteUniq(inSubj.map(x => x.topic));
+  const inTopic  = notesTopicFilter ? inSubj.filter(x => x.topic === notesTopicFilter) : inSubj;
+  const subs     = noteUniq(inTopic.map(x => x.subtopic));
+  const inSub    = notesSubFilter ? inTopic.filter(x => x.subtopic === notesSubFilter) : inTopic;
+  const subsubs  = noteUniq(inSub.map(x => x.subsubtopic));
+
+  const topicSel = document.getElementById('nf-topic');
+  if (topicSel) {
+    topicSel.innerHTML = `<option value="">All topics</option>` +
+      topics.map(t => `<option value="${h(t)}" ${notesTopicFilter===t?'selected':''}>${h(t)}</option>`).join('');
+  }
+  const subSel = document.getElementById('nf-sub');
+  if (subSel) {
+    subSel.innerHTML = `<option value="">All sub-topics</option>` +
+      subs.map(s => `<option value="${h(s)}" ${notesSubFilter===s?'selected':''}>${h(s)}</option>`).join('');
+    subSel.style.display = subs.length > 0 ? '' : 'none';
+  }
+  const subsubSel = document.getElementById('nf-subsub');
+  if (subsubSel) {
+    subsubSel.innerHTML = `<option value="">All sub-sub-topics</option>` +
+      subsubs.map(s => `<option value="${h(s)}" ${notesSubSubFilter===s?'selected':''}>${h(s)}</option>`).join('');
+    subsubSel.style.display = subsubs.length > 0 ? '' : 'none';
+  }
+
+  // ── Filter ──
+  const q = (document.getElementById('nf-search')?.value || '').toLowerCase().trim();
+  const statusF = parseInt(document.getElementById('nf-status')?.value ?? '-1');
+
+  function applyF(items, getBody) {
+    let r = items.slice();
+    if (notesSubjFilter)   r = r.filter(x => x.subject  === notesSubjFilter);
+    if (notesTopicFilter)  r = r.filter(x => x.topic    === notesTopicFilter);
+    if (notesSubFilter)    r = r.filter(x => x.subtopic === notesSubFilter);
+    if (notesSubSubFilter) r = r.filter(x => x.subsubtopic === notesSubSubFilter);
+    if (q) r = r.filter(x => (getBody(x)+' '+(x.topic||'')+' '+(x.subtopic||'')).toLowerCase().includes(q));
+    r.sort((a,b) => String(b.date||b.created_at||'').localeCompare(String(a.date||a.created_at||'')));
+    return r;
+  }
+
+  let notes = applyF(NOTES, n => n.insight || '');
+  if (statusF >= 0) notes = notes.filter(n => (n.status||0) === statusF);
+  const memos = applyF(SESSIONS.filter(s => s.note && s.note.trim()), s => s.note || '');
+
+  const anyFilter = notesSubjFilter || notesTopicFilter || notesSubFilter || notesSubSubFilter || q || statusF >= 0;
+  const clrBtn = document.getElementById('nf-clear');
+  if (clrBtn) clrBtn.style.display = anyFilter ? '' : 'none';
+
+  // ── Attention panel ──
+  renderNotesAttn();
+
+  // ── List ──
+  const listEl = document.getElementById('notes-list');
+  if (!listEl) return;
+  if (!notes.length && !memos.length) {
+    listEl.innerHTML = `<div class="notes-empty">${anyFilter?'No notes match these filters':'No notes yet — add one with + Add'}</div>`;
+    return;
+  }
+  listEl.innerHTML =
+    (notes.length ? `<div class="notes-group-title">Concept notes <span class="ngc">${notes.length}</span></div>${notes.map(renderNoteCard).join('')}` : '') +
+    (memos.length ? `<div class="notes-group-title">Session memos <span class="ngc">${memos.length}</span></div>${memos.map(renderMemoCard).join('')}` : '');
 }
 
-function renderNotesFocus() {
-  const el = document.getElementById('notes-focus');
+function renderNotesAttn() {
+  const el = document.getElementById('notes-attn');
   if (!el) return;
-  const inScope = (subj) => !notesSubjFilter || subj === notesSubjFilter;
+  const inScope = x => !notesSubjFilter || x.subject === notesSubjFilter;
 
-  // Group notes by (subject, topic, subtopic) and pick urgent ones
-  const groupKey = (n) => `${n.subject||''}|${n.topic||''}|${n.subtopic||''}`;
   const groups = {};
-  NOTES.forEach(n => {
-    if (!inScope(n.subject)) return;
-    if ((n.status||0) === 0) return; // only "need review" or "still confused"
-    const k = groupKey(n);
+  NOTES.filter(n => inScope(n) && (n.status||0) > 0).forEach(n => {
+    const k = `${n.subject}|${n.topic}|${n.subtopic||''}`;
     if (!groups[k]) groups[k] = { subj:n.subject||'', topic:n.topic||'', sub:n.subtopic||'', confused:0, review:0 };
-    if (n.status === 2) groups[k].confused++;
-    else if (n.status === 1) groups[k].review++;
+    n.status===2 ? groups[k].confused++ : groups[k].review++;
   });
 
-  // Weak topics by accuracy
-  const sessKey = (s) => `${s.subject||''}|${s.topic||''}|${s.subtopic||''}`;
-  const sessStats = {};
-  SESSIONS.forEach(s => {
-    if (!inScope(s.subject)) return;
-    const k = sessKey(s);
-    if (!sessStats[k]) sessStats[k] = { subj:s.subject||'', topic:s.topic||'', sub:s.subtopic||'', att:0, cor:0 };
-    sessStats[k].att += s.attempted||0;
-    sessStats[k].cor += s.correct||0;
+  const sessMap = {};
+  SESSIONS.filter(s => inScope(s)).forEach(s => {
+    const k = `${s.subject}|${s.topic}|${s.subtopic||''}`;
+    if (!sessMap[k]) sessMap[k] = { subj:s.subject||'', topic:s.topic||'', sub:s.subtopic||'', att:0, cor:0 };
+    sessMap[k].att += s.attempted||0; sessMap[k].cor += s.correct||0;
   });
-  const weak = Object.values(sessStats)
-    .filter(t => t.att >= 5 && (t.cor / t.att) < 0.55)
-    .map(t => ({ ...t, acc: Math.round(t.cor/t.att*100) }))
+  const weak = Object.values(sessMap)
+    .filter(t => t.att >= 5 && t.cor/t.att < 0.6)
+    .map(t => ({ ...t, acc:Math.round(t.cor/t.att*100), color:'#D97706', label:`${Math.round(t.cor/t.att*100)}% accuracy`, badge:`${t.att}Q` }))
     .sort((a,b) => a.acc - b.acc);
 
   const items = [];
-  // Priority 1: confused notes
-  Object.values(groups)
-    .filter(g => g.confused > 0)
-    .sort((a,b) => b.confused - a.confused)
-    .slice(0, 3)
-    .forEach(g => items.push({
-      color: 'var(--red)', label: 'Still confused',
-      count: `${g.confused} note${g.confused>1?'s':''}`,
-      ...g
-    }));
-  // Priority 2: weak accuracy (skip if already in list)
-  weak.slice(0, Math.max(0, 5 - items.length)).forEach(t => {
-    const dupe = items.some(i => i.subj===t.subj && i.topic===t.topic && i.sub===t.sub);
-    if (dupe) return;
-    items.push({ color:'var(--amber)', label:`${t.acc}% accuracy`, count:`${t.att}Q`, ...t });
-  });
-  // Priority 3: notes flagged for review
-  Object.values(groups)
-    .filter(g => g.review > 0 && g.confused === 0)
-    .sort((a,b) => b.review - a.review)
-    .slice(0, Math.max(0, 5 - items.length))
-    .forEach(g => items.push({
-      color:'var(--amber)', label:'Needs review',
-      count:`${g.review} note${g.review>1?'s':''}`,
-      ...g
-    }));
+  Object.values(groups).filter(g=>g.confused>0).sort((a,b)=>b.confused-a.confused).slice(0,3)
+    .forEach(g => items.push({ ...g, color:'#DC2626', label:'Still confused', badge:`${g.confused} note${g.confused>1?'s':''}` }));
+  weak.filter(t => !items.some(i=>i.subj===t.subj&&i.topic===t.topic&&i.sub===t.sub)).slice(0,4-items.length)
+    .forEach(t => items.push(t));
+  Object.values(groups).filter(g=>g.review>0&&g.confused===0).sort((a,b)=>b.review-a.review).slice(0,4-items.length)
+    .forEach(g => items.push({ ...g, color:'#D97706', label:'Needs review', badge:`${g.review} note${g.review>1?'s':''}` }));
 
   if (!items.length) { el.innerHTML = ''; return; }
-
-  const cards = items.slice(0, 5).map(it => {
-    const path = [it.subj, it.topic, it.sub].filter(Boolean).join(' / ');
-    return `<div class="focus-card" onclick="focusOnArea('${h(it.subj)}','${h(it.topic)}','${h(it.sub)}')">
-      <div class="focus-icon" style="background:${it.color}"></div>
-      <div class="focus-body">
-        <div class="focus-name">${h(it.sub || it.topic || '—')}</div>
-        <div class="focus-reason">${h(path)} &middot; ${h(it.label)}</div>
+  const rows = items.slice(0,4).map(it =>
+    `<div class="attn-row" onclick="focusOnArea('${h(it.subj)}','${h(it.topic)}','${h(it.sub)}')">
+      <div class="attn-dot" style="background:${it.color}"></div>
+      <div class="attn-body">
+        <div class="attn-name">${h(it.sub || it.topic || '—')}</div>
+        <div class="attn-path">${h([it.subj,it.topic,it.sub].filter(Boolean).join(' / '))} &middot; ${h(it.label)}</div>
       </div>
-      <div class="focus-count">${h(it.count)}</div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `<div class="focus-section">
-    <div class="focus-header">
-      <div class="focus-title">Needs attention</div>
-      <div class="focus-sub">${items.length} area${items.length===1?'':'s'} to focus on${notesSubjFilter?' in '+h(notesSubjFilter):''}</div>
-    </div>
-    <div class="focus-grid">${cards}</div>
-  </div>`;
-}
-
-function applyNotesFilters(items, getStr) {
-  const q = (document.getElementById('notes-search')?.value || '').toLowerCase().trim();
-  let r = items.slice();
-  if (notesSubjFilter)  r = r.filter(x => x.subject === notesSubjFilter);
-  if (notesTopicFilter) r = r.filter(x => x.topic === notesTopicFilter);
-  if (notesSubFilter)   r = r.filter(x => x.subtopic === notesSubFilter);
-  if (notesSubSubFilter)r = r.filter(x => x.subsubtopic === notesSubSubFilter);
-  if (q) r = r.filter(x => {
-    const blob = (getStr(x) + ' ' + (x.topic||'') + ' ' + (x.subtopic||'') + ' ' + (x.subsubtopic||'')).toLowerCase();
-    return blob.includes(q);
-  });
-  r.sort((a,b) => String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || '')));
-  return r;
-}
-
-function renderNotes() {
-  renderNotesSubjTabs();
-  renderNotesCascade();
-  renderNotesFocus();
-
-  const statusFilter = parseInt(document.getElementById('notes-status-filter')?.value ?? '-1');
-  let notes = applyNotesFilters(NOTES, n => n.insight || '');
-  if (statusFilter >= 0) notes = notes.filter(n => (n.status || 0) === statusFilter);
-
-  let memos = applyNotesFilters(SESSIONS.filter(s => s.note && s.note.trim()), s => s.note || '');
-
-  // Toggle Clear button visibility
-  const anyFilter = notesSubjFilter || notesTopicFilter || notesSubFilter || notesSubSubFilter ||
-    (document.getElementById('notes-search')?.value || '') || statusFilter >= 0;
-  const clearBtn = document.getElementById('notes-clear-btn');
-  if (clearBtn) clearBtn.style.display = anyFilter ? 'inline-block' : 'none';
-
-  const listEl = document.getElementById('notes-list');
-  if (!listEl) return;
-
-  if (!notes.length && !memos.length) {
-    listEl.innerHTML = `<div class="notes-empty">${anyFilter ? 'No notes match these filters' : 'No notes yet. Add one with the + Add button.'}</div>`;
-    return;
-  }
-
-  const notesHtml = notes.map(renderNoteCard).join('');
-  const memosHtml = memos.map(renderMemoCard).join('');
-
-  listEl.innerHTML =
-    (notes.length ? `<div class="notes-section-head">Concept notes<span class="notes-count-pill">${notes.length}</span></div>${notesHtml}` : '') +
-    (memos.length ? `<div class="notes-section-head">Session memos<span class="notes-count-pill">${memos.length}</span></div>${memosHtml}` : '');
+      <div class="attn-badge">${h(it.badge)}</div>
+    </div>`
+  ).join('');
+  el.innerHTML = `<div class="attn-wrap"><div class="attn-title">Needs attention</div><div class="attn-list">${rows}</div></div>`;
 }
 
 function renderNoteCard(n) {
-  const qs = (n.questions || []).filter(Boolean);
   const st = n.status || 0;
-  const statCls = st === 2 ? 'ms-r' : st === 1 ? 'ms-a' : 'ms-g';
+  const statCls = st===2?'ms-r':st===1?'ms-a':'ms-g';
+  const qs = (n.questions||[]).filter(Boolean);
+  const path = [n.subject, n.topic, n.subtopic, n.subsubtopic].filter(Boolean).join(' · ');
   if (editingNoteId === n.id) {
-    return `<div class="note-card status-${st}">
-      <textarea id="edit-note-text-${n.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(n.insight || '')}</textarea>
+    return `<div class="nc s${st}">
+      <textarea id="edit-note-text-${n.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(n.insight||'')}</textarea>
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-        <select class="notes-select" id="edit-note-status-${n.id}" style="flex:0 0 auto;min-width:140px">
+        <select class="nf-select" id="edit-note-status-${n.id}" style="max-width:160px">
           <option value="0" ${st===0?'selected':''}>Got it</option>
           <option value="1" ${st===1?'selected':''}>Need review</option>
           <option value="2" ${st===2?'selected':''}>Still confused</option>
         </select>
-        <button class="note-action-btn" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
-        <button class="note-action-btn" onclick="saveEditNote('${n.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
+        <button class="nca" onclick="cancelEditNote()" style="margin-left:auto">Cancel</button>
+        <button class="nca" onclick="saveEditNote('${n.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
       </div>
     </div>`;
   }
-  const path = [n.subject, n.topic, n.subtopic, n.subsubtopic].filter(Boolean).join(' &middot; ');
-  return `<div class="note-card status-${st}">
-    <div class="note-card-head">
-      <div style="flex:1;min-width:0">
-        <div class="note-card-title">${h(n.topic || 'Untitled')}</div>
-        <div class="note-card-path">${path}</div>
+  return `<div class="nc s${st}">
+    <div class="nc-head">
+      <div class="nc-left">
+        <div class="nc-title">${h(n.topic||'Untitled')}</div>
+        <div class="nc-path">${h(path)}</div>
       </div>
-      <div class="note-card-meta">
+      <div class="nc-right">
         <span class="mini-stat ${statCls}">${noteStatusText(st)}</span>
-        <span class="note-card-date">${h(n.date || '')}</span>
+        <span class="nc-date">${h(n.date||'')}</span>
       </div>
     </div>
-    <div class="note-card-body">${fmt(n.insight || '')}</div>
-    ${qs.length ? `<div class="note-qs" style="margin-top:10px">${qs.map(q => `<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>` : ''}
-    <div class="note-card-actions">
-      <button class="note-action-btn" onclick="startEditNote('${n.id}')">Edit</button>
-      <button class="note-action-btn danger" onclick="deleteNote('${n.id}')">Delete</button>
+    <div class="nc-body">${fmt(n.insight||'')}</div>
+    ${qs.length?`<div class="note-qs" style="margin-top:8px">${qs.map(q=>`<div class="note-q">Q: ${h(q)}</div>`).join('')}</div>`:''}
+    <div class="nc-actions">
+      <button class="nca" onclick="startEditNote('${n.id}')">Edit</button>
+      <button class="nca del" onclick="deleteNote('${n.id}')">Delete</button>
     </div>
   </div>`;
 }
 
 function renderMemoCard(s) {
-  const a = s.attempted || 0, c = s.correct || 0;
-  const pct = a > 0 ? Math.round(c / a * 100) : null;
-  const statCls = pct === null ? 'ms-n' : pct >= 75 ? 'ms-g' : pct >= 55 ? 'ms-a' : 'ms-r';
+  const a = s.attempted||0, c = s.correct||0;
+  const pct = a>0?Math.round(c/a*100):null;
+  const statCls = pct===null?'ms-n':pct>=75?'ms-g':pct>=55?'ms-a':'ms-r';
   if (editingMemoId === s.id) {
-    return `<div class="note-card memo">
-      <div class="note-card-head">
-        <div style="flex:1;min-width:0">
-          <div class="note-card-title">${h(s.topic || 'Session')}</div>
-          <div class="note-card-path">${h(s.subject || '')}${s.subtopic ? ' &middot; '+h(s.subtopic) : ''}</div>
-        </div>
-        <div class="note-card-meta">
-          ${pct !== null ? `<span class="mini-stat ${statCls}">${pct}%</span>` : ''}
-          <span class="mini-stat ms-n">${a}Q</span>
-          <span class="note-card-date">${h(s.date || '')}</span>
-        </div>
+    return `<div class="nc memo">
+      <div class="nc-head">
+        <div class="nc-left"><div class="nc-title">${h(s.topic||'Session')}</div><div class="nc-path">${h(s.subject||'')}${s.subtopic?' · '+h(s.subtopic):''}</div></div>
+        <div class="nc-right">${pct!==null?`<span class="mini-stat ${statCls}">${pct}%</span>`:''}<span class="mini-stat ms-n">${a}Q</span><span class="nc-date">${h(s.date||'')}</span></div>
       </div>
-      <textarea id="edit-memo-text-${s.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(s.note || '')}</textarea>
+      <textarea id="edit-memo-text-${s.id}" rows="5" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;background:#fff;color:var(--text);line-height:1.6">${h(s.note||'')}</textarea>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="note-action-btn" onclick="cancelEditMemo()" style="margin-left:auto">Cancel</button>
-        <button class="note-action-btn" onclick="saveEditMemo('${s.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
+        <button class="nca" onclick="cancelEditMemo()" style="margin-left:auto">Cancel</button>
+        <button class="nca" onclick="saveEditMemo('${s.id}')" style="background:var(--text);color:#fff;border-color:var(--text)">Save</button>
       </div>
     </div>`;
   }
-  return `<div class="note-card memo">
-    <div class="note-card-head">
-      <div style="flex:1;min-width:0">
-        <div class="note-card-title">${h(s.topic || 'Session')}</div>
-        <div class="note-card-path">${h(s.subject || '')}${s.subtopic ? ' &middot; '+h(s.subtopic) : ''}</div>
-      </div>
-      <div class="note-card-meta">
-        ${pct !== null ? `<span class="mini-stat ${statCls}">${pct}%</span>` : ''}
-        <span class="mini-stat ms-n">${a}Q</span>
-        <span class="note-card-date">${h(s.date || '')}</span>
-      </div>
+  return `<div class="nc memo">
+    <div class="nc-head">
+      <div class="nc-left"><div class="nc-title">${h(s.topic||'Session')}</div><div class="nc-path">${h(s.subject||'')}${s.subtopic?' · '+h(s.subtopic):''}</div></div>
+      <div class="nc-right">${pct!==null?`<span class="mini-stat ${statCls}">${pct}%</span>`:''}<span class="mini-stat ms-n">${a}Q</span><span class="nc-date">${h(s.date||'')}</span></div>
     </div>
-    <div class="note-card-body">${fmt(s.note)}</div>
-    <div class="note-card-actions">
-      <button class="note-action-btn" onclick="startEditMemo('${s.id}')">Edit</button>
-    </div>
+    <div class="nc-body">${fmt(s.note)}</div>
+    <div class="nc-actions"><button class="nca" onclick="startEditMemo('${s.id}')">Edit</button></div>
   </div>`;
 }
 
