@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { CHART, barColor } from '../lib/colors.js'
 
 function CustomTooltip({ active, payload }) {
@@ -15,42 +15,74 @@ function CustomTooltip({ active, payload }) {
   )
 }
 
+function PatternTick({ x, y, payload }) {
+  const label = payload.value.length > 24 ? `${payload.value.slice(0, 22)}…` : payload.value
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fontWeight={500} fill="#374151">
+      {label}
+    </text>
+  )
+}
+
 export default function WeaknessRadar({ data }) {
+  const rowHeight = 36
+  const chartHeight = Math.max(180, data.length * rowHeight + 32)
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5">
-      <div className="flex items-baseline justify-between mb-3">
+      <div className="flex items-baseline justify-between mb-4">
         <div className="text-[13px] font-semibold tracking-tight text-gray-900">Weakness Radar</div>
-        <div className="text-[11px] font-normal text-gray-400">Accuracy % by Low-Level Pattern</div>
+        <div className="flex items-center gap-3 text-[11px] font-normal text-gray-400">
+          <span>Accuracy % by Low-Level Pattern</span>
+          <span className="flex items-center gap-1.5">
+            <svg width="12" height="2" className="shrink-0">
+              <line x1="0" y1="1" x2="12" y2="1" stroke="#B0B4BB" strokeWidth="1.5" strokeDasharray="3 2" />
+            </svg>
+            60% threshold
+          </span>
+        </div>
       </div>
       {data.length === 0 ? (
         <EmptyState text="Sync a mock to populate the weakness radar." />
       ) : (
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 48 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="4 4" vertical={false} />
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 4, right: 32, left: 8, bottom: 4 }}
+            barCategoryGap="28%"
+          >
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="4 4" horizontal={false} />
             <XAxis
-              dataKey="pattern"
-              tick={{ fontSize: 10, fill: CHART.axis }}
-              tickLine={false}
-              axisLine={{ stroke: CHART.grid }}
-              interval={0}
-              angle={-35}
-              textAnchor="end"
-              height={70}
-            />
-            <YAxis
+              type="number"
               domain={[0, 100]}
               tick={{ fontSize: 10, fill: CHART.axis }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#00000006' }} />
-            <Bar dataKey="accuracy" radius={[6, 6, 0, 0]} maxBarSize={28}>
+            <YAxis
+              type="category"
+              dataKey="pattern"
+              width={148}
+              tick={<PatternTick />}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#00000005' }} />
+            <Bar
+              dataKey="accuracy"
+              radius={[0, 6, 6, 0]}
+              maxBarSize={16}
+              background={{ fill: '#F3F4F6', radius: 6 }}
+              label={{ position: 'right', formatter: (v) => `${v}%`, fill: '#374151', fontSize: 11, fontWeight: 600 }}
+              isAnimationActive={false}
+            >
               {data.map((d) => (
                 <Cell key={d.pattern} fill={barColor(d.accuracy)} />
               ))}
             </Bar>
+            <ReferenceLine x={60} stroke="#B0B4BB" strokeDasharray="3 3" />
           </BarChart>
         </ResponsiveContainer>
       )}
