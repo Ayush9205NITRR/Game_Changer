@@ -1,21 +1,5 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #F5F4F0;
-  --card: #FFFFFF;
-  --border: #E2E1DC;
-  --border2: #CCCBC5;
-  --text: #111110;
-  --t2: #65655F;
-  --t3: #A5A59E;
-  --green: #15803D;
-  --green-bg: #EAF3EC;
-  --amber: #B45309;
-  --amber-bg: #FBF0E2;
-  --red: #B91C1C;
-  --red-bg: #FBEAEA;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -25,20 +9,20 @@ html, body, #root {
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: #F9FAFB;
+  color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: var(--text);
+  background: #111827;
   color: #fff;
 }
 
-/* dense native form controls */
 select, input[type="text"], input[type="number"], input[type="date"] {
   font-family: inherit;
   font-size: inherit;
@@ -54,8 +38,11 @@ table {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border2);
-  border-radius: 4px;
+  background: #D1D5DB;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

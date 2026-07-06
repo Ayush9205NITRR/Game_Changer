@@ -63,14 +63,14 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-20 bg-[var(--card)] border-b border-[var(--border)]">
-        <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200">
+        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center justify-between">
           <div>
-            <div className="text-[14px] font-bold tracking-tight">GAME CHANGER</div>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--t2)]">Mock Diagnostic Engine</div>
+            <div className="text-[14px] font-bold tracking-tight text-gray-900">GAME CHANGER</div>
+            <div className="text-[10px] font-medium uppercase tracking-widest text-gray-400">Mock Diagnostic Engine</div>
           </div>
-          <div className="flex items-center gap-6 text-right">
+          <div className="flex items-center gap-2.5">
             <StatChip label="Mocks Synced" value={stats.mockCount} />
             <StatChip
               label="Overall Accuracy"
@@ -82,7 +82,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-6 py-6 flex flex-col gap-5">
+      <main className="max-w-[1200px] mx-auto px-6 py-7 flex flex-col gap-5">
         <IntakeBar onRowsParsed={handleRowsParsed} />
 
         {pendingRows.length > 0 && (
@@ -101,7 +101,8 @@ export default function App() {
       </main>
 
       {notice && (
-        <div className="fixed bottom-5 right-5 bg-[var(--text)] text-white text-[12px] font-medium px-4 py-2.5 shadow-lg">
+        <div className="fixed bottom-5 right-5 flex items-center gap-2 bg-gray-900 text-white text-[12px] font-medium px-4 py-3 rounded-lg shadow-lg shadow-black/10 animate-[fadeIn_0.15s_ease-out]">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           {notice}
         </div>
       )}
@@ -110,10 +111,10 @@ export default function App() {
 }
 
 function StatChip({ label, value, tone }) {
-  const toneCls = tone === 'red' ? 'text-[var(--red)]' : tone === 'amber' ? 'text-[var(--amber)]' : 'text-[var(--text)]'
+  const toneCls = tone === 'red' ? 'text-red-500' : tone === 'amber' ? 'text-amber-600' : 'text-gray-900'
   return (
-    <div>
-      <div className="text-[9px] uppercase tracking-widest text-[var(--t3)]">{label}</div>
+    <div className="rounded-lg border border-gray-100 bg-gray-50 px-3.5 py-1.5 text-right transition-shadow hover:shadow-sm">
+      <div className="text-[9px] font-medium uppercase tracking-widest text-gray-400">{label}</div>
       <div className={`text-[16px] font-bold tabular-nums leading-tight ${toneCls}`}>{value}</div>
     </div>
   )

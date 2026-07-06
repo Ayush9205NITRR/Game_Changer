@@ -1,20 +1,16 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { EmptyState } from './WeaknessRadar.jsx'
-
-const COLORS = {
-  Conceptual: '#B91C1C',
-  Calculation: '#B45309',
-  Misread: '#65655F',
-  'Silly Mistake': '#A5A59E',
-  Unspecified: '#CCCBC5',
-}
+import { ERROR_COLORS } from '../lib/colors.js'
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
   const d = payload[0]
   return (
-    <div className="border border-[var(--border2)] bg-[var(--card)] px-3 py-2 text-[11px]">
-      <span className="font-semibold">{d.name}</span> · {d.value} error{d.value === 1 ? '' : 's'}
+    <div className="rounded-lg border border-gray-100 bg-white/95 backdrop-blur-sm px-3 py-2 text-[11px] shadow-lg shadow-black/5">
+      <span className="font-semibold text-gray-900">{d.name}</span>{' '}
+      <span className="font-medium text-gray-500">
+        · {d.value} error{d.value === 1 ? '' : 's'}
+      </span>
     </div>
   )
 }
@@ -22,10 +18,10 @@ function CustomTooltip({ active, payload }) {
 export default function ErrorDonut({ data }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   return (
-    <div className="border border-[var(--border)] bg-[var(--card)] p-4">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5">
       <div className="flex items-baseline justify-between mb-3">
-        <div className="text-[13px] font-semibold tracking-tight">Error Root-Cause</div>
-        <div className="text-[11px] text-[var(--t2)]">{total} incorrect answers analyzed</div>
+        <div className="text-[13px] font-semibold tracking-tight text-gray-900">Error Root-Cause</div>
+        <div className="text-[11px] font-normal text-gray-400">{total} incorrect answers analyzed</div>
       </div>
       {data.length === 0 ? (
         <EmptyState text="Tag error types on incorrect rows to see the breakdown." />
@@ -38,11 +34,12 @@ export default function ErrorDonut({ data }) {
               nameKey="name"
               innerRadius={60}
               outerRadius={95}
-              paddingAngle={2}
+              paddingAngle={3}
+              cornerRadius={6}
               stroke="none"
             >
               {data.map((d) => (
-                <Cell key={d.name} fill={COLORS[d.name] || '#CCCBC5'} />
+                <Cell key={d.name} fill={ERROR_COLORS[d.name] || '#E5E7EB'} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
@@ -50,9 +47,9 @@ export default function ErrorDonut({ data }) {
               layout="vertical"
               align="right"
               verticalAlign="middle"
-              iconType="square"
-              iconSize={8}
-              wrapperStyle={{ fontSize: 11, color: '#65655F' }}
+              iconType="circle"
+              iconSize={7}
+              wrapperStyle={{ fontSize: 11, fontWeight: 500, color: '#6B7280' }}
             />
           </PieChart>
         </ResponsiveContainer>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { downloadMasterSchema, parseMockCsv } from '../lib/csv.js'
+import { IconDownload, IconUpload } from './icons.jsx'
 
 export default function IntakeBar({ onRowsParsed }) {
   const [dragging, setDragging] = useState(false)
@@ -30,16 +31,17 @@ export default function IntakeBar({ onRowsParsed }) {
   }
 
   return (
-    <div className="border border-[var(--border)] bg-[var(--card)]">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <div>
-          <div className="text-[13px] font-semibold tracking-tight">Intake</div>
-          <div className="text-[11px] text-[var(--t2)]">Download the schema, fill it in, upload it back.</div>
+          <div className="text-[13px] font-semibold tracking-tight text-gray-900">Intake</div>
+          <div className="text-[12px] font-normal text-gray-500">Download the schema, fill it in, upload it back.</div>
         </div>
         <button
           onClick={downloadMasterSchema}
-          className="text-[12px] font-medium px-3 py-1.5 border border-[var(--border2)] hover:border-[var(--text)] hover:bg-[var(--text)] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3.5 py-2 rounded-lg border border-gray-200 text-gray-700 shadow-sm hover:border-gray-300 hover:bg-gray-50 transition-colors duration-150"
         >
+          <IconDownload className="h-3.5 w-3.5 text-gray-400" />
           Download Master Schema
         </button>
       </div>
@@ -56,8 +58,8 @@ export default function IntakeBar({ onRowsParsed }) {
           handleFile(e.dataTransfer.files?.[0])
         }}
         onClick={() => inputRef.current?.click()}
-        className={`m-5 mt-4 flex flex-col items-center justify-center gap-1 border border-dashed py-8 cursor-pointer transition-colors ${
-          dragging ? 'border-[var(--text)] bg-[var(--bg)]' : 'border-[var(--border2)] hover:bg-[var(--bg)]'
+        className={`m-6 mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-10 cursor-pointer transition-colors duration-150 ${
+          dragging ? 'border-indigo-400 bg-indigo-50/40' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/60'
         }`}
       >
         <input
@@ -67,11 +69,14 @@ export default function IntakeBar({ onRowsParsed }) {
           className="hidden"
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
-        <div className="text-[12px] font-medium">
+        <div className={`flex items-center justify-center h-9 w-9 rounded-full ${dragging ? 'bg-indigo-100' : 'bg-gray-100'} transition-colors duration-150`}>
+          <IconUpload className={`h-4 w-4 ${dragging ? 'text-indigo-500' : 'text-gray-400'}`} />
+        </div>
+        <div className="text-[12px] font-medium text-gray-700">
           {busy ? 'Parsing…' : 'Drop filled mock CSV here, or click to browse'}
         </div>
-        <div className="text-[11px] text-[var(--t3)]">.csv only — mapped rows appear below for review</div>
-        {error && <div className="text-[11px] text-[var(--red)] mt-1">{error}</div>}
+        <div className="text-[11px] font-normal text-gray-400">.csv only — mapped rows appear below for review</div>
+        {error && <div className="text-[11px] font-medium text-red-500 mt-1">{error}</div>}
       </div>
     </div>
   )

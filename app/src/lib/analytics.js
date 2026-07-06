@@ -50,13 +50,13 @@ export function computeAlert(patternStats) {
   if (worst.accuracy < ALERT_THRESHOLD) {
     return {
       level: 'critical',
-      message: `Urgent Alert: Accuracy in "${worst.pattern}" has dropped to ${worst.accuracy}% (below ${ALERT_THRESHOLD}%). Review simplification notes before next mock.`,
+      message: `Accuracy in "${worst.pattern}" has dropped to ${worst.accuracy}% (below ${ALERT_THRESHOLD}%). Review simplification notes before next mock.`,
     }
   }
   if (worst.accuracy < 75) {
     return {
       level: 'watch',
-      message: `Watch: "${worst.pattern}" is trending soft at ${worst.accuracy}% accuracy. Reinforce before it becomes a leak.`,
+      message: `"${worst.pattern}" is trending soft at ${worst.accuracy}% accuracy. Reinforce before it becomes a leak.`,
     }
   }
   return { level: 'clear', message: 'No critical leaks detected. All tracked patterns are holding above threshold.' }
