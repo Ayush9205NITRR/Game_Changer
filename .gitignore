@@ -1,3 +1,9 @@
 .claude/
 app/node_modules/
 app/dist/
+
+# LinkedIn scraper runtime output
+scripts/linkedin_scraper/linkedin_posts_*.csv
+scripts/linkedin_scraper/failed_rows_*.csv
+scripts/linkedin_scraper/run_log_*.log
+scripts/linkedin_scraper/scrape_progress.txt
