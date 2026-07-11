@@ -906,41 +906,49 @@ def main():
     log.info("=" * 60)
     scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
-    for idx, query in enumerate(queries, 1):
-        if query in completed:
-            stats["queries_skipped_done"] += 1
-            continue
+    # Poora loop try/finally mein hai — Ctrl+C ya koi bhi unexpected crash ho,
+    # ab tak jo ho chuka uska final report hamesha print hota hai, aur jo query
+    # abhi tak mark_query_done tak nahi pahunchi wo agli run mein retry hogi
+    # (progress file + Airtable Post-URL dedup safe hai, kuch bhi duplicate
+    # push nahi hoga chahe beech mein kahin bhi abort ho jaaye).
+    try:
+        for idx, query in enumerate(queries, 1):
+            if query in completed:
+                stats["queries_skipped_done"] += 1
+                continue
 
-        log.info(f"\n  ── Query {idx}/{len(queries)}: {query}  "
-                 f"[{tm.current_label()}, {tm.alive_count()} keys left]")
-        try:
-            raw = scrape_query(query, tm)
-        except Exception as e:   # non-credit error (timeout/actor fail)
-            log.error(f"  Query {idx} FAILED: {e}")
-            stats["errors"].append(f"Query '{query}' failed: {e}")
-            stats["query_results"][query] = 0
-            continue   # not marked done — will retry on next run
+            log.info(f"\n  ── Query {idx}/{len(queries)}: {query}  "
+                     f"[{tm.current_label()}, {tm.alive_count()} keys left]")
+            try:
+                raw = scrape_query(query, tm)
+                if raw is None:
+                    log.error("  SAARE Apify keys khatam ho gaye — ruk rahe hain.")
+                    log.error("  Ab tak ka data already push ho chuka hai. Naye keys CONFIG mein daal ke")
+                    log.error("  dobara chalao — progress file bache hue queries se resume kar dega.")
+                    break
 
-        if raw is None:
-            log.error("  SAARE Apify keys khatam ho gaye — ruk rahe hain.")
-            log.error("  Ab tak ka data already push ho chuka hai. Naye keys CONFIG mein daal ke")
-            log.error("  dobara chalao — progress file bache hue queries se resume kar dega.")
-            break
+                count = len(raw)
+                stats["query_results"][query] = count
+                stats["raw_fetched"] += count
+                stats["queries_done"] += 1
+                log.info(f"  Fetched: {count} posts")
 
-        count = len(raw)
-        stats["query_results"][query] = count
-        stats["raw_fetched"] += count
-        stats["queries_done"] += 1
-        log.info(f"  Fetched: {count} posts")
+                flush_query(raw, query, scraped_at, existing_urls)
+                mark_query_done(query)   # sirf yahan mark hota hai — pura parse+push safe hone ke baad
+            except Exception as e:   # scrape / parse / push kahin bhi fail ho — is query ko skip karo, run mat rokna
+                log.error(f"  Query {idx} FAILED: {e}")
+                stats["errors"].append(f"Query '{query}' failed: {e}")
+                stats["query_results"].setdefault(query, 0)
+                continue   # not marked done — will retry on next run
 
-        flush_query(raw, query, scraped_at, existing_urls)
-        mark_query_done(query)
-
-        if idx < len(queries):
-            time.sleep(3)
-
-    # Step 6 — Report
-    print_final_report()
+            if idx < len(queries):
+                time.sleep(3)
+    except KeyboardInterrupt:
+        log.warning("\n  Interrupted (Ctrl+C) — jo ho chuka wo already saved/pushed hai.")
+        log.warning("  Dobara chalao to progress file se wahi se resume hoga, shuru se nahi.")
+    finally:
+        # Step 6 — Report (chahe loop poora chale, break ho, error se ruke, ya Ctrl+C ho)
+        print_final_report()
 
 
 if __name__ == "__main__":
