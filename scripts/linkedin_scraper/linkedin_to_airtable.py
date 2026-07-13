@@ -233,6 +233,16 @@ class ApifyTokenInvalid(Exception):
     """Ye key auth hi fail kar raha — skip karo."""
 
 
+# Internet/DNS drop jaisi transient connectivity errors ke liye escalating
+# backoff (seconds) — Apify credit/auth errors se alag handle hote hain,
+# wo already TokenManager rotation se cover hain.
+NETWORK_RETRY_BACKOFF = [5, 15, 30, 60]
+MAX_CONSECUTIVE_NETWORK_OUTAGES = 5   # itni queries lagatar net-fail ho to poora run pause kar do
+
+def is_network_error(exc: Exception) -> bool:
+    return isinstance(exc, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
+
+
 # ─────────────────────────────────────────────────────────────────────
 # TOKEN MANAGER
 # ─────────────────────────────────────────────────────────────────────
@@ -922,6 +932,7 @@ def main():
     # abhi tak mark_query_done tak nahi pahunchi wo agli run mein retry hogi
     # (progress file + Airtable Post-URL dedup safe hai, kuch bhi duplicate
     # push nahi hoga chahe beech mein kahin bhi abort ho jaaye).
+    consecutive_network_outages = 0
     try:
         for idx, query in enumerate(queries, 1):
             if query in completed:
@@ -931,7 +942,28 @@ def main():
             log.info(f"\n  ── Query {idx}/{len(queries)}: {query}  "
                      f"[{tm.current_label()}, {tm.alive_count()} keys left]")
             try:
-                raw = scrape_query(query, tm)
+                # Connectivity blips (WiFi drop, DNS fail) get retried in-place
+                # with backoff instead of immediately failing the query and
+                # racing through the rest of the grid with no delay.
+                raw = None
+                net_attempt = 0
+                while True:
+                    try:
+                        raw = scrape_query(query, tm)
+                        consecutive_network_outages = 0
+                        break
+                    except Exception as e:
+                        if is_network_error(e) and net_attempt < len(NETWORK_RETRY_BACKOFF):
+                            wait = NETWORK_RETRY_BACKOFF[net_attempt]
+                            net_attempt += 1
+                            log.warning(f"  Network error ({e.__class__.__name__}) — internet down lag raha hai. "
+                                        f"Retry {net_attempt}/{len(NETWORK_RETRY_BACKOFF)} in {wait}s...")
+                            time.sleep(wait)
+                            continue
+                        if is_network_error(e):
+                            consecutive_network_outages += 1
+                        raise
+
                 if raw is None:
                     log.error("  SAARE Apify keys khatam ho gaye — ruk rahe hain.")
                     log.error("  Ab tak ka data already push ho chuka hai. Naye keys CONFIG mein daal ke")
@@ -950,6 +982,11 @@ def main():
                 log.error(f"  Query {idx} FAILED: {e}")
                 stats["errors"].append(f"Query '{query}' failed: {e}")
                 stats["query_results"].setdefault(query, 0)
+                if consecutive_network_outages >= MAX_CONSECUTIVE_NETWORK_OUTAGES:
+                    log.error(f"  {consecutive_network_outages} queries in a row failed on network errors — "
+                              f"internet poori tarah down lag raha hai. Run ruk rahi hai (progress file safe hai, "
+                              f"connectivity wapas aaye to bas dobara chalao).")
+                    break
                 continue   # not marked done — will retry on next run
 
             if idx < len(queries):
