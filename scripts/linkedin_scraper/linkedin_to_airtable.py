@@ -128,6 +128,10 @@ CONFIG = {
     # ── SAFETY ────────────────────────────────────────────────────────
     "DRY_RUN"          : False,   # True = sirf estimate, na scrape na push
     "SKIP_DUPLICATES"  : True,
+    # True karke dekho ki "duplicate" mark hui posts ki actual Post URLs kya
+    # hain — Airtable mein wo URL search karke verify karo ki wo pehle se
+    # kisi aur query se already push ho chuki thi (real dup) ya nahi (bug).
+    "LOG_DUPLICATE_URLS": True,
 }
 
 # ══════════════════════════════════════════════════════════════════════
@@ -158,6 +162,7 @@ PAGES_TO_FETCH      = CONFIG["PAGES_TO_FETCH"]
 MAX_POSTS           = CONFIG["MAX_POSTS"]
 DRY_RUN             = CONFIG["DRY_RUN"]
 SKIP_DUPLICATES     = CONFIG["SKIP_DUPLICATES"]
+LOG_DUPLICATE_URLS  = CONFIG["LOG_DUPLICATE_URLS"]
 PROACTIVE_CREDIT_CHECK = CONFIG["PROACTIVE_CREDIT_CHECK"]
 PROGRESS_FILE        = CONFIG["PROGRESS_FILE"]
 RESCRAPE_DONE         = CONFIG["RESCRAPE_DONE"]
@@ -750,11 +755,17 @@ def push_to_airtable(parsed_posts: list, existing_urls: set) -> list:
 
     if SKIP_DUPLICATES and existing_urls:
         before = len(parsed_posts)
+        dup_urls = [p["Post URL"] for p in parsed_posts if p["Post URL"] in existing_urls]
         parsed_posts = [p for p in parsed_posts if p["Post URL"] not in existing_urls]
         skipped = before - len(parsed_posts)
         stats["airtable_skipped_dup"] += skipped
         if skipped:
             log.info(f"  Duplicates skipped: {skipped} | New: {len(parsed_posts)}")
+            if LOG_DUPLICATE_URLS:
+                for u in dup_urls[:5]:
+                    log.info(f"    dup → {u}")
+                if len(dup_urls) > 5:
+                    log.info(f"    ... +{len(dup_urls) - 5} more (check any of the above in Airtable to verify)")
 
     if not parsed_posts:
         log.info("  Nothing new to push.")
