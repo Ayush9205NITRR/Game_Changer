@@ -15,6 +15,32 @@ python linkedin_intent_to_airtable.py               # asli run
 ```
 
 Flags: `--self-test` `--dry-run` `--preview-queries` `--comments-only` `--no-comments`
+`--preview` `--push-csv FILE` `--push-all` `--yes`
+
+## Preview → review → push
+
+Airtable me kuch bhejne se pehle results dekhne ke liye:
+
+```bash
+# 1. Scrape + score + CSV. Airtable ko CHHOOTA BHI NAHI (na read, na write).
+python linkedin_intent_to_airtable.py --preview
+
+# 2. CSV kholo (Excel/Sheets), junk rows delete kar do.
+#    CSV me SAARE scraped posts hote hain -- filtered wale bhi -- taaki
+#    threshold galat laga ho to bina dobara scrape kiye theek kar sako.
+
+# 3. Jo bacha wahi push karo (dedup + schema-aware + confirmation prompt).
+python linkedin_intent_to_airtable.py --push-csv linkedin_posts_XXXX.csv
+```
+
+`--push-csv` by default wahi quality gate lagata hai jo pipeline lagati hai
+(`Lead Type != supply`, `Intent Score >= MIN_INTENT_SCORE`) — `--push-all`
+se bypass, `--yes` se prompt skip. Comments CSV bhi isi flag se jaati hai;
+header dekh ke script khud pata kar leti hai ki posts hai ya comments.
+
+**DHYAAN:** `--preview` credits kharch karta hai — scraping hi paid part hai.
+Bilkul free check ke liye `--dry-run` (cost estimate) aur `--self-test`
+(scorer) use karo.
 
 ## v2 se kya badla
 

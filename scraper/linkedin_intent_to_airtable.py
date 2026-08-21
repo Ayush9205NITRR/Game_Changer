@@ -48,21 +48,20 @@ v3 CHAAR CHEEZEIN ADD KARTA HAI
                         "looking for agency" post dead lead hai.
 
 Plus reliability upgrades: Airtable SCHEMA INTROSPECTION (unknown field ->
-422 wali crash khatam), env-based secrets, per-stage cost estimate, aur
+422 wali crash khatam), per-stage cost estimate, budget guard, aur
 SELF_TEST mode jisse bina ek bhi credit kharch kiye scorer tune kar sako.
 
 SECRETS -- IMPORTANT
 --------------------
-Is file me koi token HARDCODE nahi hai aur karna bhi mat. Repo public hai.
-Tokens env se aate hain:
+Tokens neeche CONFIG block me hain (v2 ki tarah). Neeche sirf PLACEHOLDERS
+hain -- apni LOCAL copy me real tokens bharo, lekin us fill-in ko kabhi
+commit mat karna. Ye repo PUBLIC hai:
 
-    export APIFY_TOKENS="apify_api_xxx,apify_api_yyy,apify_api_zzz"
-    export AIRTABLE_TOKEN="patXXXX.yyyy"
+    git diff        # commit se pehle hamesha check karo
 
-ya same folder me ek `.env` file bana lo (wo .gitignore me hai):
-
-    APIFY_TOKENS=apify_api_xxx,apify_api_yyy
-    AIRTABLE_TOKEN=patXXXX.yyyy
+Agar koi real token galti se commit ho jaaye to turant Apify/Airtable
+dashboard se revoke + regenerate karo -- public repo me commit hote hi wo
+leaked maana jaata hai.
 
 QUICK START
 -----------
@@ -87,10 +86,25 @@ from urllib.parse import urlparse, urlunparse, quote
 
 
 # ══════════════════════════════════════════════════════════════════════
-# ① CONFIG  <- SIRF YEH BLOCK EDIT KARO  (tokens yahan NAHI -- env me)
+# ① CONFIG  <- SIRF YEH BLOCK EDIT KARO
 # ══════════════════════════════════════════════════════════════════════
 
 CONFIG = {
+
+    # ── APIFY KEYS (LIST) ────────────────────────────────────
+    # Jitne free keys hain sab yahan daalo. Order mein use honge: pehla
+    # khatam -> doosra -> teesra ... Ek key ka credit khatam hote hi script
+    # apne aap next par chali jaati hai.
+    "APIFY_TOKENS": [
+        "apify_api_KEY_1_YAHAN_PASTE_KARO",
+        "apify_api_KEY_2_YAHAN_PASTE_KARO",
+        "apify_api_KEY_3_YAHAN_PASTE_KARO",
+        # ... jitne chaaho add karo
+    ],
+
+    # ── AIRTABLE TOKEN ─────────────────────────────────────
+    # Scopes chahiye: data.records:read + data.records:write + schema.bases:read
+    "AIRTABLE_TOKEN": "pat_YAHAN_PASTE_KARO",
 
     # ── AIRTABLE TARGET ───────────────────────────────────────────────
     "AIRTABLE_BASE_ID"       : "appNjXRYNAQ2Nuiah",
@@ -232,8 +246,14 @@ CONFIG = {
                                     "comment_queue.jsonl"),
     "RESCRAPE_DONE" : False,
 
-    # ── SAFETY ────────────────────────────────────────────────────────
-    "DRY_RUN"         : False,
+    # ── SAFETY / REVIEW GATE ──────────────────────────────────────────
+    "DRY_RUN"         : False,   # kuch scrape hi mat karo, sirf estimate
+    # PREVIEW_ONLY = scrape + score + CSV + report, lekin Airtable me KUCH
+    # NAHI likho. CSV dekh lo, junk rows delete kar do, phir:
+    #     python linkedin_intent_to_airtable.py --push-csv <file.csv>
+    # DHYAAN: preview credits kharch karta hai (scraping hi paid part hai).
+    # Bilkul free check ke liye --dry-run use karo.
+    "PREVIEW_ONLY"    : False,
     "SKIP_DUPLICATES" : True,
 }
 
@@ -246,28 +266,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 # ─────────────────────────────────────────────────────────────────────
-# SECRETS  (env / .env only -- kabhi hardcode mat karna)
+# CREDENTIALS  (CONFIG se -- commit karne se pehle git diff check karo)
 # ─────────────────────────────────────────────────────────────────────
 
-def load_dotenv(path=os.path.join(HERE, ".env")) -> None:
-    """Minimal .env loader -- koi dependency nahi. Existing env ko override
-    nahi karta (shell hamesha jeetta hai)."""
-    if not os.path.exists(path):
-        return
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, _, val = line.partition("=")
-            key, val = key.strip(), val.strip().strip('"').strip("'")
-            os.environ.setdefault(key, val)
-
-
-load_dotenv()
-
-APIFY_TOKENS = [t.strip() for t in os.environ.get("APIFY_TOKENS", "").split(",") if t.strip()]
-AIRTABLE_TOKEN = os.environ.get("AIRTABLE_TOKEN", "").strip()
+APIFY_TOKENS   = [t.strip() for t in CONFIG["APIFY_TOKENS"] if t and t.strip()]
+AIRTABLE_TOKEN = CONFIG["AIRTABLE_TOKEN"].strip()
 
 AIRTABLE_BASE_ID       = CONFIG["AIRTABLE_BASE_ID"]
 AIRTABLE_TABLE         = CONFIG["AIRTABLE_TABLE"]
@@ -295,6 +298,7 @@ PROGRESS_FILE          = CONFIG["PROGRESS_FILE"]
 LEAD_QUEUE_FILE        = CONFIG["LEAD_QUEUE_FILE"]
 RESCRAPE_DONE          = CONFIG["RESCRAPE_DONE"]
 DRY_RUN                = CONFIG["DRY_RUN"]
+PREVIEW_ONLY           = CONFIG["PREVIEW_ONLY"]
 SKIP_DUPLICATES        = CONFIG["SKIP_DUPLICATES"]
 
 MIN_CREDIT_BUFFER_USD  = CONFIG["MIN_CREDIT_BUFFER_USD"]
@@ -409,6 +413,7 @@ stats = {
     "query_results"       : {},
     "keys_status"         : {},
     "top_leads"           : [],
+    "preview_rows"        : [],
 }
 
 
@@ -1248,6 +1253,10 @@ class TableSchema:
         if value is None:
             return None
         if ftype in BOOL_TYPES:
+            # CSV round-trip me sab string ban jaata hai -- bool("False") == True
+            # wali classic trap se bachne ke liye explicit parse.
+            if isinstance(value, str):
+                return value.strip().lower() in ("true", "1", "yes", "y")
             return bool(value)
         if ftype in NUMBER_TYPES:
             try:
@@ -1430,21 +1439,32 @@ def push_rows(rows: list, table: str, schema: TableSchema,
 # PRE-FLIGHT
 # ─────────────────────────────────────────────────────────────────────
 
+PLACEHOLDER_MARKS = ("YAHAN_PASTE", "PASTE_YOUR", "XXXX")
+
+
+def _is_placeholder(tok: str) -> bool:
+    return any(mark in tok for mark in PLACEHOLDER_MARKS)
+
+
 def preflight_env() -> bool:
-    log.info("  Checking credentials (env / .env)...")
+    log.info("  Checking credentials in CONFIG...")
     ok = True
     if not APIFY_TOKENS:
-        log.error("  FAIL -- APIFY_TOKENS env var khaali hai.")
-        log.error('         export APIFY_TOKENS="apify_api_xxx,apify_api_yyy"')
-        stats["errors"].append("APIFY_TOKENS not set")
+        log.error("  FAIL -- CONFIG['APIFY_TOKENS'] khaali hai")
+        stats["errors"].append("No Apify tokens in CONFIG")
         ok = False
-    if not AIRTABLE_TOKEN:
-        log.error("  FAIL -- AIRTABLE_TOKEN env var khaali hai.")
-        log.error('         export AIRTABLE_TOKEN="patXXXX.yyyy"')
+    else:
+        placeholders = [t for t in APIFY_TOKENS if _is_placeholder(t)]
+        if placeholders:
+            log.error(f"  FAIL -- {len(placeholders)} Apify key(s) abhi placeholder hain")
+            stats["errors"].append("Apify token placeholder(s) not replaced")
+            ok = False
+    if not AIRTABLE_TOKEN or _is_placeholder(AIRTABLE_TOKEN):
+        log.error("  FAIL -- CONFIG['AIRTABLE_TOKEN'] set karo")
         stats["errors"].append("AIRTABLE_TOKEN not set")
         ok = False
     if ok:
-        log.info(f"  OK -- {len(APIFY_TOKENS)} Apify key(s) + Airtable token loaded")
+        log.info(f"  OK -- {len(APIFY_TOKENS)} Apify key(s) + Airtable token present")
     return ok
 
 
@@ -1592,6 +1612,12 @@ def process_query_results(raw_items: list, query: dict, scraped_at: str,
 
     if not keep:
         return
+
+    if PREVIEW_ONLY:
+        stats["preview_rows"].extend(keep)
+        log.info(f"  PREVIEW -- {len(keep)} rows CSV me gaye, Airtable me kuch nahi.")
+        return
+
     failed = push_rows(keep, AIRTABLE_TABLE, schema, "Post URL", existing)
     if failed:
         append_csv(FAILED_ROWS_FILE, failed)
@@ -1608,14 +1634,14 @@ def stage_a_posts(tm: TokenManager, schema: TableSchema, existing: set,
     spent = 0.0
 
     for idx, query in enumerate(QUERIES, 1):
+        if query["id"] in done["query"]:
+            stats["queries_skipped_done"] += 1
+            continue
         if RUN_BUDGET_USD and spent + cpq > RUN_BUDGET_USD:
             log.warning(f"\n  BUDGET STOP -- ~${spent:.2f} spend ho chuka "
                         f"(cap ${RUN_BUDGET_USD:.2f}). Stage A rok rahe hain.")
             log.warning("  Baaki queries pending hain -- agla run resume karega.")
             break
-        if query["id"] in done["query"]:
-            stats["queries_skipped_done"] += 1
-            continue
 
         log.info(f"\n  -- Query {idx}/{len(QUERIES)} [{query['mode']}]: {query['q']}"
                  f"   ({tm.current_label()}, {tm.alive_count()} keys left)")
@@ -1623,7 +1649,7 @@ def stage_a_posts(tm: TokenManager, schema: TableSchema, existing: set,
             raw = run_actor_with_rotation(ACTOR_ID, build_search_payload(query), tm, cpq)
         except AllKeysExhausted:
             log.error("  SAARE Apify keys khatam. Ab tak ka data push ho chuka hai.")
-            log.error("  Naye keys env me daal ke dobara chalao -- progress resume karegi.")
+            log.error("  Naye keys CONFIG me daal ke dobara chalao -- progress resume karegi.")
             raise
         except Exception as e:
             log.error(f"  Query {idx} FAILED: {e}")
@@ -1648,7 +1674,10 @@ def stage_a_posts(tm: TokenManager, schema: TableSchema, existing: set,
 # ══════════════════════════════════════════════════════════════════════
 
 def stage_b_comments(tm: TokenManager, schema: TableSchema, done: dict) -> None:
-    if not SCRAPE_COMMENTS or schema is None or not schema.exists:
+    if not SCRAPE_COMMENTS:
+        return
+    # Preview me sirf CSV likhna hai, to comments table ka hona zaroori nahi.
+    if not PREVIEW_ONLY and (schema is None or not schema.exists):
         return
 
     queue = [q for q in load_lead_queue() if q["post_url"] not in done["comments"]]
@@ -1665,7 +1694,8 @@ def stage_b_comments(tm: TokenManager, schema: TableSchema, done: dict) -> None:
              f"batch size {COMMENT_BATCH_SIZE}")
 
     scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-    existing   = get_existing_keys(AIRTABLE_COMMENTS_TBL, "Comment URL")
+    existing   = set() if PREVIEW_ONLY else get_existing_keys(AIRTABLE_COMMENTS_TBL,
+                                                             "Comment URL")
     by_url     = {q["post_url"]: q for q in queue}
     est        = round((COMMENT_BATCH_SIZE * MAX_COMMENTS_PER_POST / 1000)
                        * COST_PER_1K_COMMENTS, 4)
@@ -1706,7 +1736,10 @@ def stage_b_comments(tm: TokenManager, schema: TableSchema, done: dict) -> None:
 
         stats["comments_fetched"] += len(parsed)
         log.info(f"  Fetched: {len(parsed)} comment(s)")
-        if parsed:
+        if parsed and PREVIEW_ONLY:
+            append_csv(CSV_COMMENTS_FILE, parsed)
+            log.info(f"  PREVIEW -- {len(parsed)} comments CSV me, Airtable me kuch nahi.")
+        elif parsed:
             append_csv(CSV_COMMENTS_FILE, parsed)
             before = stats["airtable_success"]
             failed = push_rows(parsed, AIRTABLE_COMMENTS_TBL, schema,
@@ -1801,6 +1834,150 @@ def preview_queries(limit: int = 25) -> None:
     print()
 
 
+# ══════════════════════════════════════════════════════════════════════
+# ⑦ PREVIEW REPORT + CSV -> AIRTABLE PUSH  (review gate)
+# ══════════════════════════════════════════════════════════════════════
+#
+# Workflow:
+#   1) python linkedin_intent_to_airtable.py --preview
+#        -> scrape + score + CSV, Airtable me KUCH NAHI. Ranked report print.
+#   2) CSV kholo (Excel/Sheets), junk rows delete kar do.
+#   3) python linkedin_intent_to_airtable.py --push-csv linkedin_posts_XXX.csv
+#        -> jo bacha wahi Airtable me jaata hai (dedup + schema-aware).
+# ──────────────────────────────────────────────────────────────────────
+
+def print_preview_report(limit: int = 40) -> None:
+    rows = sorted(stats["preview_rows"],
+                  key=lambda r: r.get("Intent Score", 0), reverse=True)
+    print("\n" + "=" * 78)
+    print(f"  PREVIEW -- {len(rows)} qualifying lead(s). AIRTABLE ME KUCH NAHI GAYA.")
+    print("=" * 78)
+    if not rows:
+        print("  Kuch nahi mila. MIN_INTENT_SCORE kam karo ya POSTED_LIMIT badhao,")
+        print(f"  aur poori scraped list dekho: {os.path.basename(CSV_POSTS_FILE)}")
+        print("=" * 78 + "\n")
+        return
+
+    for i, r in enumerate(rows[:limit], 1):
+        snippet = " ".join((r.get("Post Content") or "").split())[:150]
+        print(f"\n  {i:>3}. [score {r.get('Intent Score')}]  {r.get('Poster Name','?')}"
+              f"   ({r.get('Lead Type','?')})")
+        head = (r.get("Poster Headline") or "")[:80]
+        if head:
+            print(f"       {head}")
+        meta = []
+        if r.get("Poster Company"):    meta.append(f"co={r['Poster Company']}")
+        if r.get("Detected Location"): meta.append(f"loc={r['Detected Location']}")
+        if r.get("Comment Count"):     meta.append(f"comments={r['Comment Count']}")
+        if r.get("Emails Found"):      meta.append(f"email={r['Emails Found']}")
+        if meta:
+            print(f"       {' | '.join(meta)}")
+        print(f"       {snippet}")
+        print(f"       {r.get('Post URL','')}")
+
+    if len(rows) > limit:
+        print(f"\n  ... aur {len(rows) - limit} more (poori list CSV me hai)")
+
+    print("\n" + "=" * 78)
+    print(f"  Full CSV : {os.path.basename(CSV_POSTS_FILE)}")
+    print("  Ab kya karo:")
+    print("    1. CSV kholo, jo rows nahi chahiye unhe delete kar do")
+    print(f"    2. python {os.path.basename(__file__)} --push-csv "
+          f"{os.path.basename(CSV_POSTS_FILE)}")
+    print("=" * 78 + "\n")
+
+
+def _csv_kind(fieldnames: list) -> str:
+    """CSV posts ka hai ya comments ka -- header se pata karo."""
+    fn = set(fieldnames or [])
+    if "Comment Text" in fn or "Commenter Name" in fn:
+        return "comments"
+    if "Post Content" in fn or "Intent Score" in fn:
+        return "posts"
+    return "unknown"
+
+
+def push_from_csv(path: str, push_all: bool, assume_yes: bool) -> None:
+    """Review ki hui CSV ko Airtable me push karo."""
+    if not os.path.isabs(path):
+        path = os.path.join(HERE, path)
+    if not os.path.exists(path):
+        log.error(f"  CSV not found: {path}")
+        sys.exit(1)
+
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        kind   = _csv_kind(reader.fieldnames)
+        rows   = list(reader)
+
+    if kind == "unknown":
+        log.error("  Ye is script ki CSV nahi lag rahi (header pehchana nahi gaya).")
+        log.error(f"  Header: {reader.fieldnames}")
+        sys.exit(1)
+
+    log.info("=" * 62)
+    log.info(f"  CSV -> AIRTABLE  ({kind})")
+    log.info("=" * 62)
+    log.info(f"  File : {os.path.basename(path)}")
+    log.info(f"  Rows : {len(rows)}")
+
+    table       = AIRTABLE_TABLE if kind == "posts" else AIRTABLE_COMMENTS_TBL
+    dedup_field = "Post URL"     if kind == "posts" else "Comment URL"
+    key_fn      = None           if kind == "posts" else comment_key
+
+    # Quality gate -- jab tak --push-all na ho.
+    if kind == "posts" and not push_all:
+        before = len(rows)
+        kept = []
+        for r in rows:
+            try:
+                score = int(float(r.get("Intent Score") or 0))
+            except (TypeError, ValueError):
+                score = 0
+            if r.get("Lead Type") == "supply" and not KEEP_SUPPLY_POSTS:
+                continue
+            if score < MIN_INTENT_SCORE:
+                continue
+            kept.append(r)
+        rows = kept
+        log.info(f"  Gate : {before} -> {len(rows)} "
+                 f"(Lead Type != supply, score >= {MIN_INTENT_SCORE}; "
+                 f"--push-all se bypass karo)")
+
+    if not rows:
+        log.info("  Push karne ko kuch nahi bacha.")
+        return
+
+    schemas = fetch_table_schemas()
+    schema  = schemas.get(table)
+    if schema is None:
+        log.error(f"  Table '{table}' base me nahi mila. Available: {list(schemas)}")
+        sys.exit(1)
+    warn_missing_fields(schema, POST_FIELD_ORDER if kind == "posts"
+                        else COMMENT_FIELD_ORDER)
+
+    if not assume_yes:
+        try:
+            ans = input(f"\n  {len(rows)} records '{table}' me push karein? [y/N] ")
+        except EOFError:
+            ans = "n"
+        if ans.strip().lower() not in ("y", "yes"):
+            log.info("  Cancelled -- kuch push nahi hua.")
+            return
+
+    existing = get_existing_keys(table, dedup_field)
+    failed   = push_rows(rows, table, schema, dedup_field, existing, key_fn=key_fn)
+    if failed:
+        append_csv(FAILED_ROWS_FILE, failed)
+        log.warning(f"  {len(failed)} rows failed -> {os.path.basename(FAILED_ROWS_FILE)}")
+
+    log.info("  " + "-" * 44)
+    log.info(f"  Pushed            : {stats['airtable_success']}")
+    log.info(f"  Duplicates skipped: {stats['airtable_skipped_dup']}")
+    log.info(f"  Failed            : {stats['airtable_failed']}")
+    log.info("=" * 62)
+
+
 # ─────────────────────────────────────────────────────────────────────
 # FINAL REPORT
 # ─────────────────────────────────────────────────────────────────────
@@ -1880,11 +2057,20 @@ def parse_args():
                     help="Stage A skip karke sirf pending comment queue chalao")
     ap.add_argument("--no-comments", action="store_true",
                     help="Stage B skip karo")
+    ap.add_argument("--preview", action="store_true",
+                    help="Scrape + score + CSV + report, Airtable me KUCH mat likho "
+                         "(credits phir bhi lagte hain -- free check ke liye --dry-run)")
+    ap.add_argument("--push-csv", metavar="FILE",
+                    help="Pehle se preview ki hui CSV ko Airtable me push karo")
+    ap.add_argument("--push-all", action="store_true",
+                    help="--push-csv ke saath: score/lead-type gate bypass karo")
+    ap.add_argument("--yes", "-y", action="store_true",
+                    help="--push-csv ke saath: confirmation prompt skip karo")
     return ap.parse_args()
 
 
 def main():
-    global DRY_RUN, SCRAPE_COMMENTS
+    global DRY_RUN, SCRAPE_COMMENTS, PREVIEW_ONLY
     args = parse_args()
 
     if args.self_test:
@@ -1893,8 +2079,19 @@ def main():
     if args.preview_queries:
         preview_queries(len(QUERIES))
         return
+
+    # CSV -> Airtable: yahan Apify ki zaroorat hi nahi.
+    if args.push_csv:
+        if not AIRTABLE_TOKEN or _is_placeholder(AIRTABLE_TOKEN):
+            log.error("CONFIG['AIRTABLE_TOKEN'] set karo.")
+            sys.exit(1)
+        push_from_csv(args.push_csv, args.push_all, args.yes)
+        return
+
     if args.dry_run:
         DRY_RUN = True
+    if args.preview:
+        PREVIEW_ONLY = True
     if args.no_comments:
         SCRAPE_COMMENTS = False
 
@@ -1911,12 +2108,20 @@ def main():
     log.info(f"  Min intent score: {MIN_INTENT_SCORE}")
     log.info(f"  Comment mining  : {SCRAPE_COMMENTS}")
     log.info(f"  DRY_RUN         : {DRY_RUN}")
+    log.info(f"  PREVIEW_ONLY    : {PREVIEW_ONLY}"
+             + ("   <- Airtable me kuch nahi jaayega" if PREVIEW_ONLY else ""))
     log.info("=" * 62 + "\n")
 
     ok, posts_schema, comments_schema = run_preflight(tm)
     if not ok:
-        log.error("Aborting.")
-        sys.exit(1)
+        if PREVIEW_ONLY and APIFY_TOKENS and tm.alive_count():
+            # Preview Airtable ko chhoota hi nahi -- table/schema ka issue
+            # baad me --push-csv ke waqt dekh lenge.
+            log.warning("  Preview mode -- Airtable issue ignore karke aage badh rahe hain.\n")
+            posts_schema = comments_schema = None
+        else:
+            log.error("Aborting.")
+            sys.exit(1)
 
     estimate_cost(tm)
     preview_queries()
@@ -1930,7 +2135,7 @@ def main():
         log.info(f"  Resuming: {len(done['query'])} queries + "
                  f"{len(done['comments'])} comment-jobs already done -- skipping.\n")
 
-    existing = get_existing_keys(AIRTABLE_TABLE, "Post URL")
+    existing = set() if PREVIEW_ONLY else get_existing_keys(AIRTABLE_TABLE, "Post URL")
 
     try:
         if not args.comments_only:
@@ -1942,6 +2147,8 @@ def main():
         log.warning("\n  Interrupted -- ab tak ka data saved hai, rerun resume karega.")
     finally:
         print_final_report()
+        if PREVIEW_ONLY:
+            print_preview_report()
 
 
 if __name__ == "__main__":
