@@ -127,33 +127,86 @@ CONFIG = {
     "SEARCH_MODES": ["intent"],
 
     # ── (A) INTENT GRID ───────────────────────────────────────────────
-    # Yeh wo exact language hai jo buyer use karta hai. Reference post ki
-    # pehli line literally pehli entry hai.
-    "INTENT_PHRASES": [
-        "looking to connect with corporate event agencies",
-        "looking for a corporate event agency",
-        "looking for an event management company",
-        "looking for offsite venues",
-        "looking for a team building agency",
-        "recommendations for corporate offsite",
-        "suggest a good offsite location",
-        "planning our annual offsite",
-        "planning a team offsite",
-        "planning our sales kickoff",
-        "need a corporate event partner",
-        "looking for team outing options",
-        "looking for corporate outing venues",
-        "shortlisting event agencies",
-        "any recommendations for a corporate retreat",
-        "looking for a workation venue",
-        "looking for resorts for corporate offsite",
-        "hiring an agency for our annual day",
-        "looking for sports day organisers",
-        "employee engagement activity vendors",
+    #
+    # v3.0 ki GALTI (jisse sirf 1 match aaya):
+    #   Phrases reference post se copy kiye gaye the -- 7-7 shabd lambe,
+    #   aur QUOTE=True ke saath LinkedIn ko EXACT contiguous string
+    #   chahiye. "looking to connect with corporate event agencies" duniya
+    #   me ek hi bande ne likha tha -- wahi ek match tha. Baaki 19 phrases
+    #   usi ek idea ke near-duplicate the.
+    #
+    # v3.1 FIX -- do axes, chhote anchors, boolean OR se combine:
+    #   DEMAND_STEMS  = "kaun dhoond raha hai" wali 2-4 shabd ki language
+    #   CATEGORY_TERMS= "kis cheez ka" wala noun
+    #   Query = (stem OR stem OR ...) AND (term OR term OR ...) NOT noise
+    #
+    # Ek boolean query 30-40 phrase queries ke barabar kaam karti hai --
+    # recall bahut zyada, cost bahut kam.
+
+    # "boolean" = few queries, high recall  (RECOMMENDED)
+    # "phrase"  = har phrase alag query, literal match (fallback agar
+    #             LinkedIn boolean ko ignore kare -- report me yield dekhna)
+    "QUERY_STYLE": "boolean",
+
+    # Buyer ki maang wali language. SHORT rakho -- 2-4 shabd. Lambe
+    # sentences exact-match me mar jaate hain.
+    "DEMAND_STEMS": [
+        # universal
+        "looking for", "looking to hire", "in search of", "on the lookout for",
+        "can anyone recommend", "any recommendations", "recommendations for",
+        "suggestions for", "need suggestions", "any suggestions",
+        "help me find", "help us find", "know any", "anyone know",
+        "any leads", "please suggest", "please recommend",
+        # CTA-style (buyer vendors ko bula raha hai)
+        "reach out if you", "DM me if you", "connect me with",
+        "drop your details", "share your profile",
+        # Indian corporate procurement register -- yahi sabse zyada miss ho raha tha
+        "inviting proposals", "empanelment", "empanelled",
+        "seeking quotations", "share your quotation", "requirement for",
+        "shortlisting", "RFP for", "vendors required", "vendor required",
     ],
 
-    # BUYER cities -- yahan se demand aati hai. NOTE: yeh destinations
-    # (Goa/Coorg/Bali) se ALAG list hai. Reference post "Gurgaon" hai.
+    # Kis cheez ki maang. Yeh nouns hi topic define karte hain.
+    "CATEGORY_TERMS": [
+        "corporate offsite", "team offsite", "offsite venue", "offsite location",
+        "event agency", "event agencies", "event management company",
+        "event partner", "event planner",
+        "team building", "team outing", "corporate outing",
+        "annual day", "sports day", "family day",
+        "sales kickoff", "corporate retreat", "corporate event",
+        "employee engagement", "corporate trip", "MICE",
+    ],
+
+    # Query me NOT lagega -- hiring/edtech shor ko source par hi kaato.
+    "EXCLUDE_TERMS": ["hiring", "apply now", "job opening", "internship", "webinar"],
+
+    # Ek boolean query me kitne stems / terms ORed honge. Chhota = zyada
+    # queries lekin har ek tight; bada = kam queries, thoda loose.
+    "BOOLEAN_GROUP_SIZE": 6,
+
+    # ── phrase mode ke liye (QUERY_STYLE = "phrase") ──────────────────
+    # SHORT rakhe gaye hain -- yahi v3.0 ki galti thi.
+    "PHRASE_QUERIES": [
+        "looking for an event agency",
+        "looking for event agencies",
+        "recommendations for corporate offsite",
+        "can anyone recommend an offsite venue",
+        "suggestions for team offsite",
+        "planning our annual offsite",
+        "looking for offsite venue",
+        "need a team building partner",
+        "looking for team outing options",
+        "inviting proposals from event agencies",
+        "empanelment of event agencies",
+        "looking for corporate event partner",
+        "any recommendations for team offsite",
+        "reach out if you organise corporate events",
+    ],
+
+    # BUYER cities -- demand yahan se aati hai (destinations se NAHI).
+    # NOTE: default off hai (PHRASE_X_CITY / BOOLEAN_X_CITY) kyunki city
+    # add karte hi recall girta hai aur cost 15x ho jaata hai. Pehle bina
+    # city ke chalao; zyada volume chahiye tabhi on karo.
     "BUYER_CITIES": [
         "Gurgaon", "Gurugram", "Delhi", "Noida", "NCR",
         "Bangalore", "Bengaluru", "Mumbai", "Pune", "Hyderabad",
@@ -161,14 +214,8 @@ CONFIG = {
         "Dubai", "Singapore",
     ],
 
-    # Phrase ko quotes me bhejein? (LinkedIn phrase-match karta hai --
-    # precision badhti hai, recall thoda girta hai.)
     "QUOTE_INTENT_PHRASES" : True,
-    # City ke bina bhi bare phrase chalao (broad sweep). Costly but best recall.
     "INCLUDE_BARE_PHRASE"  : True,
-    # Phrase x city cross-product. DEFAULT False -- quoted phrase search
-    # already tight hai, aur city dimension cost ko 18x kar deta hai
-    # (20 queries -> 360). Recall kam pad raha ho tabhi True karo.
     "PHRASE_X_CITY"        : False,
 
     # ── (B) HASHTAG GRID (purana v2 behaviour) ────────────────────────
@@ -321,6 +368,38 @@ LOG_FILE            = os.path.join(HERE, f"run_log_{TIMESTAMP}.log")
 # QUERY BUILDING
 # ─────────────────────────────────────────────────────────────────────
 
+def _chunk(items: list, size: int) -> list:
+    return [items[i: i + size] for i in range(0, len(items), size)]
+
+
+def build_boolean_queries() -> list:
+    """DEMAND_STEMS x CATEGORY_TERMS ko boolean groups me collapse karo.
+
+    Har query:
+        ("looking for" OR "can anyone recommend" OR ...)
+        AND ("corporate offsite" OR "event agency" OR ...)
+        NOT hiring NOT "apply now"
+
+    30-40 alag phrase queries ka kaam ek query kar deti hai -- isliye recall
+    bahut zyada aur cost bahut kam.
+    """
+    size    = max(1, int(CONFIG.get("BOOLEAN_GROUP_SIZE", 6)))
+    stems   = [s for s in CONFIG["DEMAND_STEMS"] if s.strip()]
+    terms   = [t for t in CONFIG["CATEGORY_TERMS"] if t.strip()]
+    exclude = [e for e in CONFIG.get("EXCLUDE_TERMS", []) if e.strip()]
+
+    def group(words):
+        return "(" + " OR ".join(f'"{w}"' for w in words) + ")"
+
+    not_part = "".join(f' NOT "{e}"' if " " in e else f" NOT {e}" for e in exclude)
+
+    out = []
+    for sc in _chunk(stems, size):
+        for tc in _chunk(terms, size):
+            out.append(f"{group(sc)} AND {group(tc)}{not_part}")
+    return out
+
+
 def build_queries() -> list:
     """Returns list of {"q": str, "mode": "intent"|"hashtag", "id": str}."""
     out, seen = [], set()
@@ -344,13 +423,17 @@ def build_queries() -> list:
     modes = CONFIG["SEARCH_MODES"]
 
     if "intent" in modes:
-        for phrase in CONFIG["INTENT_PHRASES"]:
-            p = f'"{phrase}"' if CONFIG["QUOTE_INTENT_PHRASES"] else phrase
-            if CONFIG["INCLUDE_BARE_PHRASE"]:
-                add(p, "intent")
-            if CONFIG["PHRASE_X_CITY"]:
-                for city in CONFIG["BUYER_CITIES"]:
-                    add(f"{p} {city}", "intent")
+        if CONFIG.get("QUERY_STYLE", "boolean") == "boolean":
+            for q in build_boolean_queries():
+                add(q, "intent")
+        else:
+            for phrase in CONFIG["PHRASE_QUERIES"]:
+                p = f'"{phrase}"' if CONFIG["QUOTE_INTENT_PHRASES"] else phrase
+                if CONFIG["INCLUDE_BARE_PHRASE"]:
+                    add(p, "intent")
+                if CONFIG["PHRASE_X_CITY"]:
+                    for city in CONFIG["BUYER_CITIES"]:
+                        add(f"{p} {city}", "intent")
 
     if "hashtag" in modes:
         if CONFIG["INCLUDE_BARE_PREFIX"]:
@@ -414,6 +497,7 @@ stats = {
     "keys_status"         : {},
     "top_leads"           : [],
     "preview_rows"        : [],
+    "query_qualified"     : {},
 }
 
 
@@ -1607,6 +1691,7 @@ def process_query_results(raw_items: list, query: dict, scraped_at: str,
             stats["top_leads"].append(
                 (t["Intent Score"], t["Poster Name"], t["Post Content"][:90].replace("\n", " ")))
 
+    stats["query_qualified"][query["q"]] = len(keep)
     log.info(f"  Scored: {len(parsed)} posts -> {len(keep)} qualify "
              f"(demand-only, score >= {MIN_INTENT_SCORE})")
 
@@ -1978,6 +2063,108 @@ def push_from_csv(path: str, push_all: bool, assume_yes: bool) -> None:
     log.info("=" * 62)
 
 
+# ══════════════════════════════════════════════════════════════════════
+# ⑧ ANALYZE CSV  -- 0 credits. "Sirf 1 match aaya" ka post-mortem.
+# ══════════════════════════════════════════════════════════════════════
+#
+# Pichhli run ki CSV padh ke batata hai ki problem RETRIEVAL me hai ya
+# SCORING me:
+#   - agar zyadatar posts supply/noise hain -> queries galat hain (phrasing)
+#   - agar bahut saare demand posts threshold ke thoda neeche hain
+#     -> MIN_INTENT_SCORE zyada strict hai
+# Ek bhi Apify credit kharch nahi hota -- purani CSV par chalta hai.
+# ──────────────────────────────────────────────────────────────────────
+
+def analyze_csv(path: str, near_miss: int = 15) -> None:
+    if not os.path.isabs(path):
+        path = os.path.join(HERE, path)
+    if not os.path.exists(path):
+        log.error(f"  CSV not found: {path}")
+        sys.exit(1)
+
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    if not rows:
+        log.error("  CSV khaali hai."); sys.exit(1)
+
+    def score_of(r):
+        try:
+            return int(float(r.get("Intent Score") or 0))
+        except (TypeError, ValueError):
+            return 0
+
+    types, buckets, per_query, signal_freq = {}, {}, {}, {}
+    for r in rows:
+        lt = r.get("Lead Type") or "?"
+        types[lt] = types.get(lt, 0) + 1
+        sc = score_of(r)
+        key = ("<0" if sc < 0 else "0-2" if sc < 3 else "3-4" if sc < 5
+               else "5-6" if sc < 7 else "7-9" if sc < 10 else "10+")
+        buckets[key] = buckets.get(key, 0) + 1
+        q = (r.get("Search Query") or "?")[:70]
+        agg = per_query.setdefault(q, [0, 0])
+        agg[0] += 1
+        if sc >= MIN_INTENT_SCORE and lt != "supply":
+            agg[1] += 1
+        for sig in (r.get("Intent Signals") or "").split(","):
+            sig = sig.strip()
+            if sig:
+                signal_freq[sig] = signal_freq.get(sig, 0) + 1
+
+    qualified = sum(1 for r in rows
+                    if score_of(r) >= MIN_INTENT_SCORE and r.get("Lead Type") != "supply")
+    near = sorted((r for r in rows
+                   if 0 < score_of(r) < MIN_INTENT_SCORE and r.get("Lead Type") != "supply"),
+                  key=score_of, reverse=True)
+
+    print("\n" + "=" * 78)
+    print(f"  CSV ANALYSIS -- {os.path.basename(path)}   (0 credits)")
+    print("=" * 78)
+    print(f"  Total scraped   : {len(rows)}")
+    print(f"  Qualified       : {qualified}   (score >= {MIN_INTENT_SCORE}, non-supply)")
+    print(f"  Hit rate        : {100.0 * qualified / len(rows):.1f}%")
+
+    print("\n  LEAD TYPE")
+    for k, v in sorted(types.items(), key=lambda kv: -kv[1]):
+        print(f"    {k:<10} {v:>5}  ({100.0*v/len(rows):.0f}%)")
+
+    print("\n  SCORE DISTRIBUTION")
+    for k in ("<0", "0-2", "3-4", "5-6", "7-9", "10+"):
+        v = buckets.get(k, 0)
+        print(f"    {k:>4}  {v:>5}  {'#' * min(50, v * 50 // max(1, len(rows)))}")
+
+    print("\n  QUERY YIELD  (fetched -> qualified)")
+    for q, (f_, qa) in sorted(per_query.items(), key=lambda kv: -kv[1][1])[:25]:
+        print(f"    {f_:>4} -> {qa:>3}   {q}")
+
+    print("\n  TOP SIGNALS SEEN")
+    for sig, n in sorted(signal_freq.items(), key=lambda kv: -kv[1])[:12]:
+        print(f"    {n:>5}  {sig}")
+
+    if near:
+        print(f"\n  NEAR MISSES (score 1..{MIN_INTENT_SCORE - 1}) -- "
+              f"agar ye asli leads lagein to MIN_INTENT_SCORE kam karo")
+        for r in near[:near_miss]:
+            snip = " ".join((r.get("Post Content") or "").split())[:110]
+            print(f"    [{score_of(r):>2}] {(r.get('Poster Name') or '?')[:24]:<24} {snip}")
+
+    print("\n" + "=" * 78)
+    print("  DIAGNOSIS")
+    supply_noise = types.get("supply", 0) + types.get("noise", 0) + types.get("unclear", 0)
+    if len(rows) and supply_noise / len(rows) > 0.7:
+        print("    >70% supply/noise/unclear -> RETRIEVAL problem hai.")
+        print("    Queries topic to match kar rahi hain lekin DEMAND nahi.")
+        print("    Fix: DEMAND_STEMS ko tighten/expand karo, QUERY_STYLE='boolean'")
+        print("         rakho, aur EXCLUDE_TERMS me aur shor daalo.")
+    elif len(near) > qualified:
+        print("    Qualified se zyada near-miss hain -> SCORING problem hai.")
+        print(f"    Fix: MIN_INTENT_SCORE {MIN_INTENT_SCORE} -> 3 karke dekho.")
+    else:
+        print("    Mix hai. Upar QUERY YIELD dekho: jo queries 0 qualified de rahi")
+        print("    hain unke stems hata do, jo de rahi hain unke jaise aur add karo.")
+    print("=" * 78 + "\n")
+
+
 # ─────────────────────────────────────────────────────────────────────
 # FINAL REPORT
 # ─────────────────────────────────────────────────────────────────────
@@ -2018,6 +2205,21 @@ def print_final_report():
     log.info(f"  Duplicates skipped : {stats['airtable_skipped_dup']}")
     log.info(f"  Retry recovered    : {stats['retry_success']}")
     log.info(f"  Permanently failed : {stats['airtable_failed']}")
+    if stats["query_results"]:
+        log.info("  " + "-" * 44)
+        log.info("  QUERY YIELD  (fetched -> qualified)   <- yahi dekh ke phrasing tune karo")
+        rows = sorted(stats["query_results"].items(),
+                      key=lambda kv: stats["query_qualified"].get(kv[0], 0),
+                      reverse=True)
+        for q, fetched in rows:
+            qual = stats["query_qualified"].get(q, 0)
+            flag = ""
+            if fetched == 0:
+                flag = "   <- 0 fetched: query hi kuch nahi laayi (phrasing/boolean issue)"
+            elif qual == 0:
+                flag = "   <- fetched but 0 qualified: topic milta hai, demand nahi"
+            log.info(f"    {fetched:>4} -> {qual:>3}  {q[:88]}{flag}")
+
     if stats["top_leads"]:
         log.info("  " + "-" * 44)
         log.info("  TOP LEADS THIS RUN")
@@ -2060,6 +2262,9 @@ def parse_args():
     ap.add_argument("--preview", action="store_true",
                     help="Scrape + score + CSV + report, Airtable me KUCH mat likho "
                          "(credits phir bhi lagte hain -- free check ke liye --dry-run)")
+    ap.add_argument("--analyze-csv", metavar="FILE",
+                    help="Pichhli run ki CSV ka post-mortem: retrieval problem "
+                         "hai ya scoring? (0 credits)")
     ap.add_argument("--push-csv", metavar="FILE",
                     help="Pehle se preview ki hui CSV ko Airtable me push karo")
     ap.add_argument("--push-all", action="store_true",
@@ -2078,6 +2283,10 @@ def main():
         return
     if args.preview_queries:
         preview_queries(len(QUERIES))
+        return
+
+    if args.analyze_csv:
+        analyze_csv(args.analyze_csv)
         return
 
     # CSV -> Airtable: yahan Apify ki zaroorat hi nahi.

@@ -75,6 +75,55 @@ apne aap off ho jaayega:
 `Is Reply` (checkbox) · `Commenter Lead Type` · `Commenter Score` (number) ·
 `Emails Found` · `Phones Found` · `Search Query` · `Scraped At`
 
+## Phrasing (v3.1) — sirf 1 match kyun aaya tha
+
+v3.0 ke `INTENT_PHRASES` reference post se copy kiye gaye the: 7-7 shabd
+lambe, aur `QUOTE=True` ke saath LinkedIn ko **exact contiguous string**
+chahiye. Duniya me ek hi bande ne wo exact line likhi thi — wahi ek match
+tha. Baaki 19 phrases usi ek idea ke near-duplicate the.
+
+v3.1 me phrasing do axes me todi gayi hai aur boolean se joda gaya hai:
+
+```
+("looking for" OR "can anyone recommend" OR "inviting proposals" OR ...)
+AND ("corporate offsite" OR "event agency" OR "team building" OR ...)
+NOT hiring NOT "apply now" NOT "job opening"
+```
+
+32 demand stems × 21 category terms = **672 combinations, 24 queries, ~$4.80**.
+
+- `DEMAND_STEMS` — 2-4 shabd. Lambe sentences exact-match me mar jaate hain.
+  Indian procurement register include hai: *empanelment, inviting proposals,
+  seeking quotations, requirement for, RFP for, vendors required*.
+- `CATEGORY_TERMS` — topic nouns.
+- `EXCLUDE_TERMS` — hiring/webinar shor source par hi katta hai.
+- `QUERY_STYLE: "phrase"` — fallback agar LinkedIn boolean ignore kare.
+
+## Kaunsi phrasing chali? (iterate karne ka tareeka)
+
+Har run ke end me **QUERY YIELD** table aata hai:
+
+```
+  QUERY YIELD  (fetched -> qualified)
+    142 ->  11  ("looking for" OR ...) AND ("corporate offsite" OR ...)
+     88 ->   0  (...)   <- fetched but 0 qualified: topic milta hai, demand nahi
+      0 ->   0  (...)   <- 0 fetched: query hi kuch nahi laayi
+```
+
+`0 fetched` har jagah = boolean support ka issue → `QUERY_STYLE` ko
+`"phrase"` kar do. `fetched but 0 qualified` = us stem group ko hata do.
+
+Purani run ka post-mortem bina credit kharch kiye:
+
+```bash
+python linkedin_intent_to_airtable.py --analyze-csv linkedin_posts_XXXX.csv
+```
+
+Batata hai retrieval problem hai ya scoring: lead-type breakdown, score
+histogram, per-query yield, top signals, aur **near misses** (threshold se
+thoda neeche wale posts) — agar wo asli leads lagein to `MIN_INTENT_SCORE`
+kam kar do.
+
 ## Tuning
 
 - **Kam leads aa rahe?** `MIN_INTENT_SCORE` 5 → 3, `POSTED_LIMIT` → `"6months"`,
