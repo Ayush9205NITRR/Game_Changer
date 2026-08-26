@@ -692,26 +692,29 @@ class Meta:
 # ⑨  PROVISION
 # ══════════════════════════════════════════════════════════════════════
 
-def provision(api: Meta, workspace_id: str, base_id: str) -> str:
+def provision(api: Meta, workspace_id: str, base_id: str,
+              base_name: str = BASE_NAME, assume_yes: bool = False) -> str:
     """Base + tables + links ensure karta hai. Idempotent hai."""
 
     # ---- base -------------------------------------------------------------
     if base_id:
         log.info(f"\n[base] maujooda base use kar rahe hain: {base_id}")
         live = api.tables(base_id)
+        _confirm_existing(live, assume_yes)
     else:
-        existing = [b for b in api.bases() if b.get("name") == BASE_NAME]
+        existing = [b for b in api.bases() if b.get("name") == base_name]
         if existing:
             base_id = existing[0]["id"]
-            log.info(f"\n[base] '{BASE_NAME}' pehle se hai -> {base_id}")
+            log.info(f"\n[base] '{base_name}' pehle se hai -> {base_id}")
             log.info("       (naya nahi banega; missing cheezein add hongi)")
             live = api.tables(base_id)
+            _confirm_existing(live, assume_yes)
         else:
-            log.info(f"\n[base] '{BASE_NAME}' bana rahe hain "
+            log.info(f"\n[base] '{base_name}' bana rahe hain "
                      f"(workspace {workspace_id})...")
             payload = [{"name": t["name"], "description": t["description"],
                         "fields": _strip(t["fields"])} for t in TABLES]
-            res = api.create_base(BASE_NAME, workspace_id, payload)
+            res = api.create_base(base_name, workspace_id, payload)
             base_id = res["id"]
             log.info(f"       OK -> {base_id}  ({len(TABLES)} tables)")
             live = api.tables(base_id)
@@ -779,6 +782,47 @@ def provision(api: Meta, workspace_id: str, base_id: str) -> str:
                      f"rename skip kiya -- manually check karo")
 
     return base_id
+
+
+def _confirm_existing(live, assume_yes: bool):
+    """Maujooda base me likhne se pehle dikha do ki andar kya hai.
+
+    Sabse badi risk: base me pehle se koi table hamare 7 me se kisi ke naam
+    ka ho. Tab script us table me apne fields ADD kar degi -- delete kuch
+    nahi karti, par user ki maujooda table badal jaayegi. Isliye poochte hain.
+    """
+    if not live:
+        log.info("       base khaali hai -- saare 7 tables banenge.")
+        return
+
+    ours = {t["name"] for t in TABLES}
+    clashes = [t["name"] for t in live if t["name"] in ours]
+    others = [t["name"] for t in live if t["name"] not in ours]
+
+    log.info(f"\n       base me pehle se {len(live)} table(s) hain:")
+    for name in others:
+        log.info(f"         - {name}   (chhua nahi jaayega)")
+    for name in clashes:
+        log.info(f"         - {name}   <-- NAAM MATCH KARTA HAI, isme fields "
+                 f"ADD honge")
+
+    log.info(f"\n       {len(ours) - len(clashes)} naye table banenge, "
+             f"{len(clashes)} maujooda me fields add honge.")
+    log.info("       Script kuch DELETE nahi karti -- sirf add/rename karti hai.")
+
+    if assume_yes:
+        log.info("       --yes diya hai, aage badh rahe hain.\n")
+        return
+    if not sys.stdin.isatty():
+        log.info("\nFAIL -- non-interactive shell hai. Confirm nahi kar sakte.\n"
+                 "  Sab theek lage to --yes lagake dobara chalao.\n")
+        sys.exit(1)
+
+    ans = input("       Aage badhein? [y/N] ").strip().lower()
+    if ans not in ("y", "yes"):
+        log.info("       Abort. Kuch nahi badla.\n")
+        sys.exit(0)
+    log.info("")
 
 
 def _strip(fields):
@@ -898,6 +942,12 @@ def main():
                     help="wspXXXX -- naya base banane ke liye zaroori.")
     ap.add_argument("--base-id", default=os.environ.get("AIRTABLE_BASE_ID"),
                     help="appXXXX -- maujooda base me add karna ho to.")
+    ap.add_argument("--base-name",
+                    default=os.environ.get("AIRTABLE_BASE_NAME", BASE_NAME),
+                    help=f"Naya base banate waqt ka naam (default: {BASE_NAME}). "
+                         f"--base-id ke saath ignore ho jaata hai.")
+    ap.add_argument("--yes", "-y", action="store_true",
+                    help="Maujooda base me likhne se pehle confirm mat poocho.")
     args = ap.parse_args()
 
     if args.self_test:
@@ -944,7 +994,8 @@ def main():
                      f"me add karke dobara chalao.\n")
             sys.exit(1)
 
-        base_id = provision(api, args.workspace_id, args.base_id)
+        base_id = provision(api, args.workspace_id, args.base_id,
+                            args.base_name, args.yes)
     except AirtableError as e:
         log.info(f"\nFAIL -- {e}\n")
         sys.exit(1)

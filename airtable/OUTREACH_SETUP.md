@@ -20,17 +20,32 @@ CONNECT tunnel failed, response 403   (host: api.airtable.com:443)
 ```
 
 Token dene se bhi farak nahi padta — request network se hi bahar nahi jaati.
-Isliye base **tumhe apni machine se** banana padega:
+Base ID dene se bhi nahi. Isliye ye command **tumhe apni machine se**
+chalani padegi:
 
 ```bash
-export AIRTABLE_TOKEN=patXXXX.yyyy
-export AIRTABLE_WORKSPACE_ID=wspXXXX
-python3 airtable/provision_outreach_base.py
+export AIRTABLE_TOKEN=patXXXX.yyyy        # scopes: schema.bases:write + :read
+python3 airtable/provision_outreach_base.py --base-id appXomnU6fddl1b1H
 ```
+
+`appXomnU6fddl1b1H` = **Cold Email Base** (tumne khud banaya). Naya base
+banwana ho to `--base-id` ki jagah `--workspace-id wspXXXX --base-name "..."`
+de dena.
 
 Script wahi likha hai jo yahan chal jaata to main khud chalata. 7 tables,
 44 plain fields, 9 links (dono taraf ke reciprocal fields ke saath) — sab
 ek command me.
+
+> Base me pehle se ek table hai. Script kuch **delete nahi karti** — sirf
+> naye tables/fields add karti hai aur reciprocal links rename karti hai.
+> Chalne se pehle wo dikhati hai ki base me kya mila aur kya chhuega, phir
+> confirm maangti hai. Bina pooche chalana ho to `--yes` laga do.
+>
+> Ek hi cheez dhyan se dekhna: agar tumhari maujooda table ka naam hamare
+> 7 me se kisi se match karta hai (`Contacts`, `Sends`, `Domains`,
+> `Inboxes`, `Content`, `Intent Signals`, `Daily Snapshot`), to script usi
+> table me fields add kar degi, nayi nahi banayegi. Confirmation screen
+> isko `<-- NAAM MATCH KARTA HAI` karke highlight karti hai.
 
 > ⚠️ **Script live API ke against test nahi hua** — kyunki host block hai.
 > Schema graph offline validate ho chuka hai (`--self-test` clean hai) aur
@@ -69,7 +84,8 @@ kabhi alag nahi hote.
 ```
 1. python3 airtable/provision_outreach_base.py --self-test     # 0 network, sanity
 2. python3 airtable/provision_outreach_base.py --dry-run       # 0 network, kya banega
-3. python3 airtable/provision_outreach_base.py                 # asli run
+3. python3 airtable/provision_outreach_base.py \               # asli run
+       --base-id appXomnU6fddl1b1H
 4. python3 airtable/provision_outreach_base.py --manual        # UI steps
    4a. Derived fields   (order maayne rakhta hai — dependencies hain)
    4b. Views
@@ -91,8 +107,15 @@ Airtable PAT chahiye in scopes ke saath:
 - `schema.bases:write` — tables + fields banane ke liye
 - `schema.bases:read` — idempotent re-run ke liye
 
-Naya base banane ke liye **workspace ID** bhi chahiye. Airtable me workspace
-kholo, URL me dikhega:
+Base ID Airtable ke URL me `app` se shuru hone wala hissa hai:
+
+```
+https://airtable.com/appXomnU6fddl1b1H/tblfsN7CythOuOirF/viw5gCJRhzinmdPZl
+                     ^^^^^^^^^^^^^^^^^  = Cold Email Base
+```
+
+Naya base **banwana** ho (maujooda me add karne ki jagah) to workspace ID
+chahiye — wo bhi URL me hi dikhta hai jab workspace khula ho:
 
 ```
 https://airtable.com/wspAbC123XyZ/...
