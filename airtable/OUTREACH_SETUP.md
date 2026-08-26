@@ -6,56 +6,70 @@ sync hone ke liye taiyaar.
 
 ---
 
-## Pehle ye padho — base abhi BANA NAHI hai
+## Chalane ka tareeka — GitHub Actions
 
-Do cheezein raaste me aa gayin. Dono ke aage-peeche ka kaam pura ho chuka hai,
-sirf trigger dabana baaki hai.
+Schema ka source of truth **repo hai** (`airtable/provision_outreach_base.py`).
+Usko live base par apply karne ke liye kahin kuch local chalane ki zaroorat
+nahi — GitHub Actions se ho jaata hai.
 
-### 1. Is session se Airtable tak pahunch nahi hai
+### Ek baar ka setup
 
-`api.airtable.com` is workspace ki egress policy me blocked hai:
+**1. Airtable PAT banao**
+Airtable → Developer hub → Personal access tokens → Create token
+- Scopes: `schema.bases:write`, `schema.bases:read`
+- Access: wahi base jise chhuna hai (**Cold Email Base**)
 
-```
-CONNECT tunnel failed, response 403   (host: api.airtable.com:443)
-```
+**2. GitHub me secret daalo**
+Repo → Settings → Secrets and variables → Actions → New repository secret
+- Name: `AIRTABLE_TOKEN`
+- Value: token paste karo
 
-Token dene se bhi farak nahi padta — request network se hi bahar nahi jaati.
-Base ID dene se bhi nahi. Isliye ye command **tumhe apni machine se**
-chalani padegi:
+Token repo me kabhi nahi jaata — sirf GitHub Secrets me rehta hai, aur
+workflow use env var ke roop me padhta hai.
+
+**3. Workflow chalao**
+Actions tab → **"Airtable: provision base"** → Run workflow
+
+Base ID pehle se bhara hua aata hai (`appXomnU6fddl1b1H`). Teen mode hain:
+
+| Mode | Kya karta hai |
+|---|---|
+| `verify` *(default)* | Kuch likhta nahi. Live base ko repo schema se compare karke batata hai kya missing hai. |
+| `dry-run` | Kuch likhta nahi. Poora plan print karta hai. |
+| `provision` | **Likhta hai.** Tables + fields + links banata hai, phir turant verify karke dikhata hai. |
+
+Pehli baar: `dry-run` → dekh lo → phir `provision`.
+
+Har run ke baad **job summary me UI wale steps** aa jaate hain — 28 formula/
+rollup fields, 8 views, 2 automations — GitHub me hi padh lena, kahin aur
+jaane ki zaroorat nahi.
+
+### Nightly drift check
+
+Workflow roz 04:17 UTC par `verify` chalata hai. Red run ka matlab: live base
+repo se alag ho gaya (kisi ne UI se field badal diya, ya abhi provision hua
+hi nahi). Ye kuch likhta nahi — sirf batata hai.
+
+### Local se chalana ho to
 
 ```bash
-export AIRTABLE_TOKEN=patXXXX.yyyy        # scopes: schema.bases:write + :read
+export AIRTABLE_TOKEN=patXXXX.yyyy
 python3 airtable/provision_outreach_base.py --base-id appXomnU6fddl1b1H
 ```
 
-`appXomnU6fddl1b1H` = **Cold Email Base** (tumne khud banaya). Naya base
-banwana ho to `--base-id` ki jagah `--workspace-id wspXXXX --base-name "..."`
-de dena.
+Script token hamesha `AIRTABLE_TOKEN` env var se uthata hai — kahin hardcode
+nahi hai. `--base-id` bhi `AIRTABLE_BASE_ID` env se aa sakta hai.
 
-Script wahi likha hai jo yahan chal jaata to main khud chalata. 7 tables,
-44 plain fields, 9 links (dono taraf ke reciprocal fields ke saath) — sab
-ek command me.
+> **Claude Code ke web session se ye nahi ho sakta.** Wahan
+> `api.airtable.com` egress policy me blocked hai (`CONNECT tunnel failed,
+> response 403`), isliye token hone par bhi request bahar nahi jaati. GitHub
+> Actions ka runner us policy ke peeche nahi hai — isiliye wahan chalta hai.
 
-> Base me pehle se ek table hai. Script kuch **delete nahi karti** — sirf
-> naye tables/fields add karti hai aur reciprocal links rename karti hai.
-> Chalne se pehle wo dikhati hai ki base me kya mila aur kya chhuega, phir
-> confirm maangti hai. Bina pooche chalana ho to `--yes` laga do.
->
-> Ek hi cheez dhyan se dekhna: agar tumhari maujooda table ka naam hamare
-> 7 me se kisi se match karta hai (`Contacts`, `Sends`, `Domains`,
-> `Inboxes`, `Content`, `Intent Signals`, `Daily Snapshot`), to script usi
-> table me fields add kar degi, nayi nahi banayegi. Confirmation screen
-> isko `<-- NAAM MATCH KARTA HAI` karke highlight karti hai.
+---
 
-> ⚠️ **Script live API ke against test nahi hua** — kyunki host block hai.
-> Schema graph offline validate ho chuka hai (`--self-test` clean hai) aur
-> request shapes Airtable ke documented meta API ke hisaab se hain, par
-> pehla real run tumhara hoga. Isliye script idempotent hai: fail ho to
-> dobara chala do, jo ban chuka hai use skip kar degi.
+## Ye script Airtable me kya NAHI bana sakti
 
-### 2. Airtable ka API aadhi cheezein bana hi nahi sakta
-
-Ye Airtable ki limitation hai, script ki nahi:
+Airtable ki limitation hai, script ki nahi:
 
 | Cheez | API se ban sakta? |
 |---|---|
@@ -66,46 +80,43 @@ Ye Airtable ki limitation hai, script ki nahi:
 | **Automations** | ❌ Endpoint hi nahi hai |
 
 Matlab poora analytics layer (rates, health status, intent score), saare
-views, aur dono automations **UI se** banane padenge.
-
-Iske liye click-by-click steps script khud print karta hai — 0 network:
+views, aur dono automations **UI se** banane padenge. Unke click-by-click
+steps har workflow run ki job summary me hote hain, ya:
 
 ```bash
 python3 airtable/provision_outreach_base.py --manual
 ```
 
 Ye steps script ke andar hi data ke roop me rehte hain, isliye doc aur code
-kabhi alag nahi hote.
+kabhi alag nahi hote. `--verify` batata hai inme se kitne ban chuke hain.
+
+> ⚠️ **Script live Airtable ke against kabhi chali nahi hai** — jis session
+> me likhi gayi wahan host blocked tha. Schema graph offline validate ho
+> chuka hai (`--self-test`, jisme `--verify` ka round-trip bhi shaamil hai)
+> aur request shapes documented meta API ke hisaab se hain, par pehla real
+> run tumhara hoga. Isliye script idempotent hai: fail ho to dobara chala
+> do, jo ban chuka hai use skip kar degi.
 
 ---
 
 ## Order of operations
 
 ```
-1. python3 airtable/provision_outreach_base.py --self-test     # 0 network, sanity
-2. python3 airtable/provision_outreach_base.py --dry-run       # 0 network, kya banega
-3. python3 airtable/provision_outreach_base.py \               # asli run
-       --base-id appXomnU6fddl1b1H
-4. python3 airtable/provision_outreach_base.py --manual        # UI steps
-   4a. Derived fields   (order maayne rakhta hai — dependencies hain)
+1. AIRTABLE_TOKEN secret daalo          (GitHub Settings)
+2. Workflow -> mode: dry-run            (kuch nahi likhta, plan dikhata hai)
+3. Workflow -> mode: provision          (tables + fields + links)
+4. Job summary ke UI steps karo:
+   4a. Derived fields   (order maayne rakhta hai -- dependencies hain)
    4b. Views
    4c. Automations      (automations/*.js paste karo)
-5. Kylas sync connect karo
+5. Workflow -> mode: verify             (sab bana ya nahi, confirm)
+6. Kylas sync connect karo
 ```
 
 **Step 4a ka order chhodna mat.** `Domains.Open Rate` formula
 `Domains.Opens Count` rollup par depend karta hai, jo `Sends.Opened Num`
 formula par depend karta hai. `--manual` sahi order me print karta hai;
 usi kram me banao warna Airtable "field not found" dega.
-
----
-
-## Token setup
-
-Airtable PAT chahiye in scopes ke saath:
-
-- `schema.bases:write` — tables + fields banane ke liye
-- `schema.bases:read` — idempotent re-run ke liye
 
 Base ID Airtable ke URL me `app` se shuru hone wala hissa hai:
 
@@ -114,16 +125,12 @@ https://airtable.com/appXomnU6fddl1b1H/tblfsN7CythOuOirF/viw5gCJRhzinmdPZl
                      ^^^^^^^^^^^^^^^^^  = Cold Email Base
 ```
 
-Naya base **banwana** ho (maujooda me add karne ki jagah) to workspace ID
-chahiye — wo bhi URL me hi dikhta hai jab workspace khula ho:
-
-```
-https://airtable.com/wspAbC123XyZ/...
-                     ^^^^^^^^^^^^
-```
-
-> Repo public hai — token kabhi commit mat karna. Script sirf env se padhta
-> hai, kahin likhta nahi. `.gitignore` me `.env` pehle se hai.
+> Base me pehle se ek table hai. Script kuch **delete nahi karti** — sirf
+> naye tables/fields add karti hai aur reciprocal links rename karti hai.
+> Agar tumhari maujooda table ka naam hamare 7 me se kisi se match karta hai
+> (`Contacts`, `Sends`, `Domains`, `Inboxes`, `Content`, `Intent Signals`,
+> `Daily Snapshot`), to script usi table me fields add kar degi, nayi nahi
+> banayegi. `dry-run` pehle chala ke dekh lena.
 
 ---
 
@@ -406,6 +413,9 @@ Automation banate waqt script editor me ye input variables add karne honge
 ## Files
 
 ```
+.github/workflows/
+└── airtable-provision.yml       # verify / dry-run / provision + nightly drift
+
 airtable/
 ├── provision_outreach_base.py   # schema ka single source of truth + provisioner
 ├── OUTREACH_SETUP.md            # ye file

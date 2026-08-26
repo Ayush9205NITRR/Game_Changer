@@ -1,0 +1,119 @@
+# Outreach schema  ->  Airtable
+# =============================
+#
+# Repo hi source of truth hai (airtable/provision_outreach_base.py).
+# Ye workflow us schema ko live Airtable base par apply karta hai.
+#
+# EK BAAR KA SETUP
+#   1. Airtable -> Developer hub -> Personal access tokens -> naya token
+#      Scopes : schema.bases:write, schema.bases:read
+#      Access : wahi base jise chhuna hai
+#   2. GitHub -> Settings -> Secrets and variables -> Actions
+#      New repository secret -> naam: AIRTABLE_TOKEN
+#   3. Actions tab -> "Airtable: provision base" -> Run workflow
+#
+# Token sirf GitHub Secrets me rehta hai -- repo me kabhi nahi.
+
+name: "Airtable: provision base"
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_id:
+        description: "Base ID (appXXXX)"
+        required: true
+        default: "appXomnU6fddl1b1H"
+      mode:
+        description: "Kya karna hai"
+        required: true
+        type: choice
+        default: verify
+        options:
+          - verify        # kuch likhta nahi -- live base vs repo schema
+          - dry-run       # kuch likhta nahi -- kya banega wo dikhata hai
+          - provision     # LIKHTA HAI -- tables + fields + links banata hai
+  # Nightly drift check. Kuch likhta nahi -- sirf batata hai ki live base
+  # repo se alag ho gaya hai ya nahi. Red run = koi UI se schema badal gaya,
+  # ya abhi tak provision nahi hua.
+  schedule:
+    - cron: "17 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Ye hamesha chalta hai. Schema graph tuta ho to Airtable ko chhune
+      # se pehle hi fail ho jao.
+      - name: Self-test (0 network)
+        run: python3 airtable/provision_outreach_base.py --self-test
+
+      - name: Token check
+        if: github.event_name == 'schedule' || inputs.mode != 'dry-run'
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+        run: |
+          if [ -z "$AIRTABLE_TOKEN" ]; then
+            echo "::error::AIRTABLE_TOKEN secret set nahi hai."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "Naam: AIRTABLE_TOKEN   Scopes: schema.bases:write, schema.bases:read"
+            exit 1
+          fi
+          echo "Token mil gaya (length ${#AIRTABLE_TOKEN})."
+
+      - name: Dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
+        run: python3 airtable/provision_outreach_base.py --dry-run
+
+      # schedule par hamesha verify -- nightly drift check
+      - name: Verify (read-only)
+        if: github.event_name == 'schedule' || inputs.mode == 'verify'
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+          AIRTABLE_BASE_ID: ${{ inputs.base_id || 'appXomnU6fddl1b1H' }}
+        run: python3 airtable/provision_outreach_base.py --verify
+
+      # Sirf yahi step base me likhta hai. --yes isliye ki runner me tty
+      # nahi hota; confirmation "Run workflow" dabana hi hai.
+      - name: Provision (writes to Airtable)
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'provision'
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+        run: |
+          python3 airtable/provision_outreach_base.py \
+            --base-id "${{ inputs.base_id }}" --yes
+
+      # Provision ke turant baad verify -- bharosa "script ne bola" par nahi,
+      # live base kya kehta hai us par.
+      - name: Re-verify after provision
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'provision'
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+        run: |
+          python3 airtable/provision_outreach_base.py \
+            --verify --base-id "${{ inputs.base_id }}"
+
+      # Formula/rollup/view/automation API se ban hi nahi sakte. Unke steps
+      # job summary me daal dete hain -- GitHub me hi padh lena.
+      - name: UI steps -> job summary
+        if: always()
+        run: |
+          {
+            echo '## Airtable me haath se banane wali cheezein'
+            echo
+            echo 'Airtable ka API formula / rollup / count / lookup fields'
+            echo 'create nahi karta, aur views + automations ka endpoint hi'
+            echo 'nahi hai. Neeche ke steps UI me karne padenge.'
+            echo
+            echo '```'
+            python3 airtable/provision_outreach_base.py --manual
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

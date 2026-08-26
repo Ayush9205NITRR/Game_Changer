@@ -567,6 +567,20 @@ def self_test() -> int:
         if v["table"] not in projected:
             errors.append(f"View '{v['name']}' ki table '{v['table']}' nahi mili.")
 
+    # -- verify ka round-trip ----------------------------------------------
+    # Declared schema se nakli "live" banao -> _diff_schema ko us par chalao
+    # -> structural gap ZERO aana chahiye. Isse verify ki logic 0 network me
+    # test ho jaati hai.
+    rt = _diff_schema(_synthetic_live())
+    rt_structural = (rt["missing_tables"] + rt["missing_fields"]
+                     + rt["wrong_types"] + rt["missing_links"]
+                     + rt["wrong_links"] + rt["extra_fields"])
+    for x in rt_structural:
+        errors.append(f"verify round-trip: apne hi schema par gap mila -- {x}")
+    if len(rt["todo_derived"]) != len(DERIVED):
+        errors.append(f"verify round-trip: {len(DERIVED)} derived expected the, "
+                      f"{len(rt['todo_derived'])} pending mile.")
+
     # -- report -------------------------------------------------------------
     n_fields = sum(len(t["fields"]) for t in TABLES)
     log.info("\n" + "=" * 66)
@@ -784,6 +798,171 @@ def provision(api: Meta, workspace_id: str, base_id: str,
     return base_id
 
 
+# ══════════════════════════════════════════════════════════════════════
+# ⑨b  VERIFY  --  live base vs repo schema
+# ══════════════════════════════════════════════════════════════════════
+#
+# Isse GitHub sach me source of truth banta hai: live base repo se alag
+# ho to pata chal jaata hai. Comparison PURE function hai (_diff_schema),
+# isliye --self-test use 0 network me check kar leta hai.
+
+def _diff_schema(live):
+    """Live schema ko declared schema se compare karta hai.
+
+    Returns dict of lists. `missing_*` = structural, script bana sakti hai.
+    `todo_derived` = UI-only, haath se banane hain -- ye FAILURE nahi hai.
+    """
+    by_name = {t["name"]: t for t in live}
+    ids_to_name = {t["id"]: t["name"] for t in live}
+    out = {"missing_tables": [], "missing_fields": [], "wrong_types": [],
+           "missing_links": [], "wrong_links": [], "todo_derived": [],
+           "extra_fields": []}
+
+    declared = {}      # table -> {field name: expected type}
+    for t in TABLES:
+        declared.setdefault(t["name"], {})
+        for f in t["fields"]:
+            declared[t["name"]][f["name"]] = f["type"]
+    for lk in LINKS:
+        declared.setdefault(lk["from"], {})[lk["field"]] = "multipleRecordLinks"
+        declared.setdefault(lk["to"], {})[lk["reverse"]] = "multipleRecordLinks"
+
+    for t in TABLES:
+        if t["name"] not in by_name:
+            out["missing_tables"].append(t["name"])
+            continue
+        have = {f["name"]: f for f in by_name[t["name"]].get("fields", [])}
+
+        for f in t["fields"]:
+            got = have.get(f["name"])
+            if got is None:
+                out["missing_fields"].append(f"{t['name']}.{f['name']}")
+            elif got.get("type") != f["type"]:
+                out["wrong_types"].append(
+                    f"{t['name']}.{f['name']}: chahiye {f['type']}, "
+                    f"mila {got.get('type')}")
+
+        # repo me declare nahi kiya gaya field -- sirf info, error nahi
+        for name in have:
+            if name not in declared.get(t["name"], {}):
+                out["extra_fields"].append(f"{t['name']}.{name}")
+
+    # links -- naam bhi aur target table bhi
+    for lk in LINKS:
+        for tbl, fld, target in ((lk["from"], lk["field"], lk["to"]),
+                                 (lk["to"], lk["reverse"], lk["from"])):
+            if tbl not in by_name:
+                continue
+            got = next((f for f in by_name[tbl].get("fields", [])
+                        if f["name"] == fld), None)
+            if got is None:
+                out["missing_links"].append(f"{tbl}.{fld} -> {target}")
+            elif got.get("type") != "multipleRecordLinks":
+                out["wrong_links"].append(
+                    f"{tbl}.{fld}: link hona chahiye, hai {got.get('type')}")
+            else:
+                points_to = ids_to_name.get(
+                    (got.get("options") or {}).get("linkedTableId"))
+                # `target in by_name` guard: agar target table hi missing hai
+                # to wo alag se report ho chuka hai, dobara shor mat machao.
+                # Warna mismatch flag karo -- points_to None ho (anjaan table
+                # id) tab bhi, kyunki wo bhi galat hi hai.
+                if target in by_name and points_to != target:
+                    out["wrong_links"].append(
+                        f"{tbl}.{fld}: {target} ko point karna chahiye, "
+                        f"kar raha hai {points_to or 'anjaan table'}")
+
+    # derived (UI-only) -- kitne ban chuke, kitne baaki
+    for d in DERIVED:
+        if d["table"] not in by_name:
+            out["todo_derived"].append(f"{d['table']}.{d['name']} [{d['kind']}]")
+            continue
+        got = next((f for f in by_name[d["table"]].get("fields", [])
+                    if f["name"] == d["name"]), None)
+        if got is None:
+            out["todo_derived"].append(f"{d['table']}.{d['name']} [{d['kind']}]")
+
+    return out
+
+
+def verify(api: Meta, base_id: str) -> int:
+    """Live base ko repo schema se compare karke report deta hai.
+
+    Exit code: structural cheez missing ho to 1, warna 0. UI-only derived
+    fields pending hon to bhi 0 -- wo expected hai jab tak haath se na bano.
+    """
+    live = api.tables(base_id)
+    d = _diff_schema(live)
+
+    log.info("\n" + "=" * 66)
+    log.info(f"VERIFY  --  base {base_id}  vs  repo schema")
+    log.info("=" * 66)
+    log.info(f"  live base me {len(live)} table(s) mile.\n")
+
+    structural = (d["missing_tables"] + d["missing_fields"] + d["wrong_types"]
+                  + d["missing_links"] + d["wrong_links"])
+
+    def dump(title, items, marker):
+        if items:
+            log.info(f"  {title}  ({len(items)})")
+            for x in items:
+                log.info(f"      {marker} {x}")
+            log.info("")
+
+    dump("MISSING TABLES", d["missing_tables"], "-")
+    dump("MISSING FIELDS", d["missing_fields"], "-")
+    dump("GALAT TYPE", d["wrong_types"], "!")
+    dump("MISSING LINKS", d["missing_links"], "-")
+    dump("GALAT LINK TARGET", d["wrong_links"], "!")
+
+    if d["todo_derived"]:
+        log.info(f"  UI SE BANANE BAAKI  ({len(d['todo_derived'])} of "
+                 f"{len(DERIVED)})   <- ye error nahi hai")
+        for x in d["todo_derived"]:
+            log.info(f"      . {x}")
+        log.info("      steps:  --manual\n")
+    else:
+        log.info(f"  Saare {len(DERIVED)} derived fields ban chuke hain.\n")
+
+    if d["extra_fields"]:
+        log.info(f"  REPO ME NAHI HAIN  ({len(d['extra_fields'])})   "
+                 f"<- tumhare apne fields, chhue nahi jaayenge")
+        for x in d["extra_fields"][:20]:
+            log.info(f"      + {x}")
+        if len(d["extra_fields"]) > 20:
+            log.info(f"      ... aur {len(d['extra_fields']) - 20}")
+        log.info("")
+
+    if structural:
+        log.info(f"  {len(structural)} structural gap(s). Theek karne ke liye "
+                 f"bina --dry-run ke chalao.")
+    else:
+        log.info("  OK -- structure repo se match karta hai.")
+    log.info("=" * 66 + "\n")
+    return 1 if structural else 0
+
+
+def _synthetic_live():
+    """TABLES+LINKS se nakli live schema. --self-test isse _diff_schema ka
+    round-trip check karta hai, bina network ke."""
+    tbl_id = {t["name"]: f"tbl{i}" for i, t in enumerate(TABLES)}
+    out = []
+    for t in TABLES:
+        fields = [{"id": f"fld{t['name']}{i}", "name": f["name"],
+                   "type": f["type"]} for i, f in enumerate(t["fields"])]
+        for lk in LINKS:
+            if lk["from"] == t["name"]:
+                fields.append({"id": f"lnk{lk['from']}{lk['field']}",
+                               "name": lk["field"], "type": "multipleRecordLinks",
+                               "options": {"linkedTableId": tbl_id[lk["to"]]}})
+            if lk["to"] == t["name"]:
+                fields.append({"id": f"rev{lk['to']}{lk['reverse']}",
+                               "name": lk["reverse"], "type": "multipleRecordLinks",
+                               "options": {"linkedTableId": tbl_id[lk["from"]]}})
+        out.append({"id": tbl_id[t["name"]], "name": t["name"], "fields": fields})
+    return out
+
+
 def _confirm_existing(live, assume_yes: bool):
     """Maujooda base me likhne se pehle dikha do ki andar kya hai.
 
@@ -938,6 +1117,9 @@ def main():
                     help="0 network. Kya-kya banega wo print karo.")
     ap.add_argument("--manual", action="store_true",
                     help="0 network. Formula/rollup/view/automation ke steps.")
+    ap.add_argument("--verify", action="store_true",
+                    help="Live base ko repo schema se compare karo "
+                         "(kuch likhta nahi). --base-id chahiye.")
     ap.add_argument("--workspace-id", default=os.environ.get("AIRTABLE_WORKSPACE_ID"),
                     help="wspXXXX -- naya base banane ke liye zaroori.")
     ap.add_argument("--base-id", default=os.environ.get("AIRTABLE_BASE_ID"),
@@ -972,6 +1154,17 @@ def main():
                  "  export AIRTABLE_TOKEN=patXXXX.yyyy\n"
                  "  Scopes chahiye: schema.bases:write, schema.bases:read\n")
         sys.exit(1)
+    if args.verify:
+        if not args.base_id:
+            log.info("\nFAIL -- --verify ke liye --base-id chahiye "
+                     "(ya AIRTABLE_BASE_ID env).\n")
+            sys.exit(1)
+        try:
+            sys.exit(verify(Meta(token), args.base_id))
+        except AirtableError as e:
+            log.info(f"\nFAIL -- {e}\n")
+            sys.exit(1)
+
     if not args.base_id and not args.workspace_id:
         log.info("\nFAIL -- naya base banane ke liye --workspace-id chahiye.\n"
                  "  Airtable me workspace kholo, URL me wspXXXX dikhega.\n"
